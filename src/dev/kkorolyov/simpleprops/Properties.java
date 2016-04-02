@@ -21,13 +21,13 @@ public class Properties {
 	 * If an appropriate instance does not yet exist, it is created using the specified filename and no default properties.
 	 * @see #getInstance(String, Map)
 	 */
-	public static Properties getInstance(String filename) throws IOException {
+	public static Properties getInstance(String filename) {
 		return getInstance(filename, (Map<String, String>) null);
 	}
 	/**
 	 * Functions similarly to {@link #getInstance(String, Map)}, but uses a 2-dimensional array instead of a {@code Map} to specify default properties.
 	 */
-	public static Properties getInstance(String filename, String[][] defaultProperties) throws IOException {
+	public static Properties getInstance(String filename, String[][] defaultProperties) {
 		return getInstance(filename, convertArrayToMap(defaultProperties));
 	}
 	/**
@@ -36,9 +36,8 @@ public class Properties {
 	 * @param filename label for the instance, as well as the name of the file written to when saved
 	 * @param defaultProperties default properties of new instance; ignored if retrieving an existing instance
 	 * @return appropriate instance
-	 * @throws IOException if an I/O error occurs
 	 */
-	public static Properties getInstance(String filename, Map<String, String> defaultProperties) throws IOException {
+	public static Properties getInstance(String filename, Map<String, String> defaultProperties) {
 		Properties instance = null;
 		
 		while ((instance = instances.get(filename)) == null)
@@ -60,12 +59,16 @@ public class Properties {
 		return convertedMap;
 	}
 	
-	private Properties(String filename, Map<String, String> defaultProperties) throws IOException {
+	private Properties(String filename, Map<String, String> defaultProperties) {
 		this.filename = filename;
 		
 		setDefaultProperties(defaultProperties);
 		loadDefaults();
-		loadFromFile();
+		try {
+			loadFromFile();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	private void setDefaultProperties(Map<String, String> newDefaultProperties) {
