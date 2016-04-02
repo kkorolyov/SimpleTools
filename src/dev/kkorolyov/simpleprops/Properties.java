@@ -6,31 +6,82 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * A property file implementation accessible through static calls.
+ * Provides access to and mutation of long-term properties, which are an indefinite set of key-value pairs.
+ * Provides for saving and loading data to/from a file unique to the current instance.
  */
-public class Properties {	
-	private static final Map<String, String> defaultProperties = new HashMap<>();
+public class Properties {
+	private static final Map<String, Properties> instances = new HashMap<>();
 	
-	private static String fileName = "SimpleProps.txt";
-	private static Map<String, String> properties = new HashMap<>();
+	private final String filename;
+	private final Map<String, String> defaultProperties = new HashMap<>(),
+																		properties = new HashMap<>();
 	
 	/**
-	 * Initializes all necessary properties in this class.
-	 * <ol>
-	 * <li>Default, hardcoded properties are loaded.</li>
-	 * <li>The properties file is read, all current properties are updated with those read from the file.</li>
-	 * </ol>
+	 * Returns a {@code Properties} instance of the specified name.
+	 * If an appropriate instance does not yet exist, it is created using the specified filename and no default properties.
+	 * @see #getInstance(String, Map)
+	 */
+	public static Properties getInstance(String filename) throws IOException {
+		return getInstance(filename, (Map<String, String>) null);
+	}
+	/**
+	 * Functions similarly to {@link #getInstance(String, Map)}, but uses a 2-dimensional array instead of a {@code Map} to specify default properties.
+	 */
+	public static Properties getInstance(String filename, String[][] defaultProperties) throws IOException {
+		return getInstance(filename, convertArrayToMap(defaultProperties));
+	}
+	/**
+	 * Returns a {@code Properties} instance for the specified filename.
+	 * If an appropriate instance does not yet exist, it is created using the specified filename and default properties.
+	 * @param filename label for the instance, as well as the name of the file written to when saved
+	 * @param defaultProperties default properties of new instance; ignored if retrieving an existing instance
+	 * @return appropriate instance
 	 * @throws IOException if an I/O error occurs
 	 */
-	public static void init() throws IOException {
+	public static Properties getInstance(String filename, Map<String, String> defaultProperties) throws IOException {
+		Properties instance = null;
+		
+		while ((instance = instances.get(filename)) == null)
+			instances.put(filename, new Properties(filename, defaultProperties));
+		
+		return instance;
+	}
+	
+	private static Map<String, String> convertArrayToMap(String[][] array) {
+		if (array == null)
+			return null;
+		
+		Map<String, String> convertedMap = new HashMap<>();
+		
+		for (String[] property : array) {
+			if (array.length >= 2)
+				convertedMap.put(property[0], property[1]);
+		}
+		return convertedMap;
+	}
+	
+	private Properties(String filename, Map<String, String> defaultProperties) throws IOException {
+		this.filename = filename;
+		
+		setDefaultProperties(defaultProperties);
 		loadDefaults();
 		loadFile();
 	}
 	
+	private void setDefaultProperties(Map<String, String> newDefaultProperties) {
+		defaultProperties.clear();
+		
+		if (newDefaultProperties != null) {	// If null, no default properties
+			for (String key : newDefaultProperties.keySet()) {
+				defaultProperties.put(key, newDefaultProperties.get(key));
+			}
+		}
+	}
+	
 	/**
-	 * Clears all current properties and loads the hard-coded defaults.
+	 * Resets all properties to default values.
 	 */
-	public static void loadDefaults() {
+	public void loadDefaults() {
 		properties.clear();
 		
 		for (String key : defaultProperties.keySet()) {
@@ -39,49 +90,65 @@ public class Properties {
 	}
 	
 	/**
-	 * Sets the name of the file to which properties will be saved.
-	 * The default name is {@code SimpleProps.txt}.
-	 * @param newFileName new file name to write to
+	 * Retrieves the value of a property of the specified key.
+	 * @param key key of property to retrieve
+	 * @return property value
 	 */
-	public static void setFileName(String newFileName) {
-		fileName = newFileName;
-	}
-	/**
-	 * Overwrites the default properties with the specified values.
-	 * The specified array is expected to be an array of 2-element {@code String} arrays, where the String at {@code newDefaults[0]} is the key of a property, and the String at {@code newDefaults[1]} is the corresponding value.
-	 * @param newDefaults 2-Dimensional array of key-value pairs
-	 */
-	public static void setDefaults(String[][] newDefaults) {
-		defaultProperties.clear();
+	public String getValue(String key) {
+		reloadIfEmpty();
 		
-		for (String[] property : newDefaults) {
-			if (newDefaults.length >= 2)
-				defaultProperties.put(property[0], property[1]);
-		}
+		return properties.get(key);
 	}
-	/**
-	 * Overwrites the default properties using the specified map
-	 * @param newDefaults map of new default properties
-	 */
-	public static void setDefaults(Map<String, String> newDefaults) {
-		defaultProperties.clear();
+	
+	/** @return key of every property */
+	public Set<String> getAllKeys() {
+		reloadIfEmpty();
 		
-		for (String key : newDefaults.keySet()) {
-			defaultProperties.put(key, newDefaults.get(key));
+		return properties.keySet();
+	}
+	
+	/**
+	 * Adds the specified property.
+	 * If the key matches an existing property's key, then that preexisting property's value is overridden by the specified value.
+	 * @param key key of property to add
+	 * @param value value of property to add
+	 */
+	public void addProperty(String key, String value) {
+		reloadIfEmpty();
+
+		properties.put(key, value);
+	}
+	
+	private void reloadIfEmpty() {
+		if (properties.isEmpty()) {	// Properties were possibly cleared to free memory
+			try {
+				loadDefaults();
+				loadFile();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 	
 	/**
-	 * Loads all properties specified in the properties file
+	 * Clears all properties from memory.
+	 * Any properties not saved to disk are lost.
+	 */
+	public void clear() {
+		properties.clear();
+	}
+	
+	/**
+	 * Loads all properties found in this instance's respective file.
 	 * @throws IOException if an I/O error occurs
 	 */
-	public static void loadFile() throws IOException {
+	public void loadFile() throws IOException {
 		FileReader fileIn;
 		try {
-			fileIn = new FileReader(new File(fileName));
+			fileIn = new FileReader(new File(filename));
 		} catch (FileNotFoundException e) {
 			saveToFile();
-			fileIn = new FileReader(new File(fileName));	// Should open now
+			fileIn = new FileReader(new File(filename));	// Should open now
 		}
 		try (BufferedReader fileReader = new BufferedReader(fileIn)) {
 		
@@ -100,65 +167,16 @@ public class Properties {
 			}
 		}
 	}
-	
 	/**
 	 * Writes all properties currently loaded in memory to the properties file.
 	 * @throws IOException if an I/O error occurs
 	 * @throws FileNotFoundException  if the properties file cannot be accessed for some reason
 	 */
-	public static void saveToFile() throws FileNotFoundException, IOException {
-		try (	OutputStream fileOut = new FileOutputStream(new File(fileName));
+	public void saveToFile() throws FileNotFoundException, IOException {
+		try (	OutputStream fileOut = new FileOutputStream(new File(filename));
 					PrintWriter filePrinter = new PrintWriter(fileOut)) {
 			for (String key : properties.keySet()) {
 				filePrinter.println(key + "=" + properties.get(key));
-			}
-		}
-	}
-	
-	/**
-	 * Retrieves the value of a property of the specified key.
-	 * @param key key of property to retrieve
-	 * @return property value
-	 */
-	public static String getValue(String key) {
-		checkInit();
-		
-		return properties.get(key);
-	}
-	
-	/** @return key of every property */
-	public static Set<String> getAllKeys() {
-		checkInit();
-		
-		return properties.keySet();
-	}
-	
-	/**
-	 * Adds the specified property.
-	 * If the key matches an existing property's key, then that preexisting property's value is overridden by the specified value.
-	 * @param key key of property to add
-	 * @param value value of property to add
-	 */
-	public static void addProperty(String key, String value) {
-		checkInit();
-
-		properties.put(key, value);
-	}
-	
-	/**
-	 * Clears all properties from memory.
-	 * Any properties not saved to disk are lost.
-	 */
-	public static void clear() {
-		properties.clear();
-	}
-	
-	private static void checkInit() {
-		if (properties.isEmpty()) {
-			try {
-				init();
-			} catch (IOException e) {
-				e.printStackTrace();
 			}
 		}
 	}
