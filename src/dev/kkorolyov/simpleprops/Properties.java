@@ -65,7 +65,7 @@ public class Properties {
 		
 		setDefaultProperties(defaultProperties);
 		loadDefaults();
-		loadFile();
+		loadFromFile();
 	}
 	
 	private void setDefaultProperties(Map<String, String> newDefaultProperties) {
@@ -91,6 +91,7 @@ public class Properties {
 	
 	/**
 	 * Retrieves the value of a property of the specified key.
+	 * If this method is called on an instance which has no properties in memory, the instance will first attempt to load both its default properties and properties from its respective file.
 	 * @param key key of property to retrieve
 	 * @return property value
 	 */
@@ -100,16 +101,30 @@ public class Properties {
 		return properties.get(key);
 	}
 	
-	/** @return key of every property */
+	/**
+	 * Returns the keys of all properties.
+	 * If this method is called on an instance which has no properties in memory, the instance will first attempt to load both its default properties and properties from its respective file.
+ 	 * @return key of every property
+ 	 */
 	public Set<String> getAllKeys() {
 		reloadIfEmpty();
 		
 		return properties.keySet();
 	}
 	
+	/** 
+	 * Returns the total number of properties of this instance.
+	 * If this method is called on an instance which has no properties in memory, the instance will first attempt to load both its default properties and properties from its respective file.
+	 * @return number of properties
+	 */
+	public int size() {
+		return getAllKeys().size();
+	}
+	
 	/**
 	 * Adds the specified property.
-	 * If the key matches an existing property's key, then that preexisting property's value is overridden by the specified value.
+	 * If the key matches an existing property's key, then that preexisting property's value is overridden by the specified value instead.
+	 * If this method is called on an instance which has no properties in memory, the instance will first attempt to load both its default properties and properties from its respective file.
 	 * @param key key of property to add
 	 * @param value value of property to add
 	 */
@@ -123,7 +138,7 @@ public class Properties {
 		if (properties.isEmpty()) {	// Properties were possibly cleared to free memory
 			try {
 				loadDefaults();
-				loadFile();
+				loadFromFile();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -142,7 +157,7 @@ public class Properties {
 	 * Loads all properties found in this instance's respective file.
 	 * @throws IOException if an I/O error occurs
 	 */
-	public void loadFile() throws IOException {
+	public void loadFromFile() throws IOException {
 		FileReader fileIn;
 		try {
 			fileIn = new FileReader(new File(filename));
@@ -179,5 +194,10 @@ public class Properties {
 				filePrinter.println(key + "=" + properties.get(key));
 			}
 		}
+	}
+	
+	/** @return name of file attached to this instance */
+	public String getFilename() {
+		return filename;
 	}
 }
