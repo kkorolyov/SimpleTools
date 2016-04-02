@@ -2,117 +2,144 @@ package dev.kkorolyov.simpleprops;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.AfterClass;
+import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
-
-import dev.kkorolyov.simpleprops.Properties;
 
 @SuppressWarnings("javadoc")
 public class PropertiesTest {	// TODO Finish
-	private static final String TEST_FILENAME = "TestProps.txt";
+	private static final int NUM_FILES = 5;
+	private static final String[] ALL_FILENAMES = new String[NUM_FILES];
+	@SuppressWarnings("unchecked")
+	private static final Map<String, String>[] ALL_DEFAULT_PROPERTIES = new HashMap[NUM_FILES];
+	private static final String[][][] ALL_DEFAULT_PROPERTIES_ARRAY = new String[NUM_FILES][][];
 	
+	@BeforeClass
+	public static void setUpBeforeClass() throws IOException {
+		buildFilenames();
+		buildPropertiesCollection();
+		
+		for (int i = 0; i < NUM_FILES; i++) {
+			if (i % 2 == 0)
+				Properties.getInstance(ALL_FILENAMES[i], ALL_DEFAULT_PROPERTIES[i]);
+			else
+				Properties.getInstance(ALL_FILENAMES[i], ALL_DEFAULT_PROPERTIES_ARRAY[i]);
+		}
+	}
 	@Before
-	public void setUpBefore() throws IOException {	// Erases all defaults
-		Properties.setFileName(TEST_FILENAME);
-		Properties.setDefaults(new String[][]{{}});
-		Properties.init();
+	public void setUpBefore() throws IOException {
+		for (String filename : ALL_FILENAMES)
+			Properties.getInstance(filename).loadDefaults();
 	}
-	@AfterClass
-	public static void cleanUpAfterClass() {
-		if (new File(TEST_FILENAME).delete())
-			System.out.println("Cleaned up successfully");
+	
+	@After
+	public void tearDownAfter() throws IOException {
+		for (String filename : ALL_FILENAMES)
+			new File(filename).delete();
 	}
 	
 	@Test
-	public void testInit() throws IOException {
-		Properties.init();
-	}
-
-	@Test
-	public void testLoadDefaults() {
-		int numPreDefault = 10, numPostDefaultArray = 5, numPostDefaultMap = 3;
-		
-		for (String[] property : buildProperties(numPreDefault)) {
-			Properties.addProperty(property[0], property[1]);	// Expected to be erased
-		}
-		assertEquals(numPreDefault, Properties.getAllKeys().size());
-		
-		String[][] testDefaults = buildProperties(numPostDefaultArray);
-		
-		Properties.setDefaults(testDefaults);
-		Properties.loadDefaults();
-		
-		assertEquals(numPostDefaultArray, Properties.getAllKeys().size());
-		for (String[] property : testDefaults) {
-			assertEquals(property[1], Properties.getValue(property[0]));
-		}
-		
-		Map<String, String> testDefaultsMap = buildPropertiesMap(numPostDefaultMap);
-		
-		Properties.setDefaults(testDefaultsMap);
-		Properties.loadDefaults();
-		
-		assertEquals(numPostDefaultMap, Properties.getAllKeys().size());
-		for (String key : testDefaultsMap.keySet()) {
-			assertEquals(testDefaultsMap.get(key), Properties.getValue(key));
+	public void testLoadDefaults() throws IOException {
+		for (int i = 0; i < NUM_FILES; i++) {
+			String currentFilename = ALL_FILENAMES[i];
+			Map<String, String> currentDefaults = ALL_DEFAULT_PROPERTIES[i];
+			Properties currentInstance = Properties.getInstance(currentFilename);
+						
+			assertEquals(currentDefaults.size(), currentInstance.size());
+			
+			for (String key : currentDefaults.keySet()) {
+				assertEquals(currentDefaults.get(key), currentInstance.getValue(key));
+			}
 		}
 	}
 
 	@Test
-	public void testSetFileName() throws FileNotFoundException, IOException {
-		String testFileName = "NewTestProps.txt";
-		
-		Properties.setFileName(testFileName);
-		Properties.saveToFile();
-		
-		assertTrue(new File(testFileName).delete());	// Testing for creation of new file by Properties
+	public void testAddProperty() throws IOException {
+		for (int i = 0; i < NUM_FILES; i++) {
+			String currentFilename = ALL_FILENAMES[i];
+			Map<String, String> currentDefaults = ALL_DEFAULT_PROPERTIES[i];
+			Properties currentInstance = Properties.getInstance(currentFilename);
+			
+			String 	newKey = "NEW-KEY" + i,
+							newValue = "NEW-VAL" + i;
+			currentInstance.addProperty(newKey, newValue);
+			
+			assertTrue(currentInstance.size() == currentDefaults.size() + 1);
+			assertEquals(newValue, currentInstance.getValue(newKey));
+		}
 	}
 
 	@Test
-	public void testLoadFile() {
-		fail("Not yet implemented");
+	public void testClear() throws IOException {
+		for (int i = 0; i < NUM_FILES; i++) {
+			String currentFilename = ALL_FILENAMES[i];
+			Map<String, String> currentDefaults = ALL_DEFAULT_PROPERTIES[i];
+			Properties currentInstance = Properties.getInstance(currentFilename, currentDefaults);	// Test newDefaults ignoring
+			
+			currentInstance.addProperty("Extra", "Extra");
+			
+			assertTrue(currentInstance.size() == currentDefaults.size() + 1);
+
+			currentInstance.clear();
+			
+			assertEquals(currentDefaults.size(), currentInstance.size());
+		}
 	}
 
 	@Test
-	public void testSaveToFile() {
-		fail("Not yet implemented");
-	}
+	public void testSaveToFile() throws IOException {
+		for (int i = 0; i < NUM_FILES; i++) {
+			String currentFilename = ALL_FILENAMES[i];
+			Map<String, String> currentDefaults = ALL_DEFAULT_PROPERTIES[i];
+			Properties currentInstance = Properties.getInstance(currentFilename);	// Test newDefaults ignoring
+			
+			String 	changedKey = currentDefaults.keySet().iterator().next(),	// 1st key
+							newValue = "NEW-VAL" + i;
+			currentInstance.addProperty(changedKey, newValue);
+			
+			currentInstance.saveToFile();
 
-	@Test
-	public void testGetValue() {
-		fail("Not yet implemented");
+			assertEquals(currentDefaults.size(), currentInstance.size());
+			assertTrue(!currentInstance.getValue(changedKey).equals(currentDefaults.get(changedKey)));
+			
+			currentInstance.loadDefaults();
+			
+			assertEquals(currentDefaults.size(), currentInstance.size());
+			assertEquals(currentDefaults.get(changedKey), currentInstance.getValue(changedKey));
+			
+			currentInstance.loadFromFile();
+			
+			assertEquals(currentDefaults.size(), currentInstance.size());
+			assertTrue(!currentInstance.getValue(changedKey).equals(currentDefaults.get(changedKey)));
+		}
 	}
-
-	@Test
-	public void testGetAllKeys() {
-		fail("Not yet implemented");
+	
+	private static void buildFilenames() {		
+		for (int i = 0; i < NUM_FILES; i++) {
+			ALL_FILENAMES[i] = "TestPropFile" + i + ".txt";
+		}
 	}
-
-	@Test
-	public void testAddProperty() {
-		fail("Not yet implemented");
-	}
-
-	@Test
-	public void testClear() {
-		fail("Not yet implemented");
+	private static void buildPropertiesCollection() {
+		for (int i = 0; i < ALL_DEFAULT_PROPERTIES.length; i++) {
+			ALL_DEFAULT_PROPERTIES[i] = buildPropertiesMap(i + 1);
+			
+			ALL_DEFAULT_PROPERTIES_ARRAY[i] = buildProperties(i + 1);
+		}
 	}
 
 	private static String[][] buildProperties(int numProperties) {
 		String[][] properties = new String[numProperties][2];
 		
 		for (int i = 0; i < properties.length; i++) {
-			properties[i][0] = "ARRAY-KEY" + i;
-			properties[i][1] = "ARRAY-VAL" + i;
+			properties[i][0] = "KEY" + i;
+			properties[i][1] = "VAL" + i;
 		}
 		return properties;
 	}
@@ -120,7 +147,7 @@ public class PropertiesTest {	// TODO Finish
 		Map<String, String> properties = new HashMap<>();
 		
 		for (int i = 0; i < numProperties; i++) {
-			properties.put("MAP-KEY" + i, "MAP-VAL" + i);
+			properties.put("KEY" + i, "VAL" + i);
 		}
 		return properties;
 	}
