@@ -30,7 +30,9 @@ public class Logger {
 	 * @return appropriate logger
 	 */
 	public static Logger getLogger(String name) {
-		return getLogger(name, new SysOutPrinter(), Level.INFO);
+		Logger instance = instances.get(name);
+		
+		return instance != null ? instance : getLogger(name, new SysOutPrinter(), Level.INFO);
 	}
 	/**
 	 * Retrieves a logger of the specified name, if it exists.
@@ -41,6 +43,11 @@ public class Logger {
 	 * @return appropriate logger
 	 */
 	public static Logger getLogger(String name, Printer printer) {
+		Logger instance = instances.get(name);
+		if (instance != null) {
+			instance.setPrinter(printer);
+			return instance;
+		}
 		return getLogger(name, printer, Level.INFO);
 	}
 	/**
@@ -53,14 +60,16 @@ public class Logger {
 	 * @return appropriate logger
 	 */
 	public static Logger getLogger(String name, Printer printer, Level level) {
-		Logger instance;
+		Logger instance = instances.get(name);
 		
-		while ((instance = instances.get(name)) == null)
-			instances.put(name, new Logger(printer, level));
-		
-		instance.setPrinter(printer);
-		instance.setLevel(level);
-		
+		if (instance == null) {
+			instance = new Logger(printer, level);
+			instances.put(name, instance);
+		}
+		else {
+			instance.setPrinter(printer);
+			instance.setLevel(level);
+		}
 		return instance;
 	}
 	
