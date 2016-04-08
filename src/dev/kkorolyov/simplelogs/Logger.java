@@ -73,7 +73,7 @@ public class Logger {
 	 * Logs a severe exception.
 	 * @param e severe exception to log
 	 */
-	public void exceptionSevere(Exception e) {
+	public void exceptionSevere(Exception e) {	// TODO Change to custom exception logging level
 		severe(formatException(e));
 	}
 	/**
@@ -130,6 +130,9 @@ public class Logger {
 	 * @param messageLevel message's level of granularity
 	 */
 	public void log(String message, Level messageLevel) {
+		if (!enabled || messageLevel.compareTo(level) > 0)
+			return;
+		
 		StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
 		StackTraceElement originalCaller = null;
 		for (int i = 2; i < stackTrace.length; i++) {
@@ -144,9 +147,7 @@ public class Logger {
 			if (originalCallerFound)
 				break;
 		}
-		
-		if (enabled && messageLevel.compareTo(level) <= 0)
-			printer.print(formatMessage(message, messageLevel, originalCaller));
+		printer.print(formatMessage(message, messageLevel, originalCaller));
 	}
 	
 	private static String formatMessage(String message, Level messageLevel, StackTraceElement caller) {
