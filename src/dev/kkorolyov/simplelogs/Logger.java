@@ -36,22 +36,6 @@ public class Logger {
 	}
 	/**
 	 * Retrieves a logger of the specified name, if it exists.
-	 * If such a logger already exists, its printer is set to the specified printer.
-	 * If such a logger does not exist, a new logger is created using the specified name, printer, and a default logging level of {@code INFO}.
-	 * @param name logger name
-	 * @param printer printer the logger will use for message printing
-	 * @return appropriate logger
-	 */
-	public static Logger getLogger(String name, Printer printer) {
-		Logger instance = instances.get(name);
-		if (instance != null) {
-			instance.setPrinter(printer);
-			return instance;
-		}
-		return getLogger(name, printer, Level.INFO);
-	}
-	/**
-	 * Retrieves a logger of the specified name, if it exists.
 	 * If such a logger already exists, its printer and logging level are set to the specified parameters.
 	 * If such a logger does not exist, a new logger is created using the specified name, printer, and logging level.
 	 * @param name logger name
