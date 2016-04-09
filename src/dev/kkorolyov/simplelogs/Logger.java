@@ -18,10 +18,11 @@ public class Logger {
 	private static final String MESSAGE_SEPARATOR = ": ";
 	
 	private static final Map<String, Logger> instances = new HashMap<>();
+	private static boolean allEnabled = true;
 	
 	private Printer printer;
 	private Level level;
-	private boolean enabled = true;
+	private boolean enabled = allEnabled;
 	
 	/**
 	 * Retrieves a logger of the specified name, if it exists.
@@ -60,6 +61,27 @@ public class Logger {
 	private Logger(Printer printer, Level level) {
 		this.printer = printer;
 		this.level = level;
+	}
+	
+	/**
+	 * Enables all current and future {@code Logger} instances. 
+	 */
+	public static void enableAll() {
+		allEnabled = true;
+		
+		syncEnabled();
+	}
+	/**
+	 * Disables all current and future {@code Logger} instances. 
+	 */
+	public static void disableAll() {
+		allEnabled = false;
+		
+		syncEnabled();
+	}
+	private static void syncEnabled() {
+		for (Logger instance : instances.values())
+			instance.enabled = allEnabled;
 	}
 	
 	/**
