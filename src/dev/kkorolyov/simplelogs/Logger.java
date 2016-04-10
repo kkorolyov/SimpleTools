@@ -18,11 +18,12 @@ public class Logger {
 	private static final String MESSAGE_SEPARATOR = ": ";
 	
 	private static final Map<String, Logger> instances = new HashMap<>();
-	private static boolean allEnabled = true;
+	private static Level globalLevel = Level.INFO;	// Default INFO
+	private static boolean globalEnabled = true;	// Default true
 	
 	private Printer printer;
 	private Level level;
-	private boolean enabled = allEnabled;
+	private boolean enabled;
 	
 	/**
 	 * Retrieves a logger of the specified name, if it exists.
@@ -33,7 +34,7 @@ public class Logger {
 	public static Logger getLogger(String name) {
 		Logger instance = instances.get(name);
 		
-		return instance != null ? instance : getLogger(name, new SysOutPrinter(), Level.INFO);
+		return instance != null ? instance : getLogger(name, new SysOutPrinter(), globalLevel);
 	}
 	/**
 	 * Retrieves a logger of the specified name, if it exists.
@@ -49,6 +50,7 @@ public class Logger {
 		
 		if (instance == null) {
 			instance = new Logger(printer, level);
+			
 			instances.put(name, instance);
 		}
 		else {
@@ -61,27 +63,48 @@ public class Logger {
 	private Logger(Printer printer, Level level) {
 		this.printer = printer;
 		this.level = level;
+		this.enabled = globalEnabled;	
 	}
 	
 	/**
-	 * Enables all current and future {@code Logger} instances. 
+	 * Sets the logging level of all current {@code Logger} instances, and the default level of all future instances.
+	 * @param level logging level to set
 	 */
-	public static void enableAll() {
-		allEnabled = true;
+	public static void setGlobalLevel(Level level) {
+		globalLevel = level;
 		
-		syncEnabled();
+		syncLevel();
 	}
+	private static void syncLevel() {
+		for (Logger instance : instances.values())
+			instance.level = globalLevel;
+	}
+	
 	/**
-	 * Disables all current and future {@code Logger} instances. 
+	 * Sets the enabled status of all current {@code Logger} instances, as well as the default enabled status of all future instances.
+	 * @param enabled {@code true} enables, {@code false} disables
 	 */
-	public static void disableAll() {
-		allEnabled = false;
+	public static void setGlobalEnabled(boolean enabled) {
+		globalEnabled = enabled;
 		
 		syncEnabled();
 	}
 	private static void syncEnabled() {
 		for (Logger instance : instances.values())
-			instance.enabled = allEnabled;
+			instance.enabled = globalEnabled;
+	}
+	
+	/**
+	 * Enables all current {@code Logger} instances. 
+	 */
+	public static void enableAll() {
+		setGlobalEnabled(true);
+	}
+	/**
+	 * Disables all current {@code Logger} instances. 
+	 */
+	public static void disableAll() {
+		setGlobalEnabled(false);
 	}
 	
 	/**
