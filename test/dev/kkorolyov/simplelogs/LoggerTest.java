@@ -24,7 +24,7 @@ public class LoggerTest {	// TODO Assertions
 		for (Level level : Level.values()) {
 			System.out.println("Printing SEVERE exception with " + level + "-leveled loggers:");
 			for (Logger logger : getAllLoggers(level))
-				logger.exceptionSevere(new Exception("TestException"));
+				logger.exception(new Exception("TestException"), Level.SEVERE);
 		}
 		System.out.println();
 	}
@@ -34,7 +34,7 @@ public class LoggerTest {	// TODO Assertions
 		for (Level level : Level.values()) {
 			System.out.println("Printing WARNING exception with " + level + "-leveled loggers:");
 			for (Logger logger : getAllLoggers(level))
-				logger.exceptionWarning(new Exception("TestException"));
+				logger.exception(new Exception("TestException"), Level.WARNING);
 		}
 		System.out.println();
 	}
