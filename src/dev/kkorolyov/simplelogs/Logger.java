@@ -81,6 +81,18 @@ public class Logger {
 	}
 	
 	/**
+	 * Enables all current {@code Logger} instances. 
+	 */
+	public static void enableAll() {
+		setGlobalEnabled(true);
+	}
+	/**
+	 * Disables all current {@code Logger} instances. 
+	 */
+	public static void disableAll() {
+		setGlobalEnabled(false);
+	}
+	/**
 	 * Sets the enabled status of all current {@code Logger} instances, as well as the default enabled status of all future instances.
 	 * @param enabled {@code true} enables, {@code false} disables
 	 */
@@ -95,33 +107,23 @@ public class Logger {
 	}
 	
 	/**
-	 * Enables all current {@code Logger} instances. 
+	 * Logs an exception at the {@code SEVERE} level.
+	 * @param e exception to log
 	 */
-	public static void enableAll() {
-		setGlobalEnabled(true);
+	public void exception(Exception e) {
+		exception(e, Level.SEVERE);
 	}
 	/**
-	 * Disables all current {@code Logger} instances. 
+	 * Logs an exception at a specified logging level.
+	 * @param e exception to log
+	 * @param level level to log at
 	 */
-	public static void disableAll() {
-		setGlobalEnabled(false);
+	public void exception(Exception e, Level level) {
+		if (!enabled || !isLoggable(level))	// Avoid needlessly formatting exception stack
+			return;
+		
+		log(formatException(e), level);
 	}
-	
-	/**
-	 * Logs a severe exception.
-	 * @param e severe exception to log
-	 */
-	public void exceptionSevere(Exception e) {	// TODO Change to custom exception logging level
-		severe(formatException(e));
-	}
-	/**
-	 * Logs a warning exception.
-	 * @param e warning exception to log
-	 */
-	public void exceptionWarning(Exception e) {
-		warning(formatException(e));
-	}
-	
 	private static String formatException(Exception e) {
 		StringBuilder messageBuilder = new StringBuilder(e.toString());
 		
@@ -159,16 +161,15 @@ public class Logger {
 	public void debug(String message) {
 		log(message, Level.DEBUG);
 	}
-	
 	/**
 	 * Attempts to log a message at a specific level of granularity.
 	 * If this logger is disabled, the message is not logged.
 	 * If the specified granularity level is finer than this logger's current granularity level, the message is not logged.
 	 * @param message message to log
-	 * @param messageLevel message's level of granularity
+	 * @param level message's level of granularity
 	 */
-	public void log(String message, Level messageLevel) {
-		if (!enabled || messageLevel.compareTo(level) > 0)
+	public void log(String message, Level level) {
+		if (!enabled || !isLoggable(level))
 			return;
 		
 		StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
@@ -185,9 +186,8 @@ public class Logger {
 			if (originalCallerFound)
 				break;
 		}
-		printer.print(formatMessage(message, messageLevel, originalCaller));
+		printer.print(formatMessage(message, level, originalCaller));
 	}
-	
 	private static String formatMessage(String message, Level messageLevel, StackTraceElement caller) {
 		StringBuilder messageBuilder = new StringBuilder();
 		
@@ -228,6 +228,15 @@ public class Logger {
 	 */
 	public void disable() {
 		enabled = false;
+	}
+	
+	/** 
+	 * Checks if a message of a specified level would be logged by this logger.
+	 * @param level logging level to test
+	 * @return {@code true} if a message of the specified level would be logged by this logger
+	 */
+	public boolean isLoggable(Level level) {
+		return this.level.compareTo(level) >= 0;	// Greater level == finer granularity
 	}
 	
 	/**
