@@ -1,2 +1,2 @@
 # SimpleLogs
-Provides for multi-level logging to various outputs
+Logs minimalistic messages to various outputs.
