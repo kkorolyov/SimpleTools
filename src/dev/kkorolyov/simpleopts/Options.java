@@ -1,7 +1,6 @@
 package dev.kkorolyov.simpleopts;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Comparator;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -9,40 +8,27 @@ import java.util.TreeSet;
  * A set of {@code Option} objects.
  */
 public class Options {
-	private Set<Option> options = new TreeSet<>();
+	private static final Comparator<Option> optionComparator = new Comparator<Option>() {
+		@Override
+		public int compare(Option o1, Option o2) {
+			return o1.longName().compareTo(o2.longName());
+		}
+	};
+	
+	private Set<Option> options = new TreeSet<>(optionComparator);
 	
 	/**
+	 * Constructs an empty {@code Options}.
+	 */
+	public Options() {
+		this(null);
+	}
+	/**
 	 * Constructs a new {@code Options} for the specified set of options.
-	 * @param options supported options
+	 * @param options supported options in this options set
 	 */
 	public Options(Option[] options) {
-		
-		parse();
-	}
-	private void parse() {
-		int counter = 0;
-		while (counter < args.length) {
-			Option currentOption = Option.getOption(args[counter]);
-			
-			if (currentOption.requiresArg()) {
-				options.put(currentOption, args[counter + 1]);
-				counter += 2;
-			}
-			else {
-				options.put(currentOption, null);
-				counter += 1;
-			}
-		}
-	}
-	
-	/** @return	help string */
-	public static String help() {
-		StringBuilder toStringBuilder = new StringBuilder("USAGE" + System.lineSeparator());
-		
-		for (Option option : Option.values()) {
-			toStringBuilder.append(option.description()).append(System.lineSeparator());
-		}
-		return toStringBuilder.toString();
+		addAll(options);
 	}
 	
 	/**
@@ -51,19 +37,41 @@ public class Options {
 	 * @return {@code true} if this {@code Options} contains the specified option
 	 */
 	public boolean contains(Option toCheck) {
-		return options.containsKey(toCheck);
+		return options.contains(toCheck);
 	}
 	/**
-	 * Retrieves the argument for a specific option.
-	 * @param key option to get argument for
-	 * @return option's argument, or {@code null} if does not exist
+	 * Adds a new option to this options set.
+	 * @param toAdd option to add
+	 * @return {@code true} if this options set did not already contain the specified option
 	 */
-	public String get(Option key) {
-		return options.get(key);
+	public boolean add(Option toAdd) {
+		return options.add(toAdd);
+	}
+	/**
+	 * Adds an array of options to this options set.
+	 * @param toAdd array to add
+	 * @return number of options added
+	 */
+	public int addAll(Option[] toAdd) {
+		int addedCounter = 0;
+		
+		for (Option option : toAdd) {
+			if (options.add(option))
+				addedCounter++;
+		}
+		return addedCounter;
+	}
+	/**
+	 * Removes an option from this options set.
+	 * @param toRemove option to remove
+	 * @return {@code true} if this options set contained the specified option
+	 */
+	public boolean remove(Option toRemove) {
+		return options.remove(toRemove);
 	}
 	
-	/** @return	all used options */
-	public Option[] getAllOptions() {
-		return options.keySet().toArray(new Option[options.size()]);
+	/** @return	all options */
+	public Set<Option> getAllOptions() {
+		return options;
 	}
 }
