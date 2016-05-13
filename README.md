@@ -1,2 +1,2 @@
-# SimpleOptions
-API for parsing command line arguments.
+# SimpleOpts
+Parses and executes command line options.
