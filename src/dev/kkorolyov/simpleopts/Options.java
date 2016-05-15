@@ -33,13 +33,40 @@ public class Options implements Iterable<Option> {
 	}
 	
 	/**
-	 * Checks if this {@code Options} contains the specified option.
+	 * Checks if this options set contains an option of the specified name.
+	 * @param name short or long name of option
+	 * @return {@code true} if this options set contains an option of the specified name
+	 */
+	public boolean contains(String name) {
+		return get(name) != null;
+	}
+	/**
+	 * Checks if this options set contains the specified option.
 	 * @param toCheck option to check
-	 * @return {@code true} if this {@code Options} contains the specified option
+	 * @return {@code true} if this options set contains the specified option
 	 */
 	public boolean contains(Option toCheck) {
 		return options.contains(toCheck);
 	}
+	
+	/**
+	 * Returns an option from this options set matching the specified name.
+	 * @param name short or long name of option
+	 * @return matching {@code Option}, or {@code null} if no such option
+	 */
+	public Option get(String name) {
+		Option toReturn = null;
+		
+		for (Option option : options) {
+			if (option.matches(name)) {
+				toReturn = option;
+				
+				break;
+			}
+		}
+		return toReturn;
+	}
+	
 	/**
 	 * Adds a new option to this options set.
 	 * @param toAdd option to add
