@@ -41,7 +41,7 @@ public class Option {
 	}
 	
 	/** @return short identifier of this option */
-	public String shortName() {
+	public String getShortName() {
 		return shortName;
 	}
 	private void setShortName(String newShortName) {
@@ -49,7 +49,7 @@ public class Option {
 	}
 	
 	/** @return long name of this option */
-	public String longName() {
+	public String getLongName() {
 		return longName;
 	}
 	private void setLongName(String newLongName) {
@@ -65,7 +65,7 @@ public class Option {
 	}
 	
 	/** @return description of this option */
-	public String description() {
+	public String getDescription() {
 		return description;
 	}
 	private void setDescription(String newDescription) {

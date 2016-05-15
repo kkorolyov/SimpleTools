@@ -12,7 +12,7 @@ public class Options implements Iterable<Option> {
 	private static final Comparator<Option> optionComparator = new Comparator<Option>() {
 		@Override
 		public int compare(Option o1, Option o2) {
-			return o1.longName().compareTo(o2.longName());
+			return o1.getLongName().compareTo(o2.getLongName());
 		}
 	};
 	
