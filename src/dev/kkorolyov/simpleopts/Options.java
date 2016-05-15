@@ -1,13 +1,14 @@
 package dev.kkorolyov.simpleopts;
 
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeSet;
 
 /**
  * A set of {@code Option} objects.
  */
-public class Options {
+public class Options implements Iterable<Option> {
 	private static final Comparator<Option> optionComparator = new Comparator<Option>() {
 		@Override
 		public int compare(Option o1, Option o2) {
@@ -70,8 +71,11 @@ public class Options {
 		return options.remove(toRemove);
 	}
 	
-	/** @return	all options */
-	public Set<Option> getAllOptions() {
-		return options;
+	/**
+	 * Returns an iterator over all the options in this options set.
+	 */
+	@Override
+	public Iterator<Option> iterator() {
+		return options.iterator();
 	}
 }
