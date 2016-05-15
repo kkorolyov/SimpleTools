@@ -90,6 +90,21 @@ public class Options implements Iterable<Option> {
 		return addedCounter;
 	}
 	/**
+	 * Adds a set of options to this options set.
+	 * @param toAdd set to add
+	 * @return number of options added
+	 */
+	public int addAll(Set<Option> toAdd) {
+		int addedCounter = 0;
+		
+		for (Option option : toAdd) {
+			if (options.add(option))
+				addedCounter++;
+		}
+		return addedCounter;
+	}
+	
+	/**
 	 * Removes an option from this options set.
 	 * @param toRemove option to remove
 	 * @return {@code true} if this options set contained the specified option
