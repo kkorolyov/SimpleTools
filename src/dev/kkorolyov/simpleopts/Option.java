@@ -19,17 +19,17 @@ public class Option {
 	private boolean requiresArg;
 	
 	/**
-	 * Constructs a new {@code Option} using the specified parameters.
+	 * Constructs a new option using the specified parameters.
 	 * @param shortName a unique, single-character identifier of this option; if {@code null}, this option will not have a short name
 	 * @param longName full identifier of this option
-	 * @param requiresArg if {@code true}, this option requires a specified argument directly after it
 	 * @param description descriptive statement about this option
+	 * @param requiresArg if {@code true}, this option requires a specified argument declared directly after it
 	 */
-	public Option(String shortName, String longName, boolean requiresArg, String description) {
+	public Option(String shortName, String longName, String description, boolean requiresArg) {
 		setShortName(shortName);
 		setLongName(longName);
-		setRequiresArg(requiresArg);
 		setDescription(description);
+		setRequiresArg(requiresArg);
 	}
 	
 	/**

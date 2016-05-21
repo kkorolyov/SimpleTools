@@ -1,22 +1,14 @@
 package dev.kkorolyov.simpleopts;
 
-import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.TreeSet;
 
 /**
  * A set of {@code Option} objects.
  */
 public class Options implements Iterable<Option> {
-	private static final Comparator<Option> optionComparator = new Comparator<Option>() {
-		@Override
-		public int compare(Option o1, Option o2) {
-			return o1.getLongName().compareTo(o2.getLongName());
-		}
-	};
-	
-	private Set<Option> options = new TreeSet<>(optionComparator);
+	private Set<Option> options = new HashSet<>();
 	
 	/**
 	 * Constructs an empty {@code Options}.
@@ -25,11 +17,12 @@ public class Options implements Iterable<Option> {
 		this(null);
 	}
 	/**
-	 * Constructs a new {@code Options} for the specified set of options.
+	 * Constructs a new options set for the specified set of options.
 	 * @param options supported options in this options set
 	 */
 	public Options(Option[] options) {
-		addAll(options);
+		if (options != null)
+			addAll(options);
 	}
 	
 	/**
@@ -104,13 +97,9 @@ public class Options implements Iterable<Option> {
 		return addedCounter;
 	}
 	
-	/**
-	 * Removes an option from this options set.
-	 * @param toRemove option to remove
-	 * @return {@code true} if this options set contained the specified option
-	 */
-	public boolean remove(Option toRemove) {
-		return options.remove(toRemove);
+	/** @return number of options in this options set. */
+	public int size() {
+		return options.size();
 	}
 	
 	/**
@@ -119,5 +108,15 @@ public class Options implements Iterable<Option> {
 	@Override
 	public Iterator<Option> iterator() {
 		return options.iterator();
+	}
+	
+	@Override
+	public String toString() {
+		StringBuilder toStringBuilder = new StringBuilder();
+		
+		for (Option option : options)
+			toStringBuilder.append(option.toString()).append(System.lineSeparator());
+		
+		return toStringBuilder.toString();
 	}
 }
