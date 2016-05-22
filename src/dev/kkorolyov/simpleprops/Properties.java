@@ -191,7 +191,7 @@ public class Properties {
 	 * @throws FileNotFoundException  if the properties file cannot be accessed for some reason
 	 */
 	public void saveToFile() throws FileNotFoundException, IOException {
-		try (	OutputStream fileOut = new FileOutputStream(new File(filename));
+		try (OutputStream fileOut = new FileOutputStream(new File(filename));
 					PrintWriter filePrinter = new PrintWriter(fileOut)) {
 			for (String key : properties.keySet()) {
 				filePrinter.println(key + "=" + properties.get(key));
