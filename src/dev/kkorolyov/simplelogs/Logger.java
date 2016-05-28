@@ -27,14 +27,14 @@ public class Logger {
 	
 	/**
 	 * Retrieves a logger of the specified name, if it exists.
-	 * If such a logger does not exist, a new logger is created using the specified name, a default printer to {@code System.out}, and a default logging level of {@code INFO}.
+	 * If such a logger does not exist, a new logger is created using the specified name, a default printer to {@code System.err}, and a default logging level of {@code INFO}.
 	 * @param name logger name
 	 * @return appropriate logger
 	 */
 	public static Logger getLogger(String name) {
 		Logger instance = instances.get(name);
 		
-		return instance != null ? instance : getLogger(name, new SysOutPrinter(), globalLevel);
+		return instance != null ? instance : getLogger(name, new SysErrPrinter(), globalLevel);
 	}
 	/**
 	 * Retrieves a logger of the specified name, if it exists.
