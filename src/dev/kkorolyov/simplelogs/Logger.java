@@ -163,8 +163,7 @@ public class Logger {
 	}
 	/**
 	 * Attempts to log a message at a specific level of granularity.
-	 * If this logger is disabled, the message is not logged.
-	 * If the specified granularity level is finer than this logger's current granularity level, the message is not logged.
+	 * If this logger is disabled or the specified granularity level is finer than this logger's current granularity level, the message is not logged.
 	 * @param message message to log
 	 * @param level message's level of granularity
 	 */
@@ -172,21 +171,26 @@ public class Logger {
 		if (!enabled || !isLoggable(level))
 			return;
 		
-		StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-		StackTraceElement originalCaller = null;
+		StackTraceElement originalCaller = findCallingMethod(Thread.currentThread().getStackTrace());
+		
+		printer.print(formatMessage(message, level, originalCaller));
+	}
+	private static StackTraceElement findCallingMethod(StackTraceElement[] stackTrace) {
+		StackTraceElement callingMethod = null;
+
 		for (int i = 2; i < stackTrace.length; i++) {
-			originalCaller = stackTrace[i];
-			boolean originalCallerFound = true;
+			callingMethod = stackTrace[i];
+			boolean callingMethodFound = true;
 			for (Method classMethod : Logger.class.getDeclaredMethods()) {
 				if (stackTrace[i].getMethodName().equals(classMethod.getName())) {
-					originalCallerFound = false;	// Search until called by a method outside this class
+					callingMethodFound = false;	// Search until called by a method outside this class
 					break;
 				}
 			}
-			if (originalCallerFound)
+			if (callingMethodFound)
 				break;
 		}
-		printer.print(formatMessage(message, level, originalCaller));
+		return callingMethod;
 	}
 	private static String formatMessage(String message, Level messageLevel, StackTraceElement caller) {
 		StringBuilder messageBuilder = new StringBuilder();
