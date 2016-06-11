@@ -28,4 +28,4 @@ Basic API usage follows the examples noted [above](#examples).
 
 ## License
 BSD-new license.  
-More detail found [here](license).
+More detail found [here](LICENSE).
