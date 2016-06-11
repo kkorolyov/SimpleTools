@@ -22,7 +22,7 @@ log.debug("Some DEBUG message");
 
 ## Usage
 Basic usage follows the path:
-* Get a logger using any one of the `getLogger()` methods.
+* Get a logger using any one of the static `Logger.getLogger()` methods.
 * Add calls such as `log.info("INFO message")` or `log.log("Message", Level.DEBUG)` throughout code.
 * Invoke the static methods `Logger.setGlobalLevel(Level level)` and `Logger.setGlobalEnabled(boolean enabled)` to control logging during runtime.
 
