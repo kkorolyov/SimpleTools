@@ -1,5 +1,5 @@
 # SimpleProps
-A simple API for writing and reading application properties to and from files.
+A simple Java API for writing and reading application properties to and from files.
 
 ## Examples
 #### Reading a property:
