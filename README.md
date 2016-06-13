@@ -1,5 +1,5 @@
 # SimpleOpts
-A simple API for parsing and executing command line options.
+A simple Java API for parsing and executing command line options.
 
 ## Examples
 #### Creating an option:
