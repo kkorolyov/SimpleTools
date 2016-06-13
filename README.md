@@ -1,5 +1,5 @@
 # SimpleLogs
-A simple API for logging various application messages to various outputs with minimal effort.
+A simple Java API for logging various application messages to various outputs with minimal effort.
 
 ## Examples
 #### Creating a logger for a class:
