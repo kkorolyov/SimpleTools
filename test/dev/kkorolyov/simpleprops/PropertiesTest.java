@@ -5,6 +5,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import org.junit.After;
@@ -121,6 +122,18 @@ public class PropertiesTest {	// TODO Finish
 			
 			assertTrue(timeAfterSave == timeBeforeSave);	// Save did not occur
 		}
+	}
+	
+	@Test
+	public void manualCommentsTest() throws FileNotFoundException, IOException {
+		File commentedFile = new File("CommentsTest.txt");
+		
+		Properties commentedInstance = new Properties(commentedFile);
+		
+		for (String key : commentedInstance.keys())
+			System.out.println(key + " " + commentedInstance.get(key));
+		
+		commentedInstance.saveFile();
 	}
 	
 	private static Properties createInstance(int i) {

@@ -115,7 +115,7 @@ public class Properties {
 		List<String> toReturn = new LinkedList<>();
 		
 		for (String key : keys) {
-			if (key != null)
+			if (key != null && !key.contains(COMMENT))
 				toReturn.add(key);
 		}
 		return toReturn;
