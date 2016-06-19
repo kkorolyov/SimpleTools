@@ -139,6 +139,16 @@ public class Properties {
 		keyPositions.clear();
 	}
 	
+	/** @return {@code true} if this object has a backing file and matches it exactly */
+	public boolean matchesFile() {
+		boolean matches = false;
+		
+		if (file != null)
+			matches = this.equals(new Properties(file, defaults));
+		
+		return matches;
+	}
+	
 	/**
 	 * Resets all properties to default values. If this object does not have specified default values, clears all properties instead.
 	 */
@@ -230,5 +240,65 @@ public class Properties {
 	/** @param newDefaults new default properties */
 	public void setDefaults(Properties newDefaults) {		
 		defaults = newDefaults;
+	}
+	
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		
+		result = prime * result + (keys == null ? 0 : keys.hashCode());
+		result = prime * result + (values == null ? 0 : values.hashCode());
+		result = prime * result + (keyPositions == null ? 0 : keyPositions.hashCode());
+		result = prime * result + (file == null ? 0 : file.hashCode());
+		result = prime * result + (defaults == null ? 0 : defaults.hashCode());
+		
+		return result;
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		
+		if (obj == null)
+			return false;
+		
+		if (getClass() != obj.getClass())
+			return false;
+		
+		Properties other = (Properties) obj;
+		
+		if (keys == null) {
+			if (other.keys != null)
+				return false;
+		} else if (!keys.equals(other.keys))
+			return false;
+		
+		if (values == null) {
+			if (other.values != null)
+				return false;
+		} else if (!values.equals(other.values))
+			return false;
+		
+		if (keyPositions == null) {
+			if (other.keyPositions != null)
+				return false;
+		} else if (!keyPositions.equals(other.keyPositions))
+			return false;
+		
+		if (file == null) {
+			if (other.file != null)
+				return false;
+		} else if (!file.equals(other.file))
+			return false;
+		
+		if (defaults == null) {
+			if (other.defaults != null)
+				return false;
+		} else if (!defaults.equals(other.defaults))
+			return false;
+		
+		return true;
 	}
 }
