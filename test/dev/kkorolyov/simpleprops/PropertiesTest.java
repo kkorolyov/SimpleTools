@@ -71,6 +71,18 @@ public class PropertiesTest {	// TODO Finish
 			assertEquals(0, currentInstance.size());
 		}
 	}
+	
+	@Test
+	public void testMatchesFile() {
+		for (int i = 0; i < NUM_FILES; i++) {
+			Properties currentInstance = createInstance(i);
+			
+			assertTrue(currentInstance.matchesFile());
+			
+			currentInstance.put("NoMatch", "NoMatch");
+			assertFalse(currentInstance.matchesFile());
+		}
+	}
 
 	@Test
 	public void testSaveToFile() throws IOException {
