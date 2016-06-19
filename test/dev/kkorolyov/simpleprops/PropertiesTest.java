@@ -32,9 +32,8 @@ public class PropertiesTest {	// TODO Finish
 	@Test
 	public void testLoadDefaults() throws IOException {
 		for (int i = 0; i < NUM_FILES; i++) {
-			File currentFile = ALL_FILES[i];
 			Properties currentDefaults = ALL_DEFAULTS[i];
-			Properties currentInstance = new Properties(currentFile, currentDefaults);
+			Properties currentInstance = createInstance(i);
 						
 			assertEquals(currentDefaults.size(), currentInstance.size());
 			
@@ -47,9 +46,8 @@ public class PropertiesTest {	// TODO Finish
 	@Test
 	public void testAddProperty() throws IOException {
 		for (int i = 0; i < NUM_FILES; i++) {
-			File currentFile = ALL_FILES[i];
 			Properties currentDefaults = ALL_DEFAULTS[i];
-			Properties currentInstance = new Properties(currentFile, currentDefaults);
+			Properties currentInstance = createInstance(i);
 			
 			String 	newKey = "NEW-KEY" + i,
 							newValue = "NEW-VAL" + i;
@@ -63,9 +61,8 @@ public class PropertiesTest {	// TODO Finish
 	@Test
 	public void testClear() throws IOException {
 		for (int i = 0; i < NUM_FILES; i++) {
-			File currentFile = ALL_FILES[i];
 			Properties currentDefaults = ALL_DEFAULTS[i];
-			Properties currentInstance = new Properties(currentFile, currentDefaults);
+			Properties currentInstance = createInstance(i);
 			
 			currentInstance.put("Extra", "Extra");
 			assertEquals(currentDefaults.size() + 1, currentInstance.size());
@@ -78,9 +75,8 @@ public class PropertiesTest {	// TODO Finish
 	@Test
 	public void testSaveToFile() throws IOException {
 		for (int i = 0; i < NUM_FILES; i++) {
-			File currentFile = ALL_FILES[i];
 			Properties currentDefaults = ALL_DEFAULTS[i];
-			Properties currentInstance = new Properties(currentFile, currentDefaults);
+			Properties currentInstance = createInstance(i);
 			
 			String 	changedKey = currentDefaults.keys().get(0),	// 1st key
 							newValue = "NEW-VAL" + i;
@@ -101,6 +97,10 @@ public class PropertiesTest {	// TODO Finish
 			assertEquals(currentDefaults.size(), currentInstance.size());
 			assertFalse(currentInstance.get(changedKey).equals(currentDefaults.get(changedKey)));
 		}
+	}
+	
+	private static Properties createInstance(int i) {
+		return new Properties(ALL_FILES[i], ALL_DEFAULTS[i]);
 	}
 	
 	private static void buildFiles() {		
