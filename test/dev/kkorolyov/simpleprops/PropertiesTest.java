@@ -85,7 +85,7 @@ public class PropertiesTest {	// TODO Finish
 	}
 
 	@Test
-	public void testSaveToFile() throws IOException {
+	public void testSaveFile() throws IOException, InterruptedException {
 		for (int i = 0; i < NUM_FILES; i++) {
 			Properties currentDefaults = ALL_DEFAULTS[i];
 			Properties currentInstance = createInstance(i);
@@ -94,7 +94,12 @@ public class PropertiesTest {	// TODO Finish
 							newValue = "NEW-VAL" + i;
 			currentInstance.put(changedKey, newValue);
 			
+			long timeBeforeSave = currentInstance.getFile().lastModified();
+			Thread.sleep(1);	// Stall
 			currentInstance.saveFile();
+			long timeAfterSave = currentInstance.getFile().lastModified();
+			
+			assertTrue(timeAfterSave > timeBeforeSave);	// Save occurred
 
 			assertEquals(currentDefaults.size(), currentInstance.size());
 			assertFalse(currentInstance.get(changedKey).equals(currentDefaults.get(changedKey)));
@@ -108,6 +113,13 @@ public class PropertiesTest {	// TODO Finish
 			
 			assertEquals(currentDefaults.size(), currentInstance.size());
 			assertFalse(currentInstance.get(changedKey).equals(currentDefaults.get(changedKey)));
+			
+			timeBeforeSave = currentInstance.getFile().lastModified();
+			Thread.sleep(1);	// Stall
+			currentInstance.saveFile();
+			timeAfterSave = currentInstance.getFile().lastModified();
+			
+			assertTrue(timeAfterSave == timeBeforeSave);	// Save did not occur
 		}
 	}
 	

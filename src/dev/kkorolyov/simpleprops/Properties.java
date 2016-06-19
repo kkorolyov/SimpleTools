@@ -38,7 +38,8 @@ public class Properties {
 		this(file, defaults, false);
 	}
 	/**
-	 * Constructs a new {@code Properties} instance for a specified file and with specified default values. This method may optionally create the path to the specified file.
+	 * Constructs a new {@code Properties} instance for a specified file and with specified default values.
+	 * This method may optionally create the path to the specified file.
 	 * @param file backing filesystem file
 	 * @param defaults default properties
 	 * @param mkdirs if {@code true}, the path to the specified file is created if it does not exist
@@ -150,7 +151,8 @@ public class Properties {
 	}
 	
 	/**
-	 * Resets all properties to default values. If this object does not have specified default values, clears all properties instead.
+	 * Resets all properties to default values.
+	 * If this object does not have specified default values, clears all properties instead.
 	 */
 	public void loadDefaults() {
 		clear();
@@ -162,7 +164,8 @@ public class Properties {
 	}
 	
 	/**
-	 * Loads all properties found in this object's backing file. If this object does not have a backing file, this method does nothing.
+	 * Loads all properties found in this object's backing file.
+	 * If this object does not have a backing file, this method does nothing.
 	 * @throws IOException if an I/O error occurs
 	 */
 	public void loadFile() throws IOException {
@@ -173,7 +176,7 @@ public class Properties {
 		try {
 			fileIn = new FileReader(file);
 		} catch (FileNotFoundException e) {
-			saveFile();	// Create file
+			saveFile(true);	// Create file
 			fileIn = new FileReader(file);	// Open again
 		}
 		try (BufferedReader fileReader = new BufferedReader(fileIn)) {
@@ -196,10 +199,17 @@ public class Properties {
 	}
 	/**
 	 * Writes all current properties to the backing file.
+	 * If there are no new properties to write, this method does nothing.
 	 * @throws IOException if an I/O error occurs
 	 * @throws FileNotFoundException  if the backing file cannot be accessed for some reason
 	 */
 	public void saveFile() throws FileNotFoundException, IOException {
+		saveFile(false);
+	}
+	private void saveFile(boolean force) throws FileNotFoundException, IOException {
+		if (!force && matchesFile())
+			return;
+		
 		try (	OutputStream fileOut = new FileOutputStream(file);
 					PrintWriter filePrinter = new PrintWriter(fileOut)) {
 			for (String key : keys) {
