@@ -76,11 +76,19 @@ public class Properties {
 	public Properties(File file, Properties defaults, boolean mkdirs) {
 		setFile(file, mkdirs);
 		setDefaults(defaults);
-		loadDefaults();
 		try {
 			loadFile();
 		} catch (IOException e) {
 			e.printStackTrace();
+		}
+		addRemainingDefaults();
+	}
+	private void addRemainingDefaults() {
+		if (defaults != null) {
+			for (String key : defaults.keys()) {
+				if (!contains(key))
+					put(key, defaults.get(key));
+			}
 		}
 	}
 	
@@ -112,7 +120,7 @@ public class Properties {
 		keys.add(key);
 		values.add(value);
 		
-		if (key != null)
+		if (key != null && !key.equals(EMPTY))
 			keyPositions.put(key, keys.size() - 1);	// New key is at last index
 	}
 	
@@ -213,7 +221,7 @@ public class Properties {
 			String nextLine;
 			while ((nextLine = fileReader.readLine()) != null) {
 				String[] currentKeyValue = nextLine.split(DELIMETER);
-				String 	currentKey = null,
+				String 	currentKey = EMPTY,
 								currentValue = EMPTY;
 				
 				if (currentKeyValue.length > 0 && currentKeyValue[0].length() > 0) {
@@ -244,7 +252,7 @@ public class Properties {
 			for (String key : keys) {
 				filePrinter.print(key);
 				
-				if (!key.contains(COMMENT))	// If the current key is not a comment
+				if (!key.equals(EMPTY) && !key.contains(COMMENT))	// If the current key is not a blank line nor a comment
 					filePrinter.print(DELIMETER + get(key));
 				
 				filePrinter.println();
