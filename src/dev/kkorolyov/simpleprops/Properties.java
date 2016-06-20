@@ -76,20 +76,8 @@ public class Properties {
 	public Properties(File file, Properties defaults, boolean mkdirs) {
 		setFile(file, mkdirs);
 		setDefaults(defaults);
-		try {
-			loadFile();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		addRemainingDefaults();
-	}
-	private void addRemainingDefaults() {
-		if (defaults != null) {
-			for (String key : defaults.keys()) {
-				if (!contains(key))
-					put(key, defaults.get(key));
-			}
-		}
+		
+		reload();
 	}
 	
 	/**
@@ -182,21 +170,47 @@ public class Properties {
 		boolean matches = false;
 		
 		if (file != null)
-			matches = this.equals(new Properties(file, defaults));
+			matches = this.equals(new Properties(file));
 		
 		return matches;
 	}
 	
 	/**
-	 * Resets all properties to default values.
-	 * If this object does not have specified default values, clears all properties instead.
+	 * Loads backing file properties and remaining default properties.
 	 */
-	public void loadDefaults() {
+	public void reload() {
 		clear();
 		
-		if (defaults != null) {
-			for (String key : defaults.keys())
+		try {
+			loadFile();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		addRemainingDefaults();
+	}
+	private void addRemainingDefaults() {
+		if (defaults == null)
+			return;
+		
+		for (String key : defaults.keys()) {
+			if (!contains(key))
 				put(key, defaults.get(key));
+		}
+	}
+	
+	/**
+	 * Resets all properties to default values and removes all properties not found in default values.
+	 * If this object does not have specified default values, this method does nothing.
+	 */
+	public void loadDefaults() {
+		if (defaults == null)
+			return;
+		
+		for (String key : keys()) {
+			if (defaults.contains(key))
+				put(key, defaults.get(key));
+			else
+				remove(key);
 		}
 	}
 	
@@ -297,8 +311,6 @@ public class Properties {
 		result = prime * result + (keys == null ? 0 : keys.hashCode());
 		result = prime * result + (values == null ? 0 : values.hashCode());
 		result = prime * result + (keyPositions == null ? 0 : keyPositions.hashCode());
-		result = prime * result + (file == null ? 0 : file.hashCode());
-		result = prime * result + (defaults == null ? 0 : defaults.hashCode());
 		
 		return result;
 	}
@@ -332,18 +344,6 @@ public class Properties {
 			if (other.keyPositions != null)
 				return false;
 		} else if (!keyPositions.equals(other.keyPositions))
-			return false;
-		
-		if (file == null) {
-			if (other.file != null)
-				return false;
-		} else if (!file.equals(other.file))
-			return false;
-		
-		if (defaults == null) {
-			if (other.defaults != null)
-				return false;
-		} else if (!defaults.equals(other.defaults))
 			return false;
 		
 		return true;

@@ -102,10 +102,11 @@ public class PropertiesTest {	// TODO Finish
 	}
 	
 	@Test
-	public void testMatchesFile() {
+	public void testMatchesFile() throws FileNotFoundException, IOException {
 		for (int i = 0; i < NUM_FILES; i++) {
 			Properties currentInstance = createInstance(i);
 			
+			currentInstance.saveFile();
 			assertTrue(currentInstance.matchesFile());
 			
 			currentInstance.put("NoMatch", "NoMatch");
