@@ -37,7 +37,8 @@ import java.util.*;
  */
 public class Properties {
 	private static final String DELIMETER = "=",
-															COMMENT = "#";
+															COMMENT = "#",
+															EMPTY = "";
 	
 	private final List<String>	keys = new ArrayList<>(),
 															values = new ArrayList<>();
@@ -213,7 +214,7 @@ public class Properties {
 			while ((nextLine = fileReader.readLine()) != null) {
 				String[] currentKeyValue = nextLine.split(DELIMETER);
 				String 	currentKey = null,
-								currentValue = null;
+								currentValue = EMPTY;
 				
 				if (currentKeyValue.length > 0 && currentKeyValue[0].length() > 0) {
 					currentKey = currentKeyValue[0].trim();
