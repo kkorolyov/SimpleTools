@@ -36,9 +36,6 @@ import java.util.*;
  * Provides for saving and loading data to/from a file.
  */
 public class Properties {
-	private static final String DELIMETER = "=",
-															EMPTY = "";
-	
 	private final List<Property> props = new ArrayList<>();
 	private final Map<String, Integer> keyPositions = new HashMap<>();
 	private File file;
@@ -84,7 +81,7 @@ public class Properties {
 	 * @return property value, or {@code null} if no such property
 	 */
 	public String get(String key) {
-		return contains(key) ? props.get(keyPositions.get(key)).getKey() : null;
+		return contains(key) ? props.get(keyPositions.get(key)).getValue() : null;
 	}
 	
 	/**
@@ -104,9 +101,21 @@ public class Properties {
 	}
 	private void addNewKey(String key, String value) {
 		Property newProperty = new Property(key, value);
+		props.add(newProperty);
 		
 		if (newProperty.isProperty())
 			keyPositions.put(key, props.size() - 1);	// New key is at last index
+	}
+	
+	/**
+	 * Adds a comment.
+	 * Appends the comment marker to the beginning of the specified comment before adding.
+	 * @param comment comment to add
+	 */
+	public void putComment(String comment) {
+		Property newComment = new Property(comment);
+		
+		props.add(newComment);
 	}
 	
 	/**
@@ -132,10 +141,9 @@ public class Properties {
 	public List<String> keys() {
 		List<String> toReturn = new LinkedList<>();
 		
-		for (String key : keys) {
-			if (key != null && !key.contains(COMMENT))
-				toReturn.add(key);
-		}
+		for (String key : keyPositions.keySet()) 
+			toReturn.add(key);
+
 		return toReturn;
 	}
 	
@@ -153,8 +161,7 @@ public class Properties {
 	 * Clears all properties from memory.
 	 */
 	public void clear() {
-		keys.clear();
-		values.clear();
+		props.clear();
 		keyPositions.clear();
 	}
 	
@@ -227,16 +234,10 @@ public class Properties {
 		
 			String nextLine;
 			while ((nextLine = fileReader.readLine()) != null) {
-				String[] currentKeyValue = nextLine.split(DELIMETER);
-				String 	currentKey = EMPTY,
-								currentValue = EMPTY;
+				String[] splitLine = nextLine.split(Property.DELIMETER);
+				String 	currentKey = splitLine.length < 1 ? Property.EMPTY : splitLine[0],
+								currentValue = splitLine.length < 2 ? Property.EMPTY : splitLine[1];
 				
-				if (currentKeyValue.length > 0 && currentKeyValue[0].length() > 0) {
-					currentKey = currentKeyValue[0].trim();
-					if (currentKeyValue.length > 1) {
-						currentValue = currentKeyValue[1].trim();
-					}
-				}
 				put(currentKey, currentValue);
 			}
 		}
@@ -256,14 +257,7 @@ public class Properties {
 		
 		try (	OutputStream fileOut = new FileOutputStream(file);
 					PrintWriter filePrinter = new PrintWriter(fileOut)) {
-			for (String key : keys) {
-				filePrinter.print(key);
-				
-				if (!key.equals(EMPTY) && !key.contains(COMMENT))	// If the current key is not a blank line nor a comment
-					filePrinter.print(DELIMETER + get(key));
-				
-				filePrinter.println();
-			}
+			filePrinter.print(toString());
 		}
 	}
 	
@@ -301,13 +295,11 @@ public class Properties {
 		final int prime = 31;
 		int result = 1;
 		
-		result = prime * result + (keys == null ? 0 : keys.hashCode());
-		result = prime * result + (values == null ? 0 : values.hashCode());
+		result = prime * result + (props == null ? 0 : props.hashCode());
 		result = prime * result + (keyPositions == null ? 0 : keyPositions.hashCode());
 		
 		return result;
 	}
-	
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
@@ -321,16 +313,10 @@ public class Properties {
 		
 		Properties other = (Properties) obj;
 		
-		if (keys == null) {
-			if (other.keys != null)
+		if (props == null) {
+			if (other.props != null)
 				return false;
-		} else if (!keys.equals(other.keys))
-			return false;
-		
-		if (values == null) {
-			if (other.values != null)
-				return false;
-		} else if (!values.equals(other.values))
+		} else if (!props.equals(other.props))
 			return false;
 		
 		if (keyPositions == null) {
@@ -342,15 +328,33 @@ public class Properties {
 		return true;
 	}
 	
-	private static class Property {
-		private static final char COMMENT = '#';
+	/**
+	 * Returns a formatted string of current properties and comments as they would be printed to a file.
+	 */
+	@Override
+	public String toString() {
+		StringBuilder toStringBuilder = new StringBuilder();
+		
+		for (Property prop : props)
+			toStringBuilder.append(prop).append(System.lineSeparator());
+		
+		return toStringBuilder.toString();
+	}
+	
+	private static class Property {				;
+		private static final String DELIMETER = "=",
+																COMMENT = "#",
+																EMPTY = "";
 		
 		private String	key,
 										value;
 		
-		Property(String key, String value) {
+		Property(String comment) {	// Creates a comment property
+			setKey(COMMENT + comment);
+		}
+		Property(String key, String value) {	// Creates a normal property
 			setKey(key);
-			setValue(key);
+			setValue(value);
 		}
 		
 		boolean isProperty() {
@@ -360,21 +364,59 @@ public class Properties {
 			return key.length() <= 0;
 		}
 		boolean isComment() {
-			return key.charAt(0) == COMMENT;
+			return key.substring(0, COMMENT.length()).equals(COMMENT);	// Key starts with comment
 		}
 		
 		String getKey() {
 			return key;
 		}
 		void setKey(String newKey) {
-			key = newKey;
+			key = (newKey == null ? EMPTY : newKey);
 		}
 		
 		String getValue() {
 			return value;
 		}
 		void setValue(String newValue) {
-			value = newValue;
+			value = (newValue == null ? EMPTY : newValue);
+		}
+		
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			
+			result = prime * result + (key == null ? 0 : key.hashCode());
+			result = prime * result + (value == null ? 0 : value.hashCode());
+			
+			return result;
+		}
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			
+			if (obj == null)
+				return false;
+			
+			if (getClass() != obj.getClass())
+				return false;
+			
+			Property other = (Property) obj;
+			
+			if (key == null) {
+				if (other.key != null)
+					return false;
+			} else if (!key.equals(other.key))
+				return false;
+				
+			if (value == null) {
+				if (other.value != null)
+					return false;
+			} else if (!value.equals(other.value))
+				return false;
+			
+			return true;
 		}
 		
 		@Override
