@@ -37,11 +37,9 @@ import java.util.*;
  */
 public class Properties {
 	private static final String DELIMETER = "=",
-															COMMENT = "#",
 															EMPTY = "";
 	
-	private final List<String>	keys = new ArrayList<>(),
-															values = new ArrayList<>();
+	private final List<Property> props = new ArrayList<>();
 	private final Map<String, Integer> keyPositions = new HashMap<>();
 	private File file;
 	private Properties defaults;
@@ -86,7 +84,7 @@ public class Properties {
 	 * @return property value, or {@code null} if no such property
 	 */
 	public String get(String key) {
-		return contains(key) ? values.get(keyPositions.get(key)) : null;
+		return contains(key) ? props.get(keyPositions.get(key)).getKey() : null;
 	}
 	
 	/**
@@ -102,14 +100,13 @@ public class Properties {
 			addNewKey(key, value);
 	}
 	private void setKey(String key, String value) {
-		values.set(keyPositions.get(key), value);	// Change value at correct index
+		props.get(keyPositions.get(key)).setValue(value);	// Change value at correct index
 	}
 	private void addNewKey(String key, String value) {
-		keys.add(key);
-		values.add(value);
+		Property newProperty = new Property(key, value);
 		
-		if (key != null && !key.equals(EMPTY))
-			keyPositions.put(key, keys.size() - 1);	// New key is at last index
+		if (newProperty.isProperty())
+			keyPositions.put(key, props.size() - 1);	// New key is at last index
 	}
 	
 	/**
@@ -120,12 +117,8 @@ public class Properties {
 	public String remove(String key) {
 		String removedValue = null;
 		
-		if (keyPositions.containsKey(key)) {
-			int propertyIndex = keyPositions.remove(key);
-			
-			keys.remove(propertyIndex);
-			removedValue = values.remove(propertyIndex);
-		}
+		if (keyPositions.containsKey(key))
+			removedValue = props.remove((int) keyPositions.remove(key)).getValue();
 		
 		return removedValue;
 	}
@@ -347,5 +340,46 @@ public class Properties {
 			return false;
 		
 		return true;
+	}
+	
+	private static class Property {
+		private static final char COMMENT = '#';
+		
+		private String	key,
+										value;
+		
+		Property(String key, String value) {
+			setKey(key);
+			setValue(key);
+		}
+		
+		boolean isProperty() {
+			return !isBlankLine() && !isComment();
+		}
+		boolean isBlankLine() {
+			return key.length() <= 0;
+		}
+		boolean isComment() {
+			return key.charAt(0) == COMMENT;
+		}
+		
+		String getKey() {
+			return key;
+		}
+		void setKey(String newKey) {
+			key = newKey;
+		}
+		
+		String getValue() {
+			return value;
+		}
+		void setValue(String newValue) {
+			value = newValue;
+		}
+		
+		@Override
+		public String toString() {
+			return isComment() ? key : key + DELIMETER + value;
+		}
 	}
 }
