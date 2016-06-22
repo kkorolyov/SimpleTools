@@ -297,6 +297,7 @@ public class Properties {
 		
 		result = prime * result + (props == null ? 0 : props.hashCode());
 		result = prime * result + (keyPositions == null ? 0 : keyPositions.hashCode());
+		result = prime * result + (file == null ? 0 : file.hashCode());
 		
 		return result;
 	}
@@ -323,6 +324,12 @@ public class Properties {
 			if (other.keyPositions != null)
 				return false;
 		} else if (!keyPositions.equals(other.keyPositions))
+			return false;
+		
+		if (file == null) {
+			if (other.file != null)
+				return false;
+		} else if (!file.equals(other.file))
 			return false;
 		
 		return true;
