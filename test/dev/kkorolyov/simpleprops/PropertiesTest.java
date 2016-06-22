@@ -50,6 +50,7 @@ public class PropertiesTest {
 	
 	@AfterClass
 	public static void tearDownAfterClass() throws IOException {
+		System.out.println("Deleted " + testFiles.size() + " testFiles");
 		for (File file : testFiles)
 			file.delete();
 	}
@@ -182,13 +183,39 @@ public class PropertiesTest {
 	}
 	
 	@Test
-	public void reload() {
-		fail("Not Implemented");
+	public void reload() throws IOException {
 		File file = buildFile();
-		Properties 	defaults = buildDefaults(),
+		Properties 	defaults = buildDefaults(1),
 								props = new Properties(file, defaults);
 		
+		String 	key = defaults.keys().iterator().next(),
+						value = "ReloadNewValue",
+						comment = "ReloadComment";
 		
+		String 	expectedDefaultValue = defaults.get(key),
+						expectedNewValue = value;
+		
+		assertEquals(defaults.size(), props.size());
+		assertEquals(expectedDefaultValue, props.get(key));
+		
+		props.put(key, value);
+		props.putComment(comment);
+		assertEquals(defaults.size(), props.size());
+		assertFalse(props.get(key).equals(expectedDefaultValue));
+		assertEquals(expectedNewValue, props.get(key));
+		
+		props.reload();
+		assertEquals(defaults.size(), props.size());
+		assertFalse(props.get(key).equals(expectedNewValue));
+		assertEquals(expectedDefaultValue, props.get(key));
+		
+		props.put(key, value);
+		props.putComment(comment);
+		props.saveFile();
+		props.reload();
+		assertEquals(defaults.size(), props.size());
+		assertFalse(props.get(key).equals(expectedDefaultValue));
+		assertEquals(expectedNewValue, props.get(key));
 	}
 	
 	@Test
@@ -202,35 +229,34 @@ public class PropertiesTest {
 		assertEquals(defaults, props);
 		
 		String 	keyBase = "LoadDefaultsNewKey",
-						valueBase = "LoadDefaultsNewValue";
+						valueBase = "LoadDefaultsNewValue",
+						commentBase = "LoadDefaultsComment";
 		
 		for (int i = 0; i < ITERATIONS; i++) {
 			String 	key = keyBase + i,
-							value = valueBase + i;
+							value = valueBase + i,
+							comment = commentBase + i;
 			
 			props.put(key, value);
+			props.putComment(comment);
 			assertFalse(props.equals(defaults));
 		}
 		props.loadDefaults();
-		assertEquals(defaults, props);
+		assertEquals(defaults.size(), props.size());
+		assertEquals(defaults.keys(), props.keys());
+		for (String key : defaults.keys())
+			assertEquals(defaults.get(key), props.get(key));
 	}
 
-	@Test
-	public void testLoadFile() {
-		fail("Not Implemented");
-	}
-
-	@Test
-	public void testSaveFile() {
-		fail("Not Implemented");
-	}
-	
 	private static Properties buildDefaults() {
+		return buildDefaults(rand.nextInt(ITERATIONS + 1));
+	}
+	private static Properties buildDefaults(int numProperties) {
 		Properties defaults = new Properties();
 		
 		String 	keyBase = "DefaultKey",
 						valueBase = "DefaultValue";
-		for (int i = 0; i < rand.nextInt(ITERATIONS + 1); i++) {
+		for (int i = 0; i < numProperties; i++) {
 			String 	key = keyBase + i,
 							value = valueBase + i;
 			

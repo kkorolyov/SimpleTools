@@ -134,9 +134,12 @@ public class Properties {
 		if (keyPositions.containsKey(key)) {
 			int removeIndex = keyPositions.remove(key);
 			
-			for (int i = removeIndex + 1; i < size(); i++)	// Shift keyPositions mappings to match resultant props
-				keyPositions.put(props.get(i).getKey(), i - 1);
-			
+			for (int i = removeIndex + 1; i < props.size(); i++) {	// Shift keyPositions mappings to match resultant props
+				String currentRemoveKey = props.get(i).getKey();
+				
+				if (keyPositions.containsKey(currentRemoveKey))
+					keyPositions.put(props.get(i).getKey(), i - 1);
+			}
 			removedValue = props.remove(removeIndex).getValue();
 		}
 		return removedValue;
@@ -187,7 +190,7 @@ public class Properties {
 	}
 	
 	/**
-	 * Loads backing file properties and remaining default properties.
+	 * Loads all backing file properties and remaining default properties not found in the backing file.
 	 * @throws IOException if an I/O error occurs
 	 */
 	public void reload() throws IOException {
@@ -195,6 +198,29 @@ public class Properties {
 		
 		loadFile();
 		addRemainingDefaults();
+	}
+	private void loadFile() throws IOException {
+		if (file == null)
+			return;	// No file, no load
+		
+		FileReader fileIn;
+		try {
+			fileIn = new FileReader(file);
+		} catch (FileNotFoundException e) {
+			saveFile(true);	// Create file
+			fileIn = new FileReader(file);	// Open again
+		}
+		try (BufferedReader fileReader = new BufferedReader(fileIn)) {
+		
+			String nextLine;
+			while ((nextLine = fileReader.readLine()) != null) {
+				String[] splitLine = nextLine.split(Property.DELIMETER);
+				String 	currentKey = splitLine.length < 1 ? Property.EMPTY : splitLine[0],
+								currentValue = splitLine.length < 2 ? Property.EMPTY : splitLine[1];
+				
+				put(currentKey, currentValue);
+			}
+		}
 	}
 	private void addRemainingDefaults() {
 		if (defaults == null)
@@ -223,34 +249,6 @@ public class Properties {
 		addRemainingDefaults();
 	}
 	
-	/**
-	 * Loads all properties found in this object's backing file.
-	 * If this object does not have a backing file, this method does nothing.
-	 * @throws IOException if an I/O error occurs
-	 */
-	public void loadFile() throws IOException {
-		if (file == null)
-			return;	// No file, no load
-		
-		FileReader fileIn;
-		try {
-			fileIn = new FileReader(file);
-		} catch (FileNotFoundException e) {
-			saveFile(true);	// Create file
-			fileIn = new FileReader(file);	// Open again
-		}
-		try (BufferedReader fileReader = new BufferedReader(fileIn)) {
-		
-			String nextLine;
-			while ((nextLine = fileReader.readLine()) != null) {
-				String[] splitLine = nextLine.split(Property.DELIMETER);
-				String 	currentKey = splitLine.length < 1 ? Property.EMPTY : splitLine[0],
-								currentValue = splitLine.length < 2 ? Property.EMPTY : splitLine[1];
-				
-				put(currentKey, currentValue);
-			}
-		}
-	}
 	/**
 	 * Writes all current properties to the backing file.
 	 * If there are no new properties to write, this method does nothing.
@@ -357,16 +355,16 @@ public class Properties {
 		return toStringBuilder.toString();
 	}
 	
-	private static class Property {				;
+	private static class Property {
+		private static final char COMMENT = '#';
 		private static final String DELIMETER = "=",
-																COMMENT = "#",
 																EMPTY = "";
 		
 		private String	key,
 										value;
 		
 		Property(String comment) {	// Creates a comment property
-			setKey(COMMENT + comment);
+			this(COMMENT + comment, null);
 		}
 		Property(String key, String value) {	// Creates a normal property
 			setKey(key);
@@ -380,7 +378,7 @@ public class Properties {
 			return key.length() <= 0;
 		}
 		boolean isComment() {
-			return key.substring(0, COMMENT.length()).equals(COMMENT);	// Key starts with comment
+			return key.charAt(0) == COMMENT;	// Key starts with comment
 		}
 		
 		String getKey() {
@@ -437,7 +435,7 @@ public class Properties {
 		
 		@Override
 		public String toString() {
-			return isComment() ? key : key + DELIMETER + value;
+			return isProperty() ? key + DELIMETER + value : key;
 		}
 	}
 }
