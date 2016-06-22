@@ -67,12 +67,17 @@ public class Properties {
 	 * @param file backing filesystem file
 	 * @param defaults default properties
 	 * @param mkdirs if {@code true}, the path to the specified file is created if it does not exist
+	 * @throws UncheckedIOException if an I/O error occurs
 	 */
 	public Properties(File file, Properties defaults, boolean mkdirs) {
 		setFile(file, mkdirs);
 		setDefaults(defaults);
 		
-		reload();
+		try {
+			reload();
+		} catch (IOException e) {
+			throw new UncheckedIOException(e);
+		}
 	}
 	
 	/**
@@ -126,9 +131,14 @@ public class Properties {
 	public String remove(String key) {
 		String removedValue = null;
 		
-		if (keyPositions.containsKey(key))
-			removedValue = props.remove((int) keyPositions.remove(key)).getValue();
-		
+		if (keyPositions.containsKey(key)) {
+			int removeIndex = keyPositions.remove(key);
+			
+			for (int i = removeIndex + 1; i < size(); i++)	// Shift keyPositions mappings to match resultant props
+				keyPositions.put(props.get(i).getKey(), i - 1);
+			
+			removedValue = props.remove(removeIndex).getValue();
+		}
 		return removedValue;
 	}
 	
@@ -141,9 +151,10 @@ public class Properties {
 	public List<String> keys() {
 		List<String> toReturn = new LinkedList<>();
 		
-		for (String key : keyPositions.keySet()) 
-			toReturn.add(key);
-
+		for (Property prop : props) {
+			if (prop.isProperty())
+				toReturn.add(prop.getKey());
+		}
 		return toReturn;
 	}
 	
@@ -177,15 +188,12 @@ public class Properties {
 	
 	/**
 	 * Loads backing file properties and remaining default properties.
+	 * @throws IOException if an I/O error occurs
 	 */
-	public void reload() {
+	public void reload() throws IOException {
 		clear();
 		
-		try {
-			loadFile();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		loadFile();
 		addRemainingDefaults();
 	}
 	private void addRemainingDefaults() {
@@ -212,6 +220,7 @@ public class Properties {
 			else
 				remove(key);
 		}
+		addRemainingDefaults();
 	}
 	
 	/**

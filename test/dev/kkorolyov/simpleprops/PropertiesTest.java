@@ -28,159 +28,223 @@
 
 package dev.kkorolyov.simpleprops;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Random;
 
-import org.junit.After;
-import org.junit.BeforeClass;
+import org.junit.AfterClass;
 import org.junit.Test;
 
 @SuppressWarnings("javadoc")
-public class PropertiesTest {	// TODO Finish
-	private static final int NUM_FILES = 5;
-	private static final File[] ALL_FILES = new File[NUM_FILES];
-	private static final Properties[] ALL_DEFAULTS = new Properties[NUM_FILES];
+public class PropertiesTest {
+	private static final int ITERATIONS = Byte.MAX_VALUE;
+	private static final String COMMENT = "#";
+	private static final String BASE_FILENAME = "TestPropFile";
+	private static final Random rand = new Random();
+	private static final List<File> testFiles = new LinkedList<>();
 	
-	@BeforeClass
-	public static void setUpBeforeClass() throws IOException {
-		buildFiles();
-		buildDefaults();
-	}
-	
-	@After
-	public void tearDownAfter() throws IOException {
-		for (File file : ALL_FILES)
+	@AfterClass
+	public static void tearDownAfterClass() throws IOException {
+		for (File file : testFiles)
 			file.delete();
 	}
 	
 	@Test
-	public void testLoadDefaults() throws IOException {
-		for (int i = 0; i < NUM_FILES; i++) {
-			Properties currentDefaults = ALL_DEFAULTS[i];
-			Properties currentInstance = createInstance(i);
-						
-			assertEquals(currentDefaults.size(), currentInstance.size());
+	public void testPut_Contains_Get_Remove() throws IOException {
+		Properties props = new Properties();
+		
+		assertEquals(0, props.size());
+		
+		String 	keyBase = "PutKey",
+						valueBase = "PutValue";
+		
+		for (int i = 0; i < ITERATIONS; i++) {
+			String 	key = keyBase + i,
+							value = valueBase + i;
+			props.put(key, value);
 			
-			for (String key : currentDefaults.keys()) {
-				assertEquals(currentDefaults.get(key), currentInstance.get(key));
+			assertEquals(i + 1, props.size());
+			
+			for (int j = i; j >= 0; j--) {
+				assertTrue(props.contains(key));
+				assertEquals(value, props.get(key));
 			}
 		}
-	}
-
-	@Test
-	public void testAddProperty() throws IOException {
-		for (int i = 0; i < NUM_FILES; i++) {
-			Properties currentDefaults = ALL_DEFAULTS[i];
-			Properties currentInstance = createInstance(i);
-			
-			String 	newKey = "NEW-KEY" + i,
-							newValue = "NEW-VAL" + i;
-			currentInstance.put(newKey, newValue);
-			
-			assertTrue(currentInstance.size() == currentDefaults.size() + 1);
-			assertEquals(newValue, currentInstance.get(newKey));
+		for (int i = props.size() - 1; i >= 0; i--) {
+			assertEquals(valueBase + i, props.remove(keyBase + i));
+			assertEquals(i, props.size());
 		}
 	}
-
+	
 	@Test
-	public void testClear() throws IOException {
-		for (int i = 0; i < NUM_FILES; i++) {
-			Properties currentDefaults = ALL_DEFAULTS[i];
-			Properties currentInstance = createInstance(i);
-			
-			currentInstance.put("Extra", "Extra");
-			assertEquals(currentDefaults.size() + 1, currentInstance.size());
+	public void testPutComment() {
+		Properties props = new Properties();
+		StringBuilder expectedCommentsBuilder = new StringBuilder();
 
-			currentInstance.clear();
-			assertEquals(0, currentInstance.size());
+		String commentBase = "PutCommentComment";
+		
+		for (int i = 0; i < ITERATIONS; i++) {
+			String comment = commentBase + i;
+			
+			props.putComment(comment);
+			expectedCommentsBuilder.append(COMMENT).append(comment).append(System.lineSeparator());
+			
+			assertEquals(0, props.size());
+			assertTrue(props.isEmpty());
 		}
+		assertEquals(expectedCommentsBuilder.toString(), props.toString());
+	}
+	
+	@Test
+	public void testKeys() {
+		Properties props = new Properties();
+		List<String> expectedKeys = new LinkedList<>();
+		
+		String 	keyBase = "KeysKey",
+						valueBase = "KeysValue",
+						commentBase = "KeysComment";
+		
+		for (int i = 0; i < ITERATIONS; i++) {
+			String 	key = keyBase + i,
+							value = valueBase + i,
+							comment = commentBase;
+			
+			props.put(key, value);
+			props.putComment(comment);
+			
+			expectedKeys.add(key);
+		}
+		String[] 	expectedKeysArray = expectedKeys.toArray(new String[expectedKeys.size()]),
+							actualKeysArray = props.keys().toArray(new String[props.keys().size()]);
+		assertArrayEquals(expectedKeysArray, actualKeysArray);
+	}
+	
+	@Test
+	public void testClear_Size_IsEmpty() {
+		Properties props = new Properties();
+		
+		String 	keyBase = "ClearKey",
+						valueBase = "ClearValue",
+						commentBase = "ClearComment";
+		
+		for (int i = 0; i < ITERATIONS; i++) {
+			String 	key = keyBase + i,
+							value = valueBase + i,
+							comment = commentBase + i;
+			
+			props.put(key, value);
+			props.putComment(comment);
+			
+			assertEquals(i + 1, props.size());
+			assertFalse(props.isEmpty());
+		}
+		props.clear();
+		assertEquals(0, props.size());
+		assertTrue(props.isEmpty());
 	}
 	
 	@Test
 	public void testMatchesFile() throws FileNotFoundException, IOException {
-		for (int i = 0; i < NUM_FILES; i++) {
-			Properties currentInstance = createInstance(i);
-			
-			currentInstance.saveFile();
-			assertTrue(currentInstance.matchesFile());
-			
-			currentInstance.put("NoMatch", "NoMatch");
-			assertFalse(currentInstance.matchesFile());
-		}
-	}
-
-	@Test
-	public void testSaveFile() throws IOException, InterruptedException {
-		for (int i = 0; i < NUM_FILES; i++) {
-			Properties currentDefaults = ALL_DEFAULTS[i];
-			Properties currentInstance = createInstance(i);
-			
-			String 	changedKey = currentDefaults.keys().get(0),	// 1st key
-							newValue = "NEW-VAL" + i;
-			currentInstance.put(changedKey, newValue);
-			
-			long timeBeforeSave = currentInstance.getFile().lastModified();
-			Thread.sleep(1);	// Stall
-			currentInstance.saveFile();
-			long timeAfterSave = currentInstance.getFile().lastModified();
-			
-			assertTrue(timeAfterSave > timeBeforeSave);	// Save occurred
-
-			assertEquals(currentDefaults.size(), currentInstance.size());
-			assertFalse(currentInstance.get(changedKey).equals(currentDefaults.get(changedKey)));
-			
-			currentInstance.loadDefaults();
-			
-			assertEquals(currentDefaults.size(), currentInstance.size());
-			assertEquals(currentDefaults.get(changedKey), currentInstance.get(changedKey));
-			
-			currentInstance.loadFile();
-			
-			assertEquals(currentDefaults.size(), currentInstance.size());
-			assertFalse(currentInstance.get(changedKey).equals(currentDefaults.get(changedKey)));
-			
-			timeBeforeSave = currentInstance.getFile().lastModified();
-			Thread.sleep(1);	// Stall
-			currentInstance.saveFile();
-			timeAfterSave = currentInstance.getFile().lastModified();
-			
-			assertTrue(timeAfterSave == timeBeforeSave);	// Save did not occur
-		}
+		File file = buildFile();
+		Properties props = new Properties(file);
+		
+		props.saveFile();
+		assertTrue(props.matchesFile());
+		
+		String	key = "MatchesFileKey",
+						value = "MatchesFileValue",
+						comment = "MatchesFileComment";
+		
+		props.put(key, value);
+		assertFalse(props.matchesFile());
+		
+		props.clear();
+		assertTrue(props.matchesFile());
+		
+		props.putComment(comment);
+		assertFalse(props.matchesFile());
+		
+		props.clear();
+		assertTrue(props.matchesFile());
+		
+		props.put(key, value);
+		props.putComment(comment);
+		props.saveFile();
+		assertTrue(props.matchesFile());
+		
+		props.clear();
+		assertFalse(props.matchesFile());
 	}
 	
 	@Test
-	public void manualCommentsTest() throws FileNotFoundException, IOException {
-		File commentedFile = new File("CommentsTest.txt");
+	public void reload() {
+		fail("Not Implemented");
+		File file = buildFile();
+		Properties 	defaults = buildDefaults(),
+								props = new Properties(file, defaults);
 		
-		Properties commentedInstance = new Properties(commentedFile);
 		
-		for (String key : commentedInstance.keys())
-			System.out.println(key + " " + commentedInstance.get(key));
-		
-		commentedInstance.saveFile();
 	}
 	
-	private static Properties createInstance(int i) {
-		return new Properties(ALL_FILES[i], ALL_DEFAULTS[i]);
+	@Test
+	public void testLoadDefaults() throws IOException {
+		Properties 	defaults = buildDefaults(),
+								props = new Properties();
+		
+		props.setDefaults(defaults);
+		props.loadDefaults();
+		
+		assertEquals(defaults, props);
+		
+		String 	keyBase = "LoadDefaultsNewKey",
+						valueBase = "LoadDefaultsNewValue";
+		
+		for (int i = 0; i < ITERATIONS; i++) {
+			String 	key = keyBase + i,
+							value = valueBase + i;
+			
+			props.put(key, value);
+			assertFalse(props.equals(defaults));
+		}
+		props.loadDefaults();
+		assertEquals(defaults, props);
+	}
+
+	@Test
+	public void testLoadFile() {
+		fail("Not Implemented");
+	}
+
+	@Test
+	public void testSaveFile() {
+		fail("Not Implemented");
 	}
 	
-	private static void buildFiles() {		
-		for (int i = 0; i < NUM_FILES; i++) {
-			ALL_FILES[i] = new File("TestPropFile" + i + ".txt");
+	private static Properties buildDefaults() {
+		Properties defaults = new Properties();
+		
+		String 	keyBase = "DefaultKey",
+						valueBase = "DefaultValue";
+		for (int i = 0; i < rand.nextInt(ITERATIONS + 1); i++) {
+			String 	key = keyBase + i,
+							value = valueBase + i;
+			
+			defaults.put(key, value);
 		}
+		return defaults;
 	}
-	private static void buildDefaults() {
-		for (int i = 0; i < ALL_DEFAULTS.length; i++) {
-			Properties currentDefaults = new Properties();
-			for (int j = 0; j < i + 1; j++) {
-				currentDefaults.put("KEY" + j, "VAL" + j);
-			}
-			ALL_DEFAULTS[i] = currentDefaults;
-		}
+	
+	private static File buildFile() {
+		String filename = BASE_FILENAME + testFiles.size();
+		File file = new File(filename);
+		
+		testFiles.add(file);
+		
+		return file;
 	}
 }
