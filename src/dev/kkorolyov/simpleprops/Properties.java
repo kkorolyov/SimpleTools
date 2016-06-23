@@ -39,7 +39,6 @@ public class Properties {
 	private final List<Property> props = new ArrayList<>();
 	private final Map<String, Integer> keyPositions = new HashMap<>();
 	private File file;
-	private boolean mkdirs;
 	private Properties defaults;
 	
 	/**
@@ -50,28 +49,19 @@ public class Properties {
 	}
 	/**
 	 * Constructs a new {@code Properties} instance for a specified file.
-	 * @see #Properties(File, Properties, boolean)
+	 * @see #Properties(File, Properties)
 	 */
 	public Properties(File file) {
 		this(file, null);
 	}
 	/**
 	 * Constructs a new {@code Properties} instance for a specified file and with specified default values.
-	 * @see #Properties(File, Properties, boolean)
-	 */
-	public Properties(File file, Properties defaults) {
-		this(file, defaults, false);
-	}
-	/**
-	 * Constructs a new {@code Properties} instance for a specified file and with specified default values.
-	 * This method may optionally create the path to the specified file.
 	 * @param file backing filesystem file
 	 * @param defaults default properties
-	 * @param mkdirs if {@code true}, the path to the specified file is created if it does not exist
 	 * @throws UncheckedIOException if an I/O error occurs
 	 */
-	public Properties(File file, Properties defaults, boolean mkdirs) {
-		setFile(file, mkdirs);
+	public Properties(File file, Properties defaults) {
+		setFile(file);
 		setDefaults(defaults);
 		
 		try {
@@ -272,10 +262,19 @@ public class Properties {
 	/**
 	 * Writes all current properties to the backing file.
 	 * If there are no new properties to write, this method does nothing.
+	 * @see #saveFile(boolean)
+	 */
+	public void saveFile() throws FileNotFoundException, IOException {
+		saveFile(false);
+	}
+	/**
+	 * Writes all current properties to the backing file.
+	 * If there are no new properties to write, this method does nothing.
+	 * @param mkdirs if {@code true}, will automatically create the path to the backing file if it does not exist
 	 * @throws IOException if an I/O error occurs
 	 * @throws FileNotFoundException  if the backing file cannot be accessed for some reason
 	 */
-	public void saveFile() throws FileNotFoundException, IOException {
+	public void saveFile(boolean mkdirs) throws FileNotFoundException, IOException {
 		if (matchesFile())
 			return;
 		
@@ -287,8 +286,19 @@ public class Properties {
 			filePrinter.print(format(toString()));
 		}
 	}
+	private void tryMkdirs() {
+		File parent = file.getParentFile();
+		if (parent != null && !parent.exists()) {
+			parent.mkdirs();
+		}
+	}
 	
-	String format(String line) {	// Used to optionally format read/written data
+	/**
+	 * Used to optionally format read/written data.
+	 * @param line string to format
+	 * @return formatted string
+	 */
+	String format(String line) {
 		return line;
 	}
 	
@@ -296,19 +306,9 @@ public class Properties {
 	public File getFile() {
 		return file;
 	}
-	/**
-	 * @param newFile new backing file
-	 * @param mkdirs if {@code true}, the path to the specified file is created if it does not exist
-	 */
-	public void setFile(File newFile, boolean mkdirs) {
+	/** @param newFile new backing file */
+	public void setFile(File newFile) {
 		file = newFile;
-		this.mkdirs = mkdirs;
-	}
-	private void tryMkdirs() {
-		File parent = file.getParentFile();
-		if (parent != null && !parent.exists()) {
-			parent.mkdirs();
-		}
 	}
 	
 	/** @return default properties */

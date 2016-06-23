@@ -37,7 +37,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
-import org.junit.AfterClass;
 import org.junit.Test;
 
 @SuppressWarnings("javadoc")
@@ -45,15 +44,8 @@ public class PropertiesTest {
 	private static final int ITERATIONS = Byte.MAX_VALUE;
 	private static final String COMMENT = "#";
 	private static final String BASE_FILENAME = "TestPropFile";
+	private static int testFilesCounter = 0;
 	private static final Random rand = new Random();
-	private static final List<File> testFiles = new LinkedList<>();
-	
-	@AfterClass
-	public static void tearDownAfterClass() throws IOException {
-		System.out.println("Deleted " + testFiles.size() + " testFiles");
-		for (File file : testFiles)
-			file.delete();
-	}
 	
 	@Test
 	public void testPut_Contains_Get_Remove() throws IOException {
@@ -183,7 +175,31 @@ public class PropertiesTest {
 	}
 	
 	@Test
-	public void reload() throws IOException {
+	public void testSaveFileMkdirs() throws IOException {	// TODO Meh
+		File 	fileDir = new File("testDir/"),
+					file = new File("testDir/testFileInDir");
+		fileDir.deleteOnExit();
+		file.deleteOnExit();
+		
+		Properties props = new Properties(file);
+		
+		props.putComment("Comment");
+		try {
+			props.saveFile();
+			
+			fail("Failed to throw FileNotFoundException");
+		} catch (FileNotFoundException e) {
+			// Success
+		}
+		try {
+			props.saveFile(true);
+		} catch (FileNotFoundException e) {
+			fail("Failed to mkdirs");
+		}
+	}
+	
+	@Test
+	public void testReload() throws IOException {
 		File file = buildFile();
 		Properties 	defaults = buildDefaults(1),
 								props = new Properties(file, defaults);
@@ -299,10 +315,11 @@ public class PropertiesTest {
 	}
 	
 	private static File buildFile() {
-		String filename = BASE_FILENAME + testFiles.size();
+		String filename = BASE_FILENAME + testFilesCounter++;
 		File file = new File(filename);
+		file.deleteOnExit();
 		
-		testFiles.add(file);
+		System.out.println("Created testFile: " + file.toString());
 		
 		return file;
 	}

@@ -35,36 +35,27 @@ import java.util.Arrays;
 
 /**
  * A {@code Properties} which encrypts properties stored in its backing file.
- * Uses a byte array as a symmetric encryption key to encrypt and decrypt each line of the backing properties file.
+ * Uses a byte array as a symmetric encryption key to encrypt and decrypt bytes in the backing properties file.
  */
 public class EncryptedProperties extends Properties {
 	private byte[] key;
 	
 	/**
 	 * Constructs a new {@code EncryptedProperties} instance for a specified file and encryption key.
-	 * @see #EncryptedProperties(File, Properties, boolean, byte[])
+	 * @see #EncryptedProperties(File, Properties, byte[])
 	 */
 	public EncryptedProperties(File file, byte[] key) {
 		this(file, null, key);
 	}
 	/**
-	 * Constructs a new {@code EncryptedProperties} instance for a specified file, default values, and encryption key.
-	 * @see #EncryptedProperties(File, Properties, boolean, byte[])
-	 */
-	public EncryptedProperties(File file, Properties defaults, byte[] key) {
-		this(file, defaults, false, key);
-	}
-	/**
 	 * Constructs a new {@code Properties} instance for a specified file, default values, and encryption key.
-	 * This method may optionally create the path to the specified file.
 	 * @param file backing filesystem file
 	 * @param defaults default properties
-	 * @param mkdirs if {@code true}, the path to the specified file is created if it does not exist
 	 * @param key symmetric encryption key to use for decrypting read file contents and encrypting written file contents.
 	 * @throws UncheckedIOException if an I/O error occurs
 	 */
-	public EncryptedProperties(File file, Properties defaults, boolean mkdirs, byte[] key) {
-		setFile(file, mkdirs);
+	public EncryptedProperties(File file, Properties defaults, byte[] key) {
+		setFile(file);
 		setDefaults(defaults);
 		setKey(key);
 		
