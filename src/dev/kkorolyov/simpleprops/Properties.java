@@ -211,11 +211,11 @@ public class Properties {
 			return;	// Nothing to load
 		}
 		try (BufferedReader fileReader = new BufferedReader(fileIn)) {
-			String readBlock = formatLine(readToBlock(fileReader));
+			String readBlock = format(readToBlock(fileReader));
 			String[] splitBlock = readBlock.split(System.lineSeparator());
 			
 			for (String nextLine : splitBlock) {				
-				String[] splitLine = formatLine(nextLine).split(Property.DELIMETER);
+				String[] splitLine = nextLine.split(Property.DELIMETER);
 				String 	currentKey = splitLine.length < 1 ? Property.EMPTY : splitLine[0],
 								currentValue = splitLine.length < 2 ? Property.EMPTY : splitLine[1];
 				
@@ -234,13 +234,18 @@ public class Properties {
 	}
 	
 	private static String readToBlock(BufferedReader reader) throws IOException {
-		StringBuilder builder = new StringBuilder();
+		List<Byte> byteList = new LinkedList<>();
 		
-		String nextLine;
-		while ((nextLine = reader.readLine()) != null)
-			builder.append(nextLine).append(System.lineSeparator());
+		int nextInt;
+		while ((nextInt = reader.read()) >= 0)
+			byteList.add((byte) nextInt);
 		
-		return builder.toString();
+		byte[] bytes = new byte[byteList.size()];
+		int counter = 0;
+		for (Byte listByte : byteList) {
+			bytes[counter++] = listByte;
+		}
+		return new String(bytes);
 	}
 	
 	/**
@@ -275,15 +280,12 @@ public class Properties {
 		
 		try (	OutputStream fileOut = new FileOutputStream(file);
 					PrintWriter filePrinter = new PrintWriter(fileOut)) {
-			filePrinter.print(formatBlock(toString()));
+			filePrinter.print(format(toString()));
 		}
 	}
 	
-	String formatLine(String line) {	// Used to optionally format read lines
+	String format(String line) {	// Used to optionally format read lines
 		return line;
-	}
-	String formatBlock(String block) {	// Used to optionally format written blocks
-		return block;
 	}
 	
 	/** @return backing file */

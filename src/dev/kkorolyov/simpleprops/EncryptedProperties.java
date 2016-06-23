@@ -72,18 +72,8 @@ public class EncryptedProperties extends Properties {
 	}
 	
 	@Override
-	String formatLine(String line) {
+	String format(String line) {
 		return applyKey(line);
-	}
-	@Override
-	String formatBlock(String block) {
-		String[] lines = block.split(System.lineSeparator());
-		StringBuilder builder = new StringBuilder();
-		
-		for (String line : lines)
-			builder.append(applyKey(line)).append(System.lineSeparator());
-		
-		return builder.toString();
 	}
 	
 	private String applyKey(String line) {
@@ -101,6 +91,6 @@ public class EncryptedProperties extends Properties {
 	
 	/** @return encrypted {@code toString()} value */
 	public String toStringEncrypted() {
-		return formatBlock(toString());
+		return format(toString());
 	}
 }
