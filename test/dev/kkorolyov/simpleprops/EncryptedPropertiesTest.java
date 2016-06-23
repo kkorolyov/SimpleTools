@@ -41,10 +41,11 @@ import org.junit.AfterClass;
 import org.junit.Test;
 
 @SuppressWarnings("javadoc")
-public class PropertiesTest {
+public class EncryptedPropertiesTest {
 	private static final int ITERATIONS = Byte.MAX_VALUE;
 	private static final String COMMENT = "#";
 	private static final String BASE_FILENAME = "TestPropFile";
+	private static final byte[] KEY = {99};
 	private static final Random rand = new Random();
 	private static final List<File> testFiles = new LinkedList<>();
 	
@@ -57,7 +58,8 @@ public class PropertiesTest {
 	
 	@Test
 	public void testPut_Contains_Get_Remove() throws IOException {
-		Properties props = new Properties();
+		File file = buildFile();
+		Properties props = new EncryptedProperties(file, KEY);
 		
 		assertEquals(0, props.size());
 		
@@ -84,7 +86,8 @@ public class PropertiesTest {
 	
 	@Test
 	public void testPutComment() {
-		Properties props = new Properties();
+		File file = buildFile();
+		Properties props = new EncryptedProperties(file, KEY);
 		StringBuilder expectedCommentsBuilder = new StringBuilder();
 
 		String commentBase = "PutCommentComment";
@@ -103,7 +106,8 @@ public class PropertiesTest {
 	
 	@Test
 	public void testKeys() {
-		Properties props = new Properties();
+		File file = buildFile();
+		Properties props = new EncryptedProperties(file, KEY);
 		List<String> expectedKeys = new LinkedList<>();
 		
 		String 	keyBase = "KeysKey",
@@ -127,7 +131,8 @@ public class PropertiesTest {
 	
 	@Test
 	public void testClear_Size_IsEmpty() {
-		Properties props = new Properties();
+		File file = buildFile();
+		Properties props = new EncryptedProperties(file, KEY);
 		
 		String 	keyBase = "ClearKey",
 						valueBase = "ClearValue",
@@ -152,7 +157,7 @@ public class PropertiesTest {
 	@Test
 	public void testMatchesFile() throws FileNotFoundException, IOException {
 		File file = buildFile();
-		Properties props = new Properties(file);
+		Properties props = new EncryptedProperties(file, KEY);
 		
 		props.saveFile();
 		assertTrue(props.matchesFile());
@@ -186,7 +191,7 @@ public class PropertiesTest {
 	public void reload() throws IOException {
 		File file = buildFile();
 		Properties 	defaults = buildDefaults(1),
-								props = new Properties(file, defaults);
+								props = new EncryptedProperties(file, defaults, KEY);
 		
 		String 	key = defaults.keys().iterator().next(),
 						value = "ReloadNewValue",
@@ -213,6 +218,8 @@ public class PropertiesTest {
 		props.putComment(comment);
 		props.saveFile();
 		props.reload();
+		for (String key1 : props.keys())
+			System.out.println(key + "=" + props.get(key1));
 		assertEquals(defaults.size(), props.size());
 		assertFalse(props.get(key).equals(expectedDefaultValue));
 		assertEquals(expectedNewValue, props.get(key));
@@ -220,8 +227,9 @@ public class PropertiesTest {
 	
 	@Test
 	public void testLoadDefaults() throws IOException {
+		File file = buildFile();
 		Properties 	defaults = buildDefaults(),
-								props = new Properties();
+								props = new EncryptedProperties(file, KEY);
 		
 		props.setDefaults(defaults);
 		props.loadDefaults();
@@ -252,16 +260,17 @@ public class PropertiesTest {
 	}
 	
 	@Test
-	public void testToString() throws FileNotFoundException, IOException {
+	public void testToStringEncrypted() throws FileNotFoundException, IOException {
 		File file = buildFile();
-		Properties props = new Properties(file);
+		EncryptedProperties props = new EncryptedProperties(file, KEY);
 		
 		System.out.println("Clean EncryptedProperties:");
 		System.out.println(props.toString());
+		System.out.println(props.toStringEncrypted());
 		
-		String 	keyBase = "ToStringKey",
-						valueBase = "ToStringValue",
-						commentBase = "ToStringComment";
+		String 	keyBase = "ToStringEncryptedKey",
+						valueBase = "ToStringEncryptedValue",
+						commentBase = "ToStringEncryptedComment";
 		
 		for (int i = 0; i < 10; i++) {
 			String 	key = keyBase + i,
@@ -271,14 +280,16 @@ public class PropertiesTest {
 			props.put(key, value);
 			props.putComment(comment);
 		}
-		System.out.println("Properties with " + props.size() + " properties:");
+		System.out.println("EncryptedProperties with " + props.size() + " properties:");
 		System.out.println(props.toString());
+		System.out.println(props.toStringEncrypted());
 		
 		props.saveFile();
 		props.reload();
 		
-		System.out.println("Properties with " + props.size() + " properties post-reload():");
+		System.out.println("EncryptedProperties with " + props.size() + " properties post-reload():");
 		System.out.println(props.toString());
+		System.out.println(props.toStringEncrypted());
 	}
 
 	private static Properties buildDefaults() {

@@ -191,6 +191,7 @@ public class Properties {
 	
 	/**
 	 * Loads all backing file properties and remaining default properties not found in the backing file.
+	 * If the backing file is {@code null} or does not exist, this method does nothing.
 	 * @throws IOException if an I/O error occurs
 	 */
 	public void reload() throws IOException {
@@ -207,14 +208,14 @@ public class Properties {
 		try {
 			fileIn = new FileReader(file);
 		} catch (FileNotFoundException e) {
-			saveFile(true);	// Create file
-			fileIn = new FileReader(file);	// Open again
+			return;	// Nothing to load
 		}
 		try (BufferedReader fileReader = new BufferedReader(fileIn)) {
-		
-			String nextLine;
-			while ((nextLine = fileReader.readLine()) != null) {
-				String[] splitLine = nextLine.split(Property.DELIMETER);
+			String readBlock = formatLine(readToBlock(fileReader));
+			String[] splitBlock = readBlock.split(System.lineSeparator());
+			
+			for (String nextLine : splitBlock) {				
+				String[] splitLine = formatLine(nextLine).split(Property.DELIMETER);
 				String 	currentKey = splitLine.length < 1 ? Property.EMPTY : splitLine[0],
 								currentValue = splitLine.length < 2 ? Property.EMPTY : splitLine[1];
 				
@@ -230,6 +231,16 @@ public class Properties {
 			if (!contains(key))
 				put(key, defaults.get(key));
 		}
+	}
+	
+	private static String readToBlock(BufferedReader reader) throws IOException {
+		StringBuilder builder = new StringBuilder();
+		
+		String nextLine;
+		while ((nextLine = reader.readLine()) != null)
+			builder.append(nextLine).append(System.lineSeparator());
+		
+		return builder.toString();
 	}
 	
 	/**
@@ -264,8 +275,15 @@ public class Properties {
 		
 		try (	OutputStream fileOut = new FileOutputStream(file);
 					PrintWriter filePrinter = new PrintWriter(fileOut)) {
-			filePrinter.print(toString());
+			filePrinter.print(formatBlock(toString()));
 		}
+	}
+	
+	String formatLine(String line) {	// Used to optionally format read lines
+		return line;
+	}
+	String formatBlock(String block) {	// Used to optionally format written blocks
+		return block;
 	}
 	
 	/** @return backing file */
@@ -309,14 +327,14 @@ public class Properties {
 		return result;
 	}
 	@Override
-	public boolean equals(Object obj) {
+	public final boolean equals(Object obj) {
 		if (this == obj)
 			return true;
 		
 		if (obj == null)
 			return false;
 		
-		if (getClass() != obj.getClass())
+		if (!(obj instanceof Properties))
 			return false;
 		
 		Properties other = (Properties) obj;
