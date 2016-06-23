@@ -29,6 +29,7 @@
 package dev.kkorolyov.simpleprops;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Arrays;
 
@@ -63,12 +64,23 @@ public class EncryptedProperties extends Properties {
 	 * @throws UncheckedIOException if an I/O error occurs
 	 */
 	public EncryptedProperties(File file, Properties defaults, boolean mkdirs, byte[] key) {
-		super(file, defaults, mkdirs);
+		setFile(file, mkdirs);
+		setDefaults(defaults);
 		setKey(key);
+		
+		try {
+			reload();
+		} catch (IOException e) {
+			throw new UncheckedIOException(e);
+		}
 	}
-	
 	private void setKey(byte[] newKey) {
 		key = Arrays.copyOf(newKey, newKey.length);
+	}
+	
+	@Override
+	Properties buildFileProperties(File file) {
+		return new EncryptedProperties(file, key);
 	}
 	
 	@Override

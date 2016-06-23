@@ -39,6 +39,7 @@ public class Properties {
 	private final List<Property> props = new ArrayList<>();
 	private final Map<String, Integer> keyPositions = new HashMap<>();
 	private File file;
+	private boolean mkdirs;
 	private Properties defaults;
 	
 	/**
@@ -184,9 +185,12 @@ public class Properties {
 		boolean matches = false;
 		
 		if (file != null)
-			matches = this.equals(new Properties(file));
+			matches = this.equals(buildFileProperties(file));
 		
 		return matches;
+	}
+	Properties buildFileProperties(File file) {
+		return new Properties(file);
 	}
 	
 	/**
@@ -272,11 +276,11 @@ public class Properties {
 	 * @throws FileNotFoundException  if the backing file cannot be accessed for some reason
 	 */
 	public void saveFile() throws FileNotFoundException, IOException {
-		saveFile(false);
-	}
-	private void saveFile(boolean force) throws FileNotFoundException, IOException {
-		if (!force && matchesFile())
+		if (matchesFile())
 			return;
+		
+		if (mkdirs)
+			tryMkdirs();
 		
 		try (	OutputStream fileOut = new FileOutputStream(file);
 					PrintWriter filePrinter = new PrintWriter(fileOut)) {
@@ -284,7 +288,7 @@ public class Properties {
 		}
 	}
 	
-	String format(String line) {	// Used to optionally format read lines
+	String format(String line) {	// Used to optionally format read/written data
 		return line;
 	}
 	
@@ -298,8 +302,7 @@ public class Properties {
 	 */
 	public void setFile(File newFile, boolean mkdirs) {
 		file = newFile;
-		if (mkdirs)
-			tryMkdirs();
+		this.mkdirs = mkdirs;
 	}
 	private void tryMkdirs() {
 		File parent = file.getParentFile();

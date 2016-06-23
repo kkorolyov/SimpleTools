@@ -264,9 +264,10 @@ public class EncryptedPropertiesTest {
 		File file = buildFile();
 		EncryptedProperties props = new EncryptedProperties(file, KEY);
 		
-		System.out.println("Clean EncryptedProperties:");
-		System.out.println(props.toString());
-		System.out.println(props.toStringEncrypted());
+		String 	string = props.toString(),
+						encrypted = props.toStringEncrypted();
+		assertEquals(string, props.format(encrypted));
+		assertEquals(encrypted, props.format(string));
 		
 		String 	keyBase = "ToStringEncryptedKey",
 						valueBase = "ToStringEncryptedValue",
@@ -280,16 +281,18 @@ public class EncryptedPropertiesTest {
 			props.put(key, value);
 			props.putComment(comment);
 		}
-		System.out.println("EncryptedProperties with " + props.size() + " properties:");
-		System.out.println(props.toString());
-		System.out.println(props.toStringEncrypted());
-		
+		string = props.toString();
+		encrypted = props.toStringEncrypted();
+		assertEquals(string, props.format(encrypted));
+		assertEquals(encrypted, props.format(string));
+				
 		props.saveFile();
 		props.reload();
 		
-		System.out.println("EncryptedProperties with " + props.size() + " properties post-reload():");
-		System.out.println(props.toString());
-		System.out.println(props.toStringEncrypted());
+		string = props.toString();
+		encrypted = props.toStringEncrypted();
+		assertEquals(string, props.format(encrypted));
+		assertEquals(encrypted, props.format(string));
 	}
 
 	private static Properties buildDefaults() {
