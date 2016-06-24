@@ -82,13 +82,10 @@ public class EncryptedProperties extends Properties {
 	private String applyKey(String line) {
 		byte[] 	lineBytes = line.getBytes(),
 						resultBytes = new byte[lineBytes.length];
-		int keyCounter = 0;
 		
-		for (int i = 0; i < resultBytes.length; i++) {
-			resultBytes[i] = (byte) (lineBytes[i] ^ key[keyCounter]);
+		for (int i = 0; i < resultBytes.length; i++)
+			resultBytes[i] = (byte) (lineBytes[i] ^ key[i % key.length]);	// Wraps if not enough key
 			
-			keyCounter = ((keyCounter + 1) < key.length) ? (keyCounter + 1) : 0;	// Increment or wrap
-		}
 		return new String(resultBytes);
 	}
 	
