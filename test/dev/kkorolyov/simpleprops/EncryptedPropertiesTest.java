@@ -45,13 +45,13 @@ public class EncryptedPropertiesTest {
 	private static final String COMMENT = "#";
 	private static final String BASE_FILENAME = "TestPropFile";
 	private static int testFilesCounter = 0;
-	private static final byte[] KEY = {99, 47, 125, 0, 18};
+	private static final byte[] key = {99, 47, 125, 0, 18};
 	private static final Random rand = new Random();
 	
 	@Test
 	public void testPut_Contains_Get_Remove() throws IOException {
 		File file = buildFile();
-		Properties props = new EncryptedProperties(file, KEY);
+		Properties props = new EncryptedProperties(file, key);
 		
 		assertEquals(0, props.size());
 		
@@ -79,7 +79,7 @@ public class EncryptedPropertiesTest {
 	@Test
 	public void testPutComment() {
 		File file = buildFile();
-		Properties props = new EncryptedProperties(file, KEY);
+		Properties props = new EncryptedProperties(file, key);
 		StringBuilder expectedCommentsBuilder = new StringBuilder();
 
 		String commentBase = "PutCommentComment";
@@ -99,7 +99,7 @@ public class EncryptedPropertiesTest {
 	@Test
 	public void testKeys() {
 		File file = buildFile();
-		Properties props = new EncryptedProperties(file, KEY);
+		Properties props = new EncryptedProperties(file, key);
 		List<String> expectedKeys = new LinkedList<>();
 		
 		String 	keyBase = "KeysKey",
@@ -124,7 +124,7 @@ public class EncryptedPropertiesTest {
 	@Test
 	public void testClear_Size_IsEmpty() {
 		File file = buildFile();
-		Properties props = new EncryptedProperties(file, KEY);
+		Properties props = new EncryptedProperties(file, key);
 		
 		String 	keyBase = "ClearKey",
 						valueBase = "ClearValue",
@@ -149,7 +149,7 @@ public class EncryptedPropertiesTest {
 	@Test
 	public void testMatchesFile() throws FileNotFoundException, IOException {
 		File file = buildFile();
-		Properties props = new EncryptedProperties(file, KEY);
+		Properties props = new EncryptedProperties(file, key);
 		
 		props.saveFile();
 		assertTrue(props.matchesFile());
@@ -186,7 +186,7 @@ public class EncryptedPropertiesTest {
 		fileDir.deleteOnExit();
 		file.deleteOnExit();
 		
-		Properties props = new EncryptedProperties(file, KEY);
+		Properties props = new EncryptedProperties(file, key);
 		
 		props.putComment("Comment");
 		try {
@@ -207,7 +207,7 @@ public class EncryptedPropertiesTest {
 	public void reload() throws IOException {
 		File file = buildFile();
 		Properties 	defaults = buildDefaults(1),
-								props = new EncryptedProperties(file, defaults, KEY);
+								props = new EncryptedProperties(file, defaults, key);
 		
 		String 	key = defaults.keys().iterator().next(),
 						value = "ReloadNewValue",
@@ -234,8 +234,6 @@ public class EncryptedPropertiesTest {
 		props.putComment(comment);
 		props.saveFile();
 		props.reload();
-		for (String key1 : props.keys())
-			System.out.println(key + "=" + props.get(key1));
 		assertEquals(defaults.size(), props.size());
 		assertFalse(props.get(key).equals(expectedDefaultValue));
 		assertEquals(expectedNewValue, props.get(key));
@@ -245,7 +243,7 @@ public class EncryptedPropertiesTest {
 	public void testLoadDefaults() throws IOException {
 		File file = buildFile();
 		Properties 	defaults = buildDefaults(),
-								props = new EncryptedProperties(file, KEY);
+								props = new EncryptedProperties(file, key);
 		
 		props.setDefaults(defaults);
 		props.loadDefaults();
@@ -278,7 +276,7 @@ public class EncryptedPropertiesTest {
 	@Test
 	public void testToStringEncrypted() throws FileNotFoundException, IOException {
 		File file = buildFile();
-		EncryptedProperties props = new EncryptedProperties(file, KEY);
+		EncryptedProperties props = new EncryptedProperties(file, key);
 		
 		String 	string = props.toString(),
 						encrypted = props.toStringEncrypted();
