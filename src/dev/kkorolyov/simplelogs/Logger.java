@@ -128,7 +128,7 @@ public class Logger {
 		StringBuilder messageBuilder = new StringBuilder(e.toString());
 		
 		for (StackTraceElement element : e.getStackTrace()) {
-			messageBuilder.append(System.lineSeparator() + '\t' + element.toString());
+			messageBuilder.append(System.lineSeparator() + "\tat " + element.toString());
 		}
 		return messageBuilder.toString();
 	}
