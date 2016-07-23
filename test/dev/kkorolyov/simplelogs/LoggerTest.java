@@ -1,6 +1,9 @@
 package dev.kkorolyov.simplelogs;
 
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 
 import org.junit.AfterClass;
 import org.junit.Test;
@@ -10,9 +13,17 @@ import dev.kkorolyov.simplelogs.Logger.Level;
 @SuppressWarnings("javadoc")
 public class LoggerTest {	// TODO Assertions
 	private static final File testFile = new File("TestLog.txt");
-	private static final Printer[] printers = {	new SysOutPrinter(),
-																							new SysErrPrinter(),
-																							new FilePrinter(testFile)};
+	private static PrintWriter[] printers;
+	
+	static {
+		try {
+			printers = new PrintWriter[]{	new PrintWriter(System.out),
+																		new PrintWriter(System.err),
+																		new PrintWriter(new FileWriter(testFile))};
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 	
 	@AfterClass
 	public static void tearDownAfterClass() {
@@ -94,10 +105,10 @@ public class LoggerTest {	// TODO Assertions
 		for (Level level : Level.values()) {
 			System.out.println("Printing " + level + " message with disabled " + level + "-leveled loggers:");
 			for (Logger logger : getAllLoggers(level)) {
-				logger.disable();
+				logger.setEnabled(false);
 				logger.log("YOU SEE NOTHING", level);
 				
-				logger.enable();
+				logger.setEnabled(true);
 				logger.log("YOU SEE SOMETHING", level);
 			}
 		}
@@ -107,7 +118,7 @@ public class LoggerTest {	// TODO Assertions
 	private static Logger[] getAllLoggers(Level level) {
 		Logger[] loggers = new Logger[printers.length];
 		for (int i = 0; i < printers.length; i++) {
-			loggers[i] = Logger.getLogger("TestLogger" + i, printers[i], level);
+			loggers[i] = Logger.getLogger("TestLogger" + i, level, printers[i]);
 		}
 		return loggers;
 	}

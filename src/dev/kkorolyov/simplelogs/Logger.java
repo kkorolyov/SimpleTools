@@ -1,9 +1,9 @@
 package dev.kkorolyov.simplelogs;
 
+import java.io.PrintWriter;
+import java.io.Writer;
 import java.lang.reflect.Method;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Simple logging interface for multiple levels.
@@ -17,93 +17,54 @@ public class Logger {
 														INVOKER_SEPARATOR = '-';
 	private static final String MESSAGE_SEPARATOR = ": ";
 	
-	private static final Map<String, Logger> instances = new HashMap<>();
-	private static Level globalLevel = Level.INFO;	// Default INFO
-	private static boolean globalEnabled = true;	// Default true
+	private static final Level DEFAULT_LEVEL = Level.INFO;
+	private static final PrintWriter[] DEFAULT_WRITERS = {new PrintWriter(System.err)};
 	
-	private Printer printer;
+	private static final Map<String, Logger> instances = new HashMap<>();
+	
 	private Level level;
+	private Set<PrintWriter> writers = new HashSet<>();
 	private boolean enabled;
 	
 	/**
-	 * Retrieves a logger of the specified name, if it exists.
-	 * If such a logger does not exist, a new logger is created using the specified name, a default printer to {@code System.err}, and a default logging level of {@code INFO}.
+	 * Retrieves the logger of the specified name, if it exists.
+	 * If such a logger does not exist, a new logger is created using the specified name, a default logging level of {@code INFO}, and a default writer to {@code System.err}.
 	 * @param name logger name
 	 * @return appropriate logger
 	 */
 	public static Logger getLogger(String name) {
 		Logger instance = instances.get(name);
 		
-		return instance != null ? instance : getLogger(name, new SysErrPrinter(), globalLevel);
+		return instance != null ? instance : getLogger(name, DEFAULT_LEVEL, DEFAULT_WRITERS);
 	}
+	
 	/**
-	 * Retrieves a logger of the specified name, if it exists.
-	 * If such a logger already exists, its printer and logging level are set to the specified parameters.
-	 * If such a logger does not exist, a new logger is created using the specified name, printer, and logging level.
+	 * Retrieves the logger of the specified name, if it exists, and sets its level and writers to the specified parameters.
+	 * If such a logger does not exist, a new logger is created according to the specified parameters.
 	 * @param name logger name
-	 * @param printer printer the logger will use for message printing
-	 * @param level level of messages to print
+	 * @param level logging level
+	 * @param writers log writers
 	 * @return appropriate logger
 	 */
-	public static Logger getLogger(String name, Printer printer, Level level) {
+	public static Logger getLogger(String name, Level level, PrintWriter... writers) {
 		Logger instance = instances.get(name);
 		
 		if (instance == null) {
-			instance = new Logger(printer, level);
+			instance = new Logger(level, writers);
 			
 			instances.put(name, instance);
 		}
 		else {
-			instance.setPrinter(printer);
 			instance.setLevel(level);
+			instance.setWriters(writers);
 		}
 		return instance;
 	}
 	
-	private Logger(Printer printer, Level level) {
-		this.printer = printer;
-		this.level = level;
-		this.enabled = globalEnabled;	
-	}
-	
-	/**
-	 * Sets the logging level of all current {@code Logger} instances, and the default level of all future instances.
-	 * @param level logging level to set
-	 */
-	public static void setGlobalLevel(Level level) {
-		globalLevel = level;
-		
-		syncLevel();
-	}
-	private static void syncLevel() {
-		for (Logger instance : instances.values())
-			instance.level = globalLevel;
-	}
-	
-	/**
-	 * Enables all current {@code Logger} instances. 
-	 */
-	public static void enableAll() {
-		setGlobalEnabled(true);
-	}
-	/**
-	 * Disables all current {@code Logger} instances. 
-	 */
-	public static void disableAll() {
-		setGlobalEnabled(false);
-	}
-	/**
-	 * Sets the enabled status of all current {@code Logger} instances, as well as the default enabled status of all future instances.
-	 * @param enabled {@code true} enables, {@code false} disables
-	 */
-	public static void setGlobalEnabled(boolean enabled) {
-		globalEnabled = enabled;
-		
-		syncEnabled();
-	}
-	private static void syncEnabled() {
-		for (Logger instance : instances.values())
-			instance.enabled = globalEnabled;
+	private Logger(Level level, PrintWriter... writers) {
+		setLevel(level);
+		setWriters(writers);
+		setEnabled(true);
 	}
 	
 	/**
@@ -173,7 +134,10 @@ public class Logger {
 		
 		StackTraceElement originalCaller = findCallingMethod(Thread.currentThread().getStackTrace());
 		
-		printer.print(formatMessage(message, level, originalCaller));
+		for (PrintWriter writer : writers) {
+			writer.println(formatMessage(message, level, originalCaller));
+			writer.flush();
+		}
 	}
 	private static StackTraceElement findCallingMethod(StackTraceElement[] stackTrace) {
 		StackTraceElement callingMethod = null;
@@ -221,19 +185,6 @@ public class Logger {
 		return messageBuilder.toString();
 	}
 	
-	/**
-	 * Enables logging.
-	 */
-	public void enable() {
-		enabled = true;
-	}
-	/**
-	 * Disables logging.
-	 */
-	public void disable() {
-		enabled = false;
-	}
-	
 	/** 
 	 * Checks if a message of a specified level would be logged by this logger.
 	 * @param level logging level to test
@@ -243,19 +194,52 @@ public class Logger {
 		return this.level.compareTo(level) >= 0;	// Greater level == finer granularity
 	}
 	
-	/**
-	 * Sets the printer of this logger.
-	 * @param printer new printer to use for printing messages
-	 */
-	public void setPrinter(Printer printer) {
-		this.printer = printer;
+	/** @return logging level */
+	public Level getLevel() {
+		return level;
 	}
 	/**
 	 * Sets the level of this logger.
-	 * @param level new level
+	 * @param newLevel new logging level
 	 */
-	public void setLevel(Level level) {
-		this.level = level;
+	public void setLevel(Level newLevel) {
+		level = newLevel;
+	}
+	
+	/** @param toAdd writer to add */
+	public void addWriter(PrintWriter toAdd) {
+		writers.add(toAdd);
+	}
+	/** @param toRemove writer to remove */
+	public void removeWriter(PrintWriter toRemove) {
+		writers.remove(toRemove);
+	}
+	
+	/** @return all writers */
+	public Writer[] getWriters() {
+		return writers.toArray(new Writer[writers.size()]);
+	}
+	/**
+	 * Sets the writers used by this logger.
+	 * All subsequent messages logged by this logger will be written by these writers.
+	 * @param newWriters new writers; if {@code null}, will simply clear all writers
+	 */
+	public void setWriters(PrintWriter... newWriters) {
+		writers.clear();
+		
+		if (newWriters != null) {
+			for (PrintWriter writer : newWriters)
+				addWriter(writer);
+		}
+	}
+	
+	/** @return {@code true} if logger enabled */
+	public boolean isEnabled() {
+		return enabled;
+	}
+	/** @param enabled if {@code true}, enables logger; else, disables logger */
+	public void setEnabled(boolean enabled) {
+		this.enabled = enabled;
 	}
 	
 	/**
