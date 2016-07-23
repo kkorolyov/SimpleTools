@@ -1,7 +1,6 @@
 package dev.kkorolyov.simplelogs;
 
 import java.io.PrintWriter;
-import java.io.Writer;
 import java.lang.reflect.Method;
 import java.util.*;
 
@@ -16,6 +15,7 @@ public class Logger {
 														FIELD_SEPARATOR = ' ',
 														INVOKER_SEPARATOR = '-';
 	private static final String MESSAGE_SEPARATOR = ": ";
+	private static final String HIERARCHY_DELIMETER = ".";
 	
 	private static final Level DEFAULT_LEVEL = Level.INFO;
 	private static final PrintWriter[] DEFAULT_WRITERS = {new PrintWriter(System.err)};
@@ -25,6 +25,7 @@ public class Logger {
 	private Level level;
 	private Set<PrintWriter> writers = new HashSet<>();
 	private boolean enabled;
+	private Logger parent;
 	
 	/**
 	 * Retrieves the logger of the specified name, if it exists.
@@ -37,7 +38,6 @@ public class Logger {
 		
 		return instance != null ? instance : getLogger(name, DEFAULT_LEVEL, DEFAULT_WRITERS);
 	}
-	
 	/**
 	 * Retrieves the logger of the specified name, if it exists, and sets its level and writers to the specified parameters.
 	 * If such a logger does not exist, a new logger is created according to the specified parameters.
@@ -53,12 +53,30 @@ public class Logger {
 			instance = new Logger(level, writers);
 			
 			instances.put(name, instance);
+			applyParents();
 		}
 		else {
 			instance.setLevel(level);
 			instance.setWriters(writers);
 		}
 		return instance;
+	}
+	
+	private static void applyParents() {
+		for (String loggerName : instances.keySet())
+			instances.get(loggerName).setParent(findParent(loggerName));
+	}
+	private static Logger findParent(String name) {
+		String loggerPath = HIERARCHY_DELIMETER + name;	// Root logger has empty name
+		int nextLevel;
+		
+		while ((nextLevel = loggerPath.lastIndexOf(HIERARCHY_DELIMETER)) >= 0) {
+			loggerPath = loggerPath.substring(0, nextLevel);
+			
+			if (instances.containsKey(loggerPath))
+				return instances.get(loggerPath);
+		}
+		return null;
 	}
 	
 	private Logger(Level level, PrintWriter... writers) {
@@ -129,16 +147,25 @@ public class Logger {
 	 * @param level message's level of granularity
 	 */
 	public void log(String message, Level level) {
+		if (!enabled || !isLoggable(level))	// Avoid needlessly finding calling method
+			return;
+		
+		log(message, level, findCallingMethod(Thread.currentThread().getStackTrace()));
+	}
+	private void log(String message, Level level, StackTraceElement originalCaller) {
 		if (!enabled || !isLoggable(level))
 			return;
 		
-		StackTraceElement originalCaller = findCallingMethod(Thread.currentThread().getStackTrace());
-		
-		for (PrintWriter writer : writers) {
-			writer.println(formatMessage(message, level, originalCaller));
-			writer.flush();
+		if (parent == null) {	// Current root logger, log
+			for (PrintWriter writer : writers) {
+				writer.println(formatMessage(message, level, originalCaller));
+				writer.flush();
+			}
+		} else {	// Delegate logging to next parent
+			parent.log(message, level, originalCaller);
 		}
 	}
+	
 	private static StackTraceElement findCallingMethod(StackTraceElement[] stackTrace) {
 		StackTraceElement callingMethod = null;
 
@@ -216,8 +243,8 @@ public class Logger {
 	}
 	
 	/** @return all writers */
-	public Writer[] getWriters() {
-		return writers.toArray(new Writer[writers.size()]);
+	public PrintWriter[] getWriters() {
+		return writers.toArray(new PrintWriter[writers.size()]);
 	}
 	/**
 	 * Sets the writers used by this logger.
@@ -240,6 +267,11 @@ public class Logger {
 	/** @param enabled if {@code true}, enables logger; else, disables logger */
 	public void setEnabled(boolean enabled) {
 		this.enabled = enabled;
+	}
+	
+	private void setParent(Logger newParent) {
+		if (this != newParent)
+			parent = newParent;
 	}
 	
 	/**
