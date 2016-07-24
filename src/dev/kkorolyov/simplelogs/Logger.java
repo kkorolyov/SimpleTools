@@ -157,8 +157,9 @@ public class Logger {
 			return;
 		
 		if (parent == null) {	// Current root logger, log
+			String formattedMessage = formatMessage(message, level, originalCaller);
 			for (PrintWriter writer : writers) {
-				writer.println(formatMessage(message, level, originalCaller));
+				writer.println(formattedMessage);
 				writer.flush();
 			}
 		} else {	// Delegate logging to next parent
