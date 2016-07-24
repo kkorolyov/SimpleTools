@@ -1,125 +1,128 @@
 package dev.kkorolyov.simplelogs;
 
-import java.io.File;
-import java.io.FileWriter;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.Writer;
 
-import org.junit.AfterClass;
 import org.junit.Test;
 
 import dev.kkorolyov.simplelogs.Logger.Level;
 
 @SuppressWarnings("javadoc")
-public class LoggerTest {	// TODO Assertions
-	private static final File testFile = new File("TestLog.txt");
-	private static PrintWriter[] printers;
-	
-	static {
-		try {
-			printers = new PrintWriter[]{	new PrintWriter(System.out),
-																		new PrintWriter(System.err),
-																		new PrintWriter(new FileWriter(testFile))};
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-	
-	@AfterClass
-	public static void tearDownAfterClass() {
-		testFile.delete();
-	}
-	
+public class LoggerTest {
 	@Test
-	public void testExceptionSevere() {
-		for (Level level : Level.values()) {
-			System.out.println("Printing SEVERE exception with " + level + "-leveled loggers:");
-			for (Logger logger : getAllLoggers(level))
-				logger.exception(new Exception("TestException"), Level.SEVERE);
-		}
-		System.out.println();
-	}
+	public void testGetLoggerParams() {
+		PrintWriter[] expectedWriters = new PrintWriter[]{new PrintWriter(System.out), new PrintWriter(System.err)};
+		for (Level expectedLevel : Level.values()) {
+			Logger logger = Logger.getLogger("test.getLoggerParams", expectedLevel, expectedWriters);
 
-	@Test
-	public void testExceptionWarning() {
-		for (Level level : Level.values()) {
-			System.out.println("Printing WARNING exception with " + level + "-leveled loggers:");
-			for (Logger logger : getAllLoggers(level))
-				logger.exception(new Exception("TestException"), Level.WARNING);
-		}
-		System.out.println();
-	}
-
-	@Test
-	public void testSevere() {
-		for (Level level : Level.values()) {
-			System.out.println("Printing SEVERE message with " + level + "-leveled loggers:");
-			for (Logger logger : getAllLoggers(level))
-				logger.severe("Test SEVERE message");
-		}
-		System.out.println();
-	}
-
-	@Test
-	public void testWarning() {
-		for (Level level : Level.values()) {
-			System.out.println("Printing WARNING message with " + level + "-leveled loggers:");
-			for (Logger logger : getAllLoggers(level))
-				logger.warning("Test WARNING message");
-		}
-		System.out.println();
-	}
-
-	@Test
-	public void testInfo() {
-		for (Level level : Level.values()) {
-			System.out.println("Printing INFO message with " + level + "-leveled loggers:");
-			for (Logger logger : getAllLoggers(level))
-				logger.info("Test INFO message");
-		}
-		System.out.println();
-	}
-
-	@Test
-	public void testDebug() {
-		for (Level level : Level.values()) {
-			System.out.println("Printing DEBUG message with " + level + "-leveled loggers:");
-			for (Logger logger : getAllLoggers(level))
-				logger.debug("Test DEBUG message");
-		}
-		System.out.println();
-	}
-
-	@Test
-	public void testLog() {
-		for (Level level : Level.values()) {
-			System.out.println("Printing " + level + " message with " + level + "-leveled loggers:");
-			for (Logger logger : getAllLoggers(level))
-				logger.log(level + " message", level);
-		}
-		System.out.println();
-	}
-	
-	@Test
-	public void testDisable() {
-		for (Level level : Level.values()) {
-			System.out.println("Printing " + level + " message with disabled " + level + "-leveled loggers:");
-			for (Logger logger : getAllLoggers(level)) {
-				logger.setEnabled(false);
-				logger.log("YOU SEE NOTHING", level);
+			assertEquals(expectedLevel, logger.getLevel());
+			assertEquals(expectedWriters.length, logger.getWriters().length);
+			for (PrintWriter expectedWriter : expectedWriters) {
+				boolean found = false;
 				
-				logger.setEnabled(true);
-				logger.log("YOU SEE SOMETHING", level);
+				for (PrintWriter actualWriter : logger.getWriters()) {
+					if (expectedWriter == actualWriter) {
+						found = true;
+						break;
+					}
+				}
+				assertTrue(found);
 			}
 		}
-		System.out.println();
 	}
 	
-	private static Logger[] getAllLoggers(Level level) {
-		Logger[] loggers = new Logger[printers.length];
-		for (int i = 0; i < printers.length; i++) {
-			loggers[i] = Logger.getLogger("TestLogger" + i, level, printers[i]);
+	@Test
+	public void testLog() {
+		for (Level loggerLevel : Level.values()) {
+			for (Level messageLevel : Level.values()) {
+				Logger logger = Logger.getLogger("test.log", loggerLevel, buildWriterStub(loggerLevel, messageLevel));
+				logger.log("", messageLevel);
+			}
 		}
-		return loggers;
+	}
+	@Test
+	public void testSevere() {
+		for (Level loggerLevel : Level.values()) {
+			Logger logger = Logger.getLogger("test.severe", loggerLevel, buildWriterStub(loggerLevel, Level.SEVERE));
+			logger.severe("");
+		}
+	}
+	@Test
+	public void testWarning() {
+		for (Level loggerLevel : Level.values()) {
+			Logger logger = Logger.getLogger("test.warning", loggerLevel, buildWriterStub(loggerLevel, Level.WARNING));
+			logger.warning("");
+		}
+	}
+	@Test
+	public void testInfo() {
+		for (Level loggerLevel : Level.values()) {
+			Logger logger = Logger.getLogger("test.severe", loggerLevel, buildWriterStub(loggerLevel, Level.INFO));
+			logger.info("");
+		}
+	}
+	@Test
+	public void testDebug() {
+		for (Level loggerLevel : Level.values()) {
+			Logger logger = Logger.getLogger("test.severe", loggerLevel, buildWriterStub(loggerLevel, Level.DEBUG));
+			logger.debug("");
+		}
+	}
+	
+	@Test
+	public void testExceptionLevel() {
+		for (Level loggerLevel : Level.values()) {
+			for (Level messageLevel : Level.values()) {
+				Logger logger = Logger.getLogger("test.exceptionLevel", loggerLevel, buildWriterStub(loggerLevel, messageLevel));
+				logger.exception(new Exception(), messageLevel);
+			}
+		}
+	}
+	@Test
+	public void testException() {
+		for (Level loggerLevel : Level.values()) {
+			Logger logger = Logger.getLogger("test.exception", loggerLevel, buildWriterStub(loggerLevel, Level.SEVERE));
+			logger.exception(new Exception());
+		}
+	}
+	
+	@Test
+	public void testIsLoggable() {
+		Logger logger = Logger.getLogger("test.isLoggable");
+		
+		for (Level loggerLevel : Level.values()) {
+			logger.setLevel(loggerLevel);
+			
+			for (Level messageLevel : Level.values()) {
+				if (messageLevel.compareTo(loggerLevel) <= 0)
+					assertTrue(logger.isLoggable(messageLevel));
+				else
+					assertFalse(logger.isLoggable(messageLevel));
+			}
+		}
+	}
+	
+	private static PrintWriter buildWriterStub(Level loggerLevel, Level messageLevel) {
+		return new PrintWriter(new Writer() {
+			@Override
+			public void write(char[] cbuf, int off, int len) throws IOException {
+				if (messageLevel.compareTo(loggerLevel) > 0)
+					fail("Should not log when message level > logger level");
+			}
+			@Override
+			public void flush() throws IOException {
+				//
+			}
+			@Override
+			public void close() throws IOException {
+				//
+			}
+		});
 	}
 }
