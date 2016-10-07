@@ -150,21 +150,21 @@ public class Logger {
 		if (!enabled || !isLoggable(level))	// Avoid needlessly finding calling method
 			return;
 		
-		log(message, level, findCallingMethod(Thread.currentThread().getStackTrace()));
+		StackTraceElement caller = findCallingMethod(Thread.currentThread().getStackTrace());
+		String formattedMessage = formatMessage(message, level, caller);
+		
+		log(formattedMessage, level, caller);
 	}
 	private void log(String message, Level level, StackTraceElement originalCaller) {
 		if (!enabled || !isLoggable(level))
 			return;
 		
-		if (parent == null) {	// Current root logger, log
-			String formattedMessage = formatMessage(message, level, originalCaller);
-			for (PrintWriter writer : writers) {
-				writer.println(formattedMessage);
-				writer.flush();
-			}
-		} else {	// Delegate logging to next parent
-			parent.log(message, level, originalCaller);
+		for (PrintWriter writer : writers) {
+			writer.println(message);
+			writer.flush();
 		}
+		if (parent != null)
+			parent.log(message, level, originalCaller);
 	}
 	
 	private static StackTraceElement findCallingMethod(StackTraceElement[] stackTrace) {
