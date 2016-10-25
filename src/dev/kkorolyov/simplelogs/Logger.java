@@ -67,7 +67,7 @@ public class Logger {
 			instances.get(loggerName).setParent(findParent(loggerName));
 	}
 	private static Logger findParent(String name) {
-		String loggerPath = HIERARCHY_DELIMETER + name;	// Root logger has empty name
+		String loggerPath = name;
 		int nextLevel;
 		
 		while ((nextLevel = loggerPath.lastIndexOf(HIERARCHY_DELIMETER)) >= 0) {
@@ -76,7 +76,7 @@ public class Logger {
 			if (instances.containsKey(loggerPath))
 				return instances.get(loggerPath);
 		}
-		return null;
+		return instances.get("");	// Return root logger or null
 	}
 	
 	private Logger(Level level, PrintWriter... writers) {
