@@ -17,10 +17,7 @@ logger.exception(new Exception("Some SEVERE exception");
 Loggers are organized in a hierarchy according to name.
 * Each level in the hierarchy is defined as a unique set of characters (segment) delimeted by the `.` character.
 * A logger is defined as a parent of another logger when its entire name consists of segments matching the initial segments of the child logger's name.
-* The root (topmost) logger in a hierarchy is in charge of logging all messages for its child loggers.
-	* The root logger's `PrintWriters` define the output of the hierarchy's logged messages.
-	* The root logger's `Level` defines the finest granularity of the hierarchy's logged messages.
-		* Lower-level loggers may have coarser `Levels` than higher-level loggers, and will only propagate logged messages meeting their `Level`.
+* Messages logged by child loggers propagate up the hierarchy until they reach either the last logger or a logger with a level less than the message.
 * Logger hierarchies are populated dynamically when new loggers are created.
 * An empty name (`""`) corresponds to the absolute root logger.
 
@@ -32,7 +29,7 @@ Loggers are organized in a hierarchy according to name.
 * `Logger.getLogger("L1.L2").setLevel(Level.DEBUG)` is called.
 * `Logger.getLogger("L1").setLevel(Level.INFO)` is called.
 * `Logger.getLogger("L1.L2").debug("DEBUG message")` is called.
-	* `"L1.L2"` propagates the message to its parent `"L1"`, the message level exceeds the level of `"L1"` and is ignored.
+	* `"L1.L2"` logs and propagates the message to its parent `"L1"`, the message level exceeds the level of `"L1"` and is ignored by `"L1"`.
 * `Logger.getLogger("L1.L2").setLevel(Level.INFO)` is called.
 * `Logger.getLogger("L1").setLevel(Level.DEBUG)` is called.
 * `Logger.getLogger("L1.L2").debug("DEBUG message")` is called.
