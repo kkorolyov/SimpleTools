@@ -63,6 +63,34 @@ public class LoggerTest {
 	}
 	
 	@Test
+	public void testSevereLazy() {
+		Logger logger = Logger.getLogger("test.severe", loggerLevel, buildWriterStub(loggerLevel, Level.SEVERE));
+		logger.severe(() -> "");
+	}
+	@Test
+	public void testWarningLazy() {
+		Logger logger = Logger.getLogger("test.warning", loggerLevel, buildWriterStub(loggerLevel, Level.WARNING));
+		logger.warning(() -> "");
+	}
+	@Test
+	public void testInfoLazy() {
+		Logger logger = Logger.getLogger("test.severe", loggerLevel, buildWriterStub(loggerLevel, Level.INFO));
+		logger.info(() -> "");
+	}
+	@Test
+	public void testDebugLazy() {
+		Logger logger = Logger.getLogger("test.severe", loggerLevel, buildWriterStub(loggerLevel, Level.DEBUG));
+		logger.debug(() -> "");
+	}
+	@Test
+	public void testLogLazy() {
+		for (Level messageLevel : Level.values()) {
+			Logger logger = Logger.getLogger("test.log", loggerLevel, buildWriterStub(loggerLevel, messageLevel));
+			logger.log(() -> "", messageLevel);
+		}
+	}
+	
+	@Test
 	public void testSevere() {
 		Logger logger = Logger.getLogger("test.severe", loggerLevel, buildWriterStub(loggerLevel, Level.SEVERE));
 		logger.severe("");

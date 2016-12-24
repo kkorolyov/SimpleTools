@@ -98,7 +98,7 @@ public class Logger {
 	 * @param level level to log at
 	 */
 	public void exception(Exception e, Level level) {
-		if (!enabled || !isLoggable(level))	// Avoid needlessly formatting exception stack
+		if (!enabled || !isLoggable(level) || writers.size() <= 0)	// Avoid needlessly formatting exception stack
 			return;
 		
 		log(formatException(e), level);
@@ -110,6 +110,35 @@ public class Logger {
 			messageBuilder.append(System.lineSeparator() + "\tat " + element.toString());
 		}
 		return messageBuilder.toString();
+	}
+	
+	/**
+	 * Logs a lazy message at the {@code SEVERE} level.
+	 * @param message message to log
+	 */
+	public void severe(LazyMessage message) {
+		log(message, Level.SEVERE);
+	}
+	/**
+	 * Logs a lazy message at the {@code WARNING} level.
+	 * @param message message to log
+	 */
+	public void warning(LazyMessage message) {
+		log(message, Level.WARNING);
+	}
+	/**
+	 * Logs a lazy message at the {@code INFO} level.
+	 * @param message message to log
+	 */
+	public void info(LazyMessage message) {
+		log(message, Level.INFO);
+	}
+	/**
+	 * Logs a lazy message at the {@code DEBUG} level.
+	 * @param message message to log
+	 */
+	public void debug(LazyMessage message) {
+		log(message, Level.DEBUG);
 	}
 	
 	/**
@@ -140,14 +169,26 @@ public class Logger {
 	public void debug(String message) {
 		log(message, Level.DEBUG);
 	}
+	
+	/**
+	 * Attempts to log a lazy message.
+	 * The message creation function is executed only if the resultant message would be logged.
+	 * @see #log(String, Level)
+	 */
+	public void log(LazyMessage message, Level level) {
+		if (!enabled || !isLoggable(level) || writers.size() <= 0)
+			return;
+		
+		log(message.execute(), level);
+	}
 	/**
 	 * Attempts to log a message at a specific level of granularity.
-	 * If this logger is disabled or the specified granularity level is finer than this logger's current granularity level, the message is not logged.
+	 * If this logger is disabled, the specified granularity level is finer than this logger's current granularity level, or this logger does not have a valid writer, the message is not logged.
 	 * @param message message to log
 	 * @param level message's level of granularity
 	 */
 	public void log(String message, Level level) {
-		if (!enabled || !isLoggable(level))	// Avoid needlessly finding calling method
+		if (!enabled || !isLoggable(level) || writers.size() <= 0)	// Avoid needlessly finding calling method
 			return;
 		
 		StackTraceElement caller = findCallingMethod(Thread.currentThread().getStackTrace());
@@ -156,7 +197,7 @@ public class Logger {
 		log(formattedMessage, level, caller);
 	}
 	private void log(String message, Level level, StackTraceElement originalCaller) {
-		if (!enabled || !isLoggable(level))
+		if (!enabled || !isLoggable(level) || writers.size() <= 0)
 			return;
 		
 		for (PrintWriter writer : writers) {
