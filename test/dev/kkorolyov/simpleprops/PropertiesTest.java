@@ -33,6 +33,7 @@ import static org.junit.Assert.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
@@ -72,6 +73,28 @@ public class PropertiesTest {
 			assertEquals(valueBase + i, props.remove(keyBase + i));
 			assertEquals(i, props.size());
 		}
+	}
+	
+	@Test
+	public void testGetArray() throws IOException {
+		File file = buildFile();
+		Properties props = new Properties(file);
+		
+		assertEquals(0, props.size());
+		
+		String key = "PutArrayKey";
+		String[] value = {"A", "   BB", "C CC"};
+		
+		props.put(key, value);
+		
+		assertEquals(Arrays.toString(value), props.get(key));
+		assertArrayEquals(value, props.getArray(key));
+		
+		props.saveFile();
+		props.reload();
+		
+		assertEquals(Arrays.toString(value), props.get(key));
+		assertArrayEquals(value, props.getArray(key));
 	}
 	
 	@Test

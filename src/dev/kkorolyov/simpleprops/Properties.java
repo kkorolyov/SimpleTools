@@ -79,23 +79,31 @@ public class Properties {
 	public String get(String key) {
 		return contains(key) ? props.get(keyPositions.get(key)).getValue() : null;
 	}
+	/**
+	 * Retrieves a property value as an array.
+	 * @param key key of property to retrieve
+	 * @return property value parsed as an array, or {@code null} if no such property
+	 */
+	public String[] getArray(String key) {
+		return contains(key) ? props.get(keyPositions.get(key)).getValueArray() : null;
+	}
 	
 	/**
 	 * Adds a property matching the specified key-value pair.
 	 * If the specified key matches an existing property's key, the preexisting key's value is overridden by the specified value.
 	 * @param key key of property to add
-	 * @param value value of property to add
+	 * @param value value of property to add, multiple values are treated as an array
 	 */
-	public void put(String key, String value) {
+	public void put(String key, String... value) {
 		if (keyPositions.containsKey(key))
 			setKey(key, value);
 		else
 			addNewKey(key, value);
 	}
-	private void setKey(String key, String value) {
+	private void setKey(String key, String... value) {
 		props.get(keyPositions.get(key)).setValue(value);	// Change value at correct index
 	}
-	private void addNewKey(String key, String value) {
+	private void addNewKey(String key, String... value) {
 		Property newProperty = new Property(key, value);
 		props.add(newProperty);
 		
@@ -209,7 +217,7 @@ public class Properties {
 			String[] splitBlock = readBlock.split(System.lineSeparator());
 			
 			for (String nextLine : splitBlock) {				
-				String[] splitLine = nextLine.split(Property.DELIMETER);
+				String[] splitLine = nextLine.split("\\s*" + Property.DELIMETER + "\\s*");	// Trim whitespace around delimeter
 				String 	currentKey = splitLine.length < 1 ? Property.EMPTY : splitLine[0],
 								currentValue = splitLine.length < 2 ? Property.EMPTY : splitLine[1];
 				
@@ -387,9 +395,9 @@ public class Properties {
 										value;
 		
 		Property(String comment) {	// Creates a comment property
-			this(COMMENT + comment, null);
+			this(COMMENT + comment, (String[]) null);
 		}
-		Property(String key, String value) {	// Creates a normal property
+		Property(String key, String... value) {	// Creates a normal property
 			setKey(key);
 			setValue(value);
 		}
@@ -414,8 +422,24 @@ public class Properties {
 		String getValue() {
 			return value;
 		}
-		void setValue(String newValue) {
-			value = (newValue == null ? EMPTY : newValue);
+		String[] getValueArray() {
+			return value.replaceFirst("^\\[", "").replaceFirst("\\]$", "").split(",\\s?");
+		}
+		void setValue(String... newValue) {
+			if (newValue == null) {
+				value = EMPTY;
+				return;
+			}
+			switch (newValue.length) {
+				case 0:
+					value = EMPTY;
+					break;
+				case 1:
+					value = newValue[0];
+					break;
+				default:
+					value = Arrays.toString(newValue);
+			}
 		}
 		
 		@Override
