@@ -2,9 +2,9 @@ package dev.kkorolyov.simplelogs;
 
 import static org.junit.Assert.*;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.Writer;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 import org.hamcrest.core.IsEqual;
 import org.hamcrest.core.IsNot;
@@ -18,6 +18,9 @@ import dev.kkorolyov.simplelogs.Logger.Level;
 @RunWith(Parameterized.class)
 @SuppressWarnings("javadoc")
 public class LoggerTest {
+	private static final String LOGGER_PROPS_LOGGER = "logger.props.logger";
+	private static final String[] loggerPropsFiles = {"test/loggerPropsOut", "test/loggerPropsOutOut"};
+	
 	@Parameters(name = "Level({0})")
 	public static Object[] data() {
 		return Level.values();
@@ -26,6 +29,27 @@ public class LoggerTest {
 	
 	public LoggerTest(Level input) {
 		loggerLevel = input;
+	}
+	
+	@Test
+	public void testApplyProps() throws IOException {
+		Logger.applyProps(buildLoggerPropsStub());
+		
+		Logger logger = Logger.getLogger(LOGGER_PROPS_LOGGER);
+		assertEquals(loggerLevel, logger.getLevel());
+		
+		for (String filename : loggerPropsFiles)
+			assertEquals(0, new File(filename).length());
+		
+		logger.log("Message", loggerLevel);
+		
+		for (PrintWriter writer : Logger.getLogger(LOGGER_PROPS_LOGGER).getWriters()) 
+			writer.close();
+		
+		for (String filename : loggerPropsFiles) {
+			assertNotEquals(0, new File(filename).length());
+			Files.delete(Paths.get(filename));
+		}
 	}
 	
 	@Test
@@ -193,6 +217,20 @@ public class LoggerTest {
 		assertTrue(logger.isEnabled());
 		logger.setEnabled(false);
 		assertFalse(logger.isEnabled());
+	}
+	
+	private File buildLoggerPropsStub() throws FileNotFoundException {
+		File props = new File("testProps");
+		props.deleteOnExit();
+		
+		try (PrintWriter writer = new PrintWriter(props)) {
+			writer.print(LOGGER_PROPS_LOGGER + "=" + loggerLevel);
+			for (String file : loggerPropsFiles)
+				writer.print(", " + file);
+			writer.print(",OUT,ERR");
+			writer.flush();
+		}
+		return props;
 	}
 	
 	private static PrintWriter buildWriterStub(Level loggerLevel, Level messageLevel) {
