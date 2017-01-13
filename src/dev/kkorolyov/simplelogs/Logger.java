@@ -50,7 +50,7 @@ public class Logger {
 		try {
 			Class.forName("dev.kkorolyov.simplelogs.PropsApplier").getDeclaredMethod("apply", File.class).invoke(null, logProps);
 		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException | ClassNotFoundException e) {
-			System.err.println(e);
+			e.printStackTrace();
 			return false;
 		}
 		return true;
