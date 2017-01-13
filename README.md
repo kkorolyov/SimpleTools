@@ -71,6 +71,17 @@ logger.setEnabled(false);
 logger.info("Not logged message");	// Message is ignored
 ```
 
+### Configuring Loggers via properties file
+If [SimpleProps](https://github.com/kkorolyov/SimpleProps) is in the class path, `Logger.applyProps(File logProps)` can be invoked to configure loggers via a properties file.
+Each property in this file is defined as:
+
+`LOGGER=LEVEL, WRITERS...`
+* `LOGGER` - name of a logger
+* `LEVEL` - the logger's logging level
+* `WRITERS` - list of comma-delimited files or streams the logger logs to
+	* OUT - `System.out` stream
+	* ERR - `System.err` stream
+
 ## License
 BSD-new license.  
 More detail found [here](LICENSE).
