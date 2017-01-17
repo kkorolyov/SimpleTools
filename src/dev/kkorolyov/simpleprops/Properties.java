@@ -216,7 +216,7 @@ public class Properties {
 			String readBlock = format(readToBlock(fileReader));
 			String[] splitBlock = readBlock.split(System.lineSeparator());
 			
-			for (String nextLine : splitBlock) {				
+			for (String nextLine : splitBlock) {
 				String[] splitLine = nextLine.split("\\s*" + Property.DELIMETER + "\\s*");	// Trim whitespace around delimeter
 				String 	currentKey = splitLine.length < 1 ? Property.EMPTY : splitLine[0],
 								currentValue = splitLine.length < 2 ? Property.EMPTY : splitLine[1];
@@ -406,10 +406,10 @@ public class Properties {
 			return !isBlankLine() && !isComment();
 		}
 		boolean isBlankLine() {
-			return key.length() <= 0;
+			return key.length() <= 0 && value.length() <= 0;
 		}
 		boolean isComment() {
-			return key.charAt(0) == COMMENT;	// Key starts with comment
+			return key.length() > 0 && key.charAt(0) == COMMENT;	// Key starts with comment
 		}
 		
 		String getKey() {
