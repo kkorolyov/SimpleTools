@@ -29,38 +29,44 @@
 package dev.kkorolyov.simpleprops;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 /**
- * Provides access to and mutation of long-term properties, which are an indefinite set of key-value pairs.
- * Provides for saving and loading data to/from a file.
+ * A collection of key-value pairs, comments, and blank lines which maintain original insertion order.
  */
 public class Properties {
-	private final List<Property> props = new ArrayList<>();
-	private final Map<String, Integer> keyPositions = new HashMap<>();
-	private File file;
+	private static final String PROPERTY_DELIMETER = "=",
+															COMMENT_IDENTIFIER = "#";
+	
+	private final Map<String, String> props = new LinkedHashMap<>();
+	private final Set<String> fillers = new HashSet<>();
+	private Path file;
 	private Properties defaults;
 	
 	/**
-	 * Constructs a new {@code Properties} instance with no backing file.
+	 * Constructs a new {@code Properties} instance residing solely in memory.
 	 */
 	public Properties() {
 		this(null);
 	}
 	/**
-	 * Constructs a new {@code Properties} instance for a specified file.
-	 * @see #Properties(File, Properties)
+	 * Constructs a new {@code Properties} instance from a backing file.
+	 * @see #Properties(Path, Properties)
 	 */
-	public Properties(File file) {
+	public Properties(Path file) {
 		this(file, null);
 	}
 	/**
-	 * Constructs a new {@code Properties} instance for a specified file and with specified default values.
-	 * @param file backing filesystem file
+	 * Constructs a new {@code Properties} instance from both a backing file and default properties.
+	 * @param file backing file on filesystem
 	 * @param defaults default properties
 	 * @throws UncheckedIOException if an I/O error occurs
 	 */
-	public Properties(File file, Properties defaults) {
+	public Properties(Path file, Properties defaults) {
 		setFile(file);
 		setDefaults(defaults);
 		
@@ -72,110 +78,119 @@ public class Properties {
 	}
 	
 	/**
-	 * Retrieves the value of the property matching the specified key.
-	 * @param key key of property to retrieve
+	 * Retrieves the value of the property identified by {@code key}.
+	 * @param key identifier of property to retrieve
 	 * @return property value, or {@code null} if no such property
 	 */
 	public String get(String key) {
-		return contains(key) ? props.get(keyPositions.get(key)).getValue() : null;
+		return props.get(key);
 	}
 	/**
 	 * Retrieves a property value as an array.
-	 * @param key key of property to retrieve
+	 * @param key identifier of property to retrieve
 	 * @return property value parsed as an array, or {@code null} if no such property
 	 */
 	public String[] getArray(String key) {
-		return contains(key) ? props.get(keyPositions.get(key)).getValueArray() : null;
+		String value = get(key);
+		return value == null ? null : value.replaceFirst("^\\[", "").replaceFirst("\\]$", "").split(",\\s*");	// Trim optional outer brackets and split on array delimiter
+	}
+	
+	/** @return {@code true} if this object contains a property identified by {@code key} */
+	public boolean contains(String key) {
+		return props.containsKey(key);
+	}
+	
+	/** @return all properties, in order */
+	public Iterable<Entry<String, String>> properties() {
+		return propertyList();
+	}
+	private List<Entry<String, String>> propertyList() {
+		return props.entrySet().stream().filter(e -> !isFiller(e.getKey())).collect(Collectors.toList()); // Filters out comments, blank lines
+	}
+	
+	/** @return all property identifiers, in order */
+	public Iterable<String> keys() {
+		return props.keySet().stream().filter(k -> !isFiller(k)).collect(Collectors.toList());
+	}
+	
+	/** @return all comments, in order */
+	public Iterable<String> comments() {
+		return props.values().stream().filter(v -> isComment(v)).collect(Collectors.toList());
 	}
 	
 	/**
-	 * Adds a property matching the specified key-value pair.
-	 * If the specified key matches an existing property's key, the preexisting key's value is overridden by the specified value.
-	 * @param key key of property to add
-	 * @param value value of property to add, multiple values are treated as an array
+	 * Appends a new property or updates an existing property identified by {@code key}.
+	 * @param key identifier of property to add or update
+	 * @param value property value
+	 * @return previous value associated with {@code key}, or {@code null} if no such value
 	 */
-	public void put(String key, String... value) {
-		if (keyPositions.containsKey(key))
-			setKey(key, value);
-		else
-			addNewKey(key, value);
+	public String put(String key, String value) {
+		return props.put(key, value);
 	}
-	private void setKey(String key, String... value) {
-		props.get(keyPositions.get(key)).setValue(value);	// Change value at correct index
-	}
-	private void addNewKey(String key, String... value) {
-		Property newProperty = new Property(key, value);
-		props.add(newProperty);
-		
-		if (newProperty.isProperty())
-			keyPositions.put(key, props.size() - 1);	// New key is at last index
-	}
-	
 	/**
-	 * Adds a comment.
-	 * Appends the comment marker to the beginning of the specified comment before adding.
-	 * @param comment comment to add
+	 * Appends a new property or updates an existing property identified by {@code key} with multiple values.
+	 * @param key identifier of property to add or update
+	 * @param values property values
+	 * @return previous value associated with {@code key}, or {@code null} if no such value
 	 */
-	public void putComment(String comment) {
-		Property newComment = new Property(comment);
-		
-		props.add(newComment);
+	public String put(String key, String... values) {
+		return put(key, Arrays.toString(values));
 	}
 	
 	/**
-	 * Removes the property matching the specified key.
-	 * @param key key of property to remove
+	 * Removes the property identified by {@code key}.
+	 * @param key identifier of property to remove
 	 * @return removed property's value, or {@code null} if no such property
 	 */
 	public String remove(String key) {
-		String removedValue = null;
+		return props.remove(key);
+	}
+	
+	/**
+	 * Appends a comment.
+	 * @param comment comment to append, is ensured to begin with a comment identifier
+	 */
+	public void putComment(String comment) {
+		putWithFiller(isComment(comment) ? comment : (COMMENT_IDENTIFIER + comment));
+	}
+	private static boolean isComment(String key) {
+		return key != null && key.length() > 0 && key.substring(0, 1).equals(COMMENT_IDENTIFIER);
+	}
+	
+	/**
+	 * Appends a blank line.
+	 */
+	public void putBlankLine() {
+		putWithFiller("");
+	}
+	
+	private void putWithFiller(String value) {
+		String filler;
+		while (fillers.contains((filler = UUID.randomUUID().toString())));	// Randomize until unique filler
 		
-		if (keyPositions.containsKey(key)) {
-			int removeIndex = keyPositions.remove(key);
-			
-			for (int i = removeIndex + 1; i < props.size(); i++) {	// Shift keyPositions mappings to match resultant props
-				String currentRemoveKey = props.get(i).getKey();
-				
-				if (keyPositions.containsKey(currentRemoveKey))
-					keyPositions.put(props.get(i).getKey(), i - 1);
-			}
-			removedValue = props.remove(removeIndex).getValue();
-		}
-		return removedValue;
+		fillers.add(filler);
+		put(filler, value);
+	}
+	private boolean isFiller(String key) {
+		return fillers.contains(key);
 	}
 	
-	/** @return {@code true} if this object contains a property matching the specified key */
-	public boolean contains(String key) {
-		return keyPositions.containsKey(key);
-	}
-	
-	/** @return list of all property keys, in the order they appear in this object */
-	public List<String> keys() {
-		List<String> toReturn = new LinkedList<>();
-		
-		for (Property prop : props) {
-			if (prop.isProperty())
-				toReturn.add(prop.getKey());
-		}
-		return toReturn;
-	}
-	
-	/** @return {@code true} if this object contains no properties */
+	/** @return {@code true} if this object contains zero properties */
 	public boolean isEmpty() {
 		return size() <= 0;
 	}
 	
 	/** @return number of properties */
 	public int size() {
-		return keys().size();
+		return propertyList().size();
 	}
 	
 	/**
-	 * Clears all properties from memory.
+	 * Clears all properties and comments from memory.
 	 */
 	public void clear() {
 		props.clear();
-		keyPositions.clear();
+		fillers.clear();
 	}
 	
 	/** @return {@code true} if this object has a backing file and matches it exactly */
@@ -187,13 +202,13 @@ public class Properties {
 		
 		return matches;
 	}
-	Properties buildFileProperties(File file) {
+	protected Properties buildFileProperties(Path file) {
 		return new Properties(file);
 	}
 	
 	/**
 	 * Loads all backing file properties and remaining default properties not found in the backing file.
-	 * If the backing file is {@code null} or does not exist, this method does nothing.
+	 * If the backing file is {@code null} or does not exist, this method is equivalent to {@link #loadDefaults()}.
 	 * @throws IOException if an I/O error occurs
 	 */
 	public void reload() throws IOException {
@@ -206,22 +221,23 @@ public class Properties {
 		if (file == null)
 			return;	// No file, no load
 		
-		FileReader fileIn;
-		try {
-			fileIn = new FileReader(file);
-		} catch (FileNotFoundException e) {
-			return;	// Nothing to load
-		}
-		try (BufferedReader fileReader = new BufferedReader(fileIn)) {
+		try (BufferedReader fileReader = Files.newBufferedReader(file)) {
 			String readBlock = format(readToBlock(fileReader));
 			String[] splitBlock = readBlock.split(System.lineSeparator());
 			
 			for (String nextLine : splitBlock) {
-				String[] splitLine = nextLine.split("\\s*" + Property.DELIMETER + "\\s*");	// Trim whitespace around delimeter
-				String 	currentKey = splitLine.length < 1 ? Property.EMPTY : splitLine[0],
-								currentValue = splitLine.length < 2 ? Property.EMPTY : splitLine[1];
+				String[] splitLine = nextLine.split("\\s*" + PROPERTY_DELIMETER + "\\s*");	// Trim whitespace around delimiter
 				
-				put(currentKey, currentValue);
+				if (splitLine.length < 1)
+					putBlankLine();
+				else if (splitLine.length < 2) {
+					if (splitLine[0].length() < 1)
+						putBlankLine();
+					else
+						putComment(splitLine[0]);
+				}
+				else
+					put(splitLine[0], splitLine[1]);
 			}
 		}
 	}
@@ -236,27 +252,22 @@ public class Properties {
 	}
 	
 	private static String readToBlock(BufferedReader reader) throws IOException {
-		List<Byte> byteList = new LinkedList<>();
+		StringBuilder blockBuilder = new StringBuilder();
 		
 		int nextInt;
 		while ((nextInt = reader.read()) >= 0)
-			byteList.add((byte) nextInt);
+			blockBuilder.append((char) nextInt);
 		
-		byte[] bytes = new byte[byteList.size()];
-		int counter = 0;
-		for (Byte listByte : byteList) {
-			bytes[counter++] = listByte;
-		}
-		return new String(bytes);
+		return blockBuilder.toString();
 	}
 	
 	/**
-	 * Resets all properties to default values and removes all properties not found in default values.
-	 * If this object does not have specified default values, this method does nothing.
+	 * Resets all properties to match defaults, if default properties are set.
+	 * @return {@code true} if this instance has default properties and successfully loaded them
 	 */
-	public void loadDefaults() {
+	public boolean loadDefaults() {
 		if (defaults == null)
-			return;
+			return false;
 		
 		for (String key : keys()) {
 			if (defaults.contains(key))
@@ -265,11 +276,13 @@ public class Properties {
 				remove(key);
 		}
 		addRemainingDefaults();
+		
+		return false;
 	}
 	
 	/**
 	 * Writes all current properties to the backing file.
-	 * If there are no new properties to write, this method does nothing.
+	 * This method does not attempt to create the path to the backing file if it does not exist.
 	 * @see #saveFile(boolean)
 	 */
 	public void saveFile() throws FileNotFoundException, IOException {
@@ -278,7 +291,7 @@ public class Properties {
 	/**
 	 * Writes all current properties to the backing file.
 	 * If there are no new properties to write, this method does nothing.
-	 * @param mkdirs if {@code true}, will automatically create the path to the backing file if it does not exist
+	 * @param mkdirs if {@code true}, will create the path to the backing file if it does not exist
 	 * @throws IOException if an I/O error occurs
 	 * @throws FileNotFoundException  if the backing file cannot be accessed for some reason
 	 */
@@ -286,36 +299,26 @@ public class Properties {
 		if (matchesFile())
 			return;
 		
-		if (mkdirs)
-			tryMkdirs();
-		
-		try (	OutputStream fileOut = new FileOutputStream(file);
-					PrintWriter filePrinter = new PrintWriter(fileOut)) {
-			filePrinter.print(format(toString()));
+		if (mkdirs) {
+			Path parent = file.getParent();
+			if (parent != null)
+				Files.createDirectories(parent);
 		}
-	}
-	private void tryMkdirs() {
-		File parent = file.getParentFile();
-		if (parent != null && !parent.exists()) {
-			parent.mkdirs();
+		try (BufferedWriter out = Files.newBufferedWriter(file)) {
+			out.write(format(toString()));
 		}
 	}
 	
-	/**
-	 * Used to optionally format read/written data.
-	 * @param line string to format
-	 * @return formatted string
-	 */
-	String format(String line) {
-		return line;
+	protected String format(String string) {
+		return string;
 	}
 	
-	/** @return backing file */
-	public File getFile() {
+	/** @return path to backing file */
+	public Path getFile() {
 		return file;
 	}
-	/** @param newFile new backing file */
-	public void setFile(File newFile) {
+	/** @param newFile new path to backing file */
+	public void setFile(Path newFile) {
 		file = newFile;
 	}
 	
@@ -329,48 +332,23 @@ public class Properties {
 	}
 	
 	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		
-		result = prime * result + (props == null ? 0 : props.hashCode());
-		result = prime * result + (keyPositions == null ? 0 : keyPositions.hashCode());
-		result = prime * result + (file == null ? 0 : file.hashCode());
-		
-		return result;
-	}
-	@Override
-	public final boolean equals(Object obj) {
+	public boolean equals(Object obj) {
 		if (this == obj)
 			return true;
 		
-		if (obj == null)
+		if (obj == null || getClass() != obj.getClass())
 			return false;
 		
-		if (!(obj instanceof Properties))
-			return false;
+		Properties o = (Properties) obj;
 		
-		Properties other = (Properties) obj;
-		
-		if (props == null) {
-			if (other.props != null)
-				return false;
-		} else if (!props.equals(other.props))
-			return false;
-		
-		if (keyPositions == null) {
-			if (other.keyPositions != null)
-				return false;
-		} else if (!keyPositions.equals(other.keyPositions))
-			return false;
-		
-		if (file == null) {
-			if (other.file != null)
-				return false;
-		} else if (!file.equals(other.file))
-			return false;
-		
-		return true;
+		return Objects.equals(properties(), o.properties())
+				&& Objects.equals(comments(), o.comments())
+				&& Objects.equals(file, o.file)
+				&& Objects.equals(defaults, o.defaults);
+	}
+	@Override
+	public int hashCode() {
+		return Objects.hash(props, file, defaults);
 	}
 	
 	/**
@@ -380,109 +358,14 @@ public class Properties {
 	public String toString() {
 		StringBuilder toStringBuilder = new StringBuilder();
 		
-		for (Property prop : props)
-			toStringBuilder.append(prop).append(System.lineSeparator());
-		
+		for (Entry<String, String> prop : props.entrySet()) {
+			if (isFiller(prop.getKey()))	// Comment or blank line
+				toStringBuilder.append(prop.getValue());
+			else
+				toStringBuilder.append(prop.getKey()).append(PROPERTY_DELIMETER).append(prop.getValue());
+			
+			toStringBuilder.append(System.lineSeparator());
+		}
 		return toStringBuilder.toString();
-	}
-	
-	private static class Property {
-		private static final char COMMENT = '#';
-		private static final String DELIMETER = "=",
-																EMPTY = "";
-		
-		private String	key,
-										value;
-		
-		Property(String comment) {	// Creates a comment property
-			this(COMMENT + comment, (String[]) null);
-		}
-		Property(String key, String... value) {	// Creates a normal property
-			setKey(key);
-			setValue(value);
-		}
-		
-		boolean isProperty() {
-			return !isBlankLine() && !isComment();
-		}
-		boolean isBlankLine() {
-			return key.length() <= 0 && value.length() <= 0;
-		}
-		boolean isComment() {
-			return key.length() > 0 && key.charAt(0) == COMMENT;	// Key starts with comment
-		}
-		
-		String getKey() {
-			return key;
-		}
-		void setKey(String newKey) {
-			key = (newKey == null ? EMPTY : newKey);
-		}
-		
-		String getValue() {
-			return value;
-		}
-		String[] getValueArray() {
-			return value.replaceFirst("^\\[", "").replaceFirst("\\]$", "").split(",\\s?");
-		}
-		void setValue(String... newValue) {
-			if (newValue == null) {
-				value = EMPTY;
-				return;
-			}
-			switch (newValue.length) {
-				case 0:
-					value = EMPTY;
-					break;
-				case 1:
-					value = newValue[0];
-					break;
-				default:
-					value = Arrays.toString(newValue);
-			}
-		}
-		
-		@Override
-		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			
-			result = prime * result + (key == null ? 0 : key.hashCode());
-			result = prime * result + (value == null ? 0 : value.hashCode());
-			
-			return result;
-		}
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj)
-				return true;
-			
-			if (obj == null)
-				return false;
-			
-			if (getClass() != obj.getClass())
-				return false;
-			
-			Property other = (Property) obj;
-			
-			if (key == null) {
-				if (other.key != null)
-					return false;
-			} else if (!key.equals(other.key))
-				return false;
-				
-			if (value == null) {
-				if (other.value != null)
-					return false;
-			} else if (!value.equals(other.value))
-				return false;
-			
-			return true;
-		}
-		
-		@Override
-		public String toString() {
-			return isProperty() ? key + DELIMETER + value : key;
-		}
 	}
 }

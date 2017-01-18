@@ -28,23 +28,22 @@
 
 package dev.kkorolyov.simpleprops;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.file.Path;
 import java.util.Arrays;
 
 /**
- * A {@code Properties} which encrypts properties stored in its backing file.
- * Uses a byte array as a symmetric encryption key to encrypt and decrypt bytes in the backing properties file.
+ * {@link Properties} which are encrypted before being written to a backing file.
  */
 public class EncryptedProperties extends Properties {
 	private byte[] key;
 	
 	/**
 	 * Constructs a new {@code EncryptedProperties} instance for a specified file and encryption key.
-	 * @see #EncryptedProperties(File, Properties, byte[])
+	 * @see #EncryptedProperties(Path, Properties, byte[])
 	 */
-	public EncryptedProperties(File file, byte[] key) {
+	public EncryptedProperties(Path file, byte[] key) {
 		this(file, null, key);
 	}
 	/**
@@ -54,7 +53,7 @@ public class EncryptedProperties extends Properties {
 	 * @param key symmetric encryption key to use for decrypting read file contents and encrypting written file contents.
 	 * @throws UncheckedIOException if an I/O error occurs
 	 */
-	public EncryptedProperties(File file, Properties defaults, byte[] key) {
+	public EncryptedProperties(Path file, Properties defaults, byte[] key) {
 		setFile(file);
 		setDefaults(defaults);
 		setKey(key);
@@ -70,23 +69,22 @@ public class EncryptedProperties extends Properties {
 	}
 	
 	@Override
-	Properties buildFileProperties(File file) {
+	protected Properties buildFileProperties(Path file) {
 		return new EncryptedProperties(file, key);
 	}
 	
 	@Override
-	String format(String line) {
-		return applyKey(line);
+	protected String format(String string) {
+		return applyKey(string);
 	}
 	
 	private String applyKey(String line) {
-		byte[] 	lineBytes = line.getBytes(),
-						resultBytes = new byte[lineBytes.length];
+		byte[] bytes = line.getBytes();
 		
-		for (int i = 0; i < resultBytes.length; i++)
-			resultBytes[i] = (byte) (lineBytes[i] ^ key[i % key.length]);	// Wraps if not enough key
+		for (int i = 0; i < bytes.length; i++)
+			bytes[i] = (byte) (bytes[i] ^ key[i % key.length]);	// Wraps if not enough key
 			
-		return new String(resultBytes);
+		return new String(bytes);
 	}
 	
 	/** @return encrypted {@code toString()} value */
