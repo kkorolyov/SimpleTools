@@ -47,19 +47,132 @@ public class PropertiesTest {
 	private int fileCounter;
 	
 	@Test
+	public void shouldReturnOriginalValueOnGetWhenPutSingleValue() {
+		String key = "key", value = "val";
+		Properties props = new Properties();
+		
+		props.put(key, value);
+		assertEquals(value, props.get(key));
+	}
+	@Test
+	public void shouldReturnOriginalArrayAsStringOnGetWhenPutMultipleValues() {
+		String key = "key";
+		String[] values = {"v1", "v4", " ", UUID.randomUUID().toString()};
+		Properties props = new Properties();
+		
+		props.put(key, values);
+		assertEquals(Arrays.toString(values), props.get(key));
+	}
+	@Test
+	public void shouldReturnNullOnGetWhenMissingKey() {
+		assertNull(new Properties().get("key"));
+	}
+	
+	@Test
+	public void shouldReturnOriginalValueAsArrayOnGetArrayWhenPutSingleValue() {
+		String key = "key", value = "val";
+		Properties props = new Properties();
+		
+		props.put(key, value);
+		assertArrayEquals(Arrays.asList(value).toArray(new String[1]), props.getArray(key));
+	}
+	@Test
+	public void shouldReturnOriginalValueOnGetArrayWhenPutMultipleValues() {
+		String key = "key";
+		String[] values = {"v1", "v4", " ", UUID.randomUUID().toString()};
+		Properties props = new Properties();
+		
+		props.put(key, values);
+		assertArrayEquals(values, props.getArray(key));
+	}
+	@Test
+	public void shouldReturnNullOnGetArrayWhenMissingKey() {
+		assertNull(new Properties().getArray("key"));
+	}
+	
+	@Test
 	public void shouldReturnKeysInInsertionOrder() {
 		Map<String, String> properties = generateProperties(100);
 		assertIterablesEquals(properties.keySet(), randomize(new Properties(), properties, generateComments(20), 14).keys());
 	}
 	@Test
-	public void shouldReturnPropertiesInInsertionOrder() {
-		Map<String, String> properties = generateProperties(100);
-		assertIterablesEquals(properties.entrySet(), randomize(new Properties(), properties, generateComments(20), 14).properties());
-	}
-	@Test
 	public void shouldReturnCommentsInInsertionOrder() {
 		List<String> comments = generateComments(40);
 		assertIterablesEquals(comments, randomize(new Properties(), generateProperties(4), comments, 7).comments());
+	}
+	
+	@Test
+	public void shouldIteratePropertiesInInsertionOrder() {
+		Map<String, String> properties = generateProperties(100);
+		assertIterablesEquals(properties.entrySet(), randomize(new Properties(), properties, generateComments(20), 14));
+	}
+	@Test
+	public void shouldAllowModifiyingIteratedProperties() {
+		Properties props = new Properties();
+		String 	oldKey = "K1", oldVal = "V1", newVal = "V2";
+		
+		props.put(oldKey, oldVal);
+		assertEquals(oldVal, props.get(oldKey));
+		
+		props.forEach(e -> e.setValue(newVal));
+		assertTrue(props.contains(oldKey));
+		assertEquals(newVal, props.get(oldKey));
+	}
+	@Test
+	public void shouldIgnoreRemovingIteratedProperties() {
+		Properties props = new Properties();
+		String key = "K", val = "V";
+		
+		props.put(key, val);
+		assertTrue(props.contains(key));
+		assertEquals(1, props.size());
+		
+		Iterator<Entry<String, String>> it = props.iterator();
+		it.next();
+		it.remove();
+		
+		assertTrue(props.contains(key));
+		assertEquals(1, props.size());
+	}
+	
+	@Test
+	public void shouldAppendMissingPropertiesOnOverwrite() {
+		Properties 	p1 = new Properties(),
+								p2 = new Properties();
+		String 	key1 = "K1", key2 = "K2", val = "V";
+		
+		p1.put(key1, val);
+		p2.put(key2, val);
+		p1.put(p2, true);
+		
+		assertEquals(2, p1.size());
+		assertEquals(val, p1.get(key1));
+		assertEquals(val, p1.get(key2));
+	}
+	
+	@Test
+	public void shouldNotOverwriteOnPutPropertiesWhenOverwriteFalse() {
+		Properties 	p1 = new Properties(),
+								p2 = new Properties();
+		String key = "K", val1 = "V1", val2 = "V2";
+		
+		p1.put(key, val1);
+		p2.put(key, val2);
+		p1.put(p2, false);
+		
+		assertEquals(val1, p1.get(key));
+	}
+	@Test
+	public void shouldOverwriteOnPutPropertiesWhenOverwriteTrue() {
+		Properties 	p1 = new Properties(),
+								p2 = new Properties();
+		String key = "K", val1 = "V1", val2 = "V2";
+		
+		p1.put(key, val1);
+		p2.put(key, val2);
+		p1.put(p2, true);
+		
+		assertEquals(val2, p1.get(key));
 	}
 	
 	@Test
@@ -70,61 +183,33 @@ public class PropertiesTest {
 	}
 	
 	@Test
-	public void shouldReturnEqualOnGetWhenValidKey() {
-		String 	key = "key",
-						value = "val";
-		Properties props = new Properties();
-		
-		props.put(key, value);
-		assertEquals(value, props.get(key));
-	}
-	@Test
-	public void shouldReturnEqualArrayStringOnGetWhenValidKey() {
-		String key = "key";
-		String[] values = {"v1", "v4", " ", UUID.randomUUID().toString()};
-		Properties props = new Properties();
-		
-		props.put(key, values);
-		assertEquals(Arrays.toString(values), props.get(key));
-	}
-	@Test
-	public void shouldReturnNullOnGetWhenInvalidKey() {
-		assertNull(new Properties().get("key"));
-	}
-	
-	@Test
-	public void shouldReturnEqualAsArrayOnGetArrayWhenValidKey() {
-		String 	key = "key",
-						value = "val";
-		Properties props = new Properties();
-		
-		props.put(key, value);
-		assertArrayEquals(Arrays.asList(value).toArray(new String[1]), props.getArray(key));
-	}
-	@Test
-	public void shouldReturnEqualArrayOnGetArrayWhenValidKey() {
-		String key = "key";
-		String[] values = {"v1", "v4", " ", UUID.randomUUID().toString()};
-		Properties props = new Properties();
-		
-		props.put(key, values);
-		assertArrayEquals(values, props.getArray(key));
-	}
-	@Test
-	public void shouldReturnNullOnGetArrayWhenInvalidKey() {
-		assertNull(new Properties().getArray("key"));
-	}
-	
-	@Test
 	public void shouldBeEmptyWhenInitializedEmpty() {
 		assertTrue(new Properties().isEmpty());
+	}
+	@Test
+	public void shouldNotBeEmptyWhenHasAtLeastOneProperty() {
+		Properties props = new Properties();
+		props.put("Key", "Val");
+		assertFalse(props.isEmpty());
 	}
 	
 	@Test
 	public void shouldEqualSizeWhenFillerDiffers() {
 		Properties 	p1 = randomize(new Properties(), generateProperties(4), generateComments(1), 5),
 								p2 = randomize(new Properties(), generateProperties(4), generateComments(10), 20);
+		
+		assertNotEquals(count(p1.comments()), count(p2.comments()));
 		assertEquals(p1.size(), p2.size());
+	}
+	private static int count(Iterable<?> iterable) {
+		int count = 0;
+		
+		Iterator<?> it = iterable.iterator();
+		while (it.hasNext()) {
+			it.next();
+			count++;
+		}
+		return count;
 	}
 	
 	@Test
