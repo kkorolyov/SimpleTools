@@ -66,15 +66,6 @@ public class Properties {
 	public Properties(Path defaults) throws IOException {
 		load(defaults);
 	}
-	/**
-	 * Constructs a collection of properties by parsing a properties file.
-	 * @param defaults path to file containing initial properties
-	 * @param key symmetric encryption key used to decrypt file contents before applying to this instance
-	 * @throws IOException if an I/O error occurs
-	 */
-	public Properties(Path defaults, UUID key) throws IOException {
-		load(defaults, key);
-	}
 	
 	/**
 	 * Retrieves the value of the property identified by {@code key}.
@@ -227,20 +218,9 @@ public class Properties {
 	 * @throws IOException if an I/O error occurs
 	 */
 	public void load(Path file) throws IOException {
-		load(file, null);
-	}
-	/**
-	 * Parses properties and filler from a file and applies them to this instance.
-	 * @param file path to properties file to read
-	 * @param key symmetric encryption key used to decrypt file contents before applying to this instance
-	 * @throws IOException if an I/O error occurs
-	 */
-	public void load(Path file, UUID key) throws IOException {
 		try (BufferedReader in = Files.newBufferedReader(file)) {
-			Encryptor encryptor = new Encryptor(key); 
-			
 			String line;
-			while ((line = encryptor.apply(in.readLine())) != null) {
+			while ((line = in.readLine()) != null) {
 				String[] splitLine = line.split("\\s*" + PROPERTY_DELIMETER + "\\s*");	// Trim whitespace around delimiter
 				
 				if (splitLine.length < 1)
@@ -263,24 +243,13 @@ public class Properties {
 	 * @throws IOException if an I/O error occurs
 	 */
 	public void save(Path file) throws IOException {
-		save(file, null);
-	}
-	/**
-	 * Writes all properties and filler to a file.
-	 * @param file path to properties file to write, created if it does not exist
-	 * @param key symmetric encryption key used to encrypt properties and filler before writing
-	 * @throws IOException if an I/O error occurs
-	 */
-	public void save(Path file, UUID key) throws IOException {
 		Path parent = file.getParent();
 		if (parent != null)
 			Files.createDirectories(parent);
 		
 		try (BufferedWriter out = Files.newBufferedWriter(file)) {
-			Encryptor encryptor = new Encryptor(key);
-			
 			for (Entry<String, String> prop : props.entrySet()) {
-				out.write(encryptor.apply(toString(prop)));
+				out.write(toString(prop));
 				out.newLine();
 			}
 		}
@@ -330,27 +299,5 @@ public class Properties {
 	}
 	private String toString(Entry<String, String> property) {
 		return isFiller(property.getKey()) ? property.getValue() : property.getKey() + PROPERTY_DELIMETER + property.getValue();
-	}
-	
-	private static class Encryptor {	// Used to retain key index between encryptions
-		private final UUID key;
-		private int index;
-		
-		Encryptor(UUID key) {
-			this.key = key;
-		}
-		
-		String apply(String string) {
-			if (string == null || key == null)
-				return string;
-			
-			byte[] 	stringBytes = string.getBytes(),
-							keyBytes = key.toString().getBytes();
-			
-			for (int i = 0; i < stringBytes.length; i++)
-				stringBytes[i] = (byte) (stringBytes[i] ^ keyBytes[index++ % keyBytes.length]);
-			
-			return new String(stringBytes);
-		}
 	}
 }
