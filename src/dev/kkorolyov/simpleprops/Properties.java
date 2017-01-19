@@ -44,37 +44,36 @@ public class Properties {
 	
 	private final Map<String, String> props = new LinkedHashMap<>();
 	private final Set<String> fillers = new HashSet<>();
-	private Path file;
-	private Properties defaults;
 	
 	/**
-	 * Constructs a new {@code Properties} instance residing solely in memory.
+	 * Constructs a new, empty collection of properties.
 	 */
 	public Properties() {
-		this(null);
+		// Nothing special
 	}
 	/**
-	 * Constructs a new {@code Properties} instance from a backing file.
-	 * @see #Properties(Path, Properties)
+	 * Constructs a collection of properties initialized to match {@code defaults}.
+	 * @param defaults initial properties
 	 */
-	public Properties(Path file) {
-		this(file, null);
+	public Properties(Properties defaults) {
+		put(defaults, true);
 	}
 	/**
-	 * Constructs a new {@code Properties} instance from both a backing file and default properties.
-	 * @param file backing file on filesystem
-	 * @param defaults default properties
-	 * @throws UncheckedIOException if an I/O error occurs
+	 * Constructs a collection of properties by parsing a properties file.
+	 * @param defaults path to file containing initial properties
+	 * @throws IOException if an I/O error occurs
 	 */
-	public Properties(Path file, Properties defaults) {
-		setFile(file);
-		setDefaults(defaults);
-		
-		try {
-			reload();
-		} catch (IOException e) {
-			throw new UncheckedIOException(e);
-		}
+	public Properties(Path defaults) throws IOException {
+		load(defaults);
+	}
+	/**
+	 * Constructs a collection of properties by parsing a properties file.
+	 * @param defaults path to file containing initial properties
+	 * @param key symmetric encryption key used to decrypt file contents before applying to this instance
+	 * @throws IOException if an I/O error occurs
+	 */
+	public Properties(Path defaults, UUID key) throws IOException {
+		load(defaults, key);
 	}
 	
 	/**
@@ -92,7 +91,7 @@ public class Properties {
 	 */
 	public String[] getArray(String key) {
 		String value = get(key);
-		return value == null ? null : value.replaceFirst("^\\[", "").replaceFirst("\\]$", "").split(",\\s*");	// Trim optional outer brackets and split on array delimiter
+		return value == null ? null : value.replaceFirst("^\\[", "").replaceFirst("\\]$", "").split(",\\s?");	// Trim optional outer brackets and split on array delimiter
 	}
 	
 	/** @return {@code true} if this object contains a property identified by {@code key} */
@@ -140,6 +139,30 @@ public class Properties {
 	 */
 	public String put(String key, String... values) {
 		return put(key, Arrays.toString(values));
+	}
+	/**
+	 * Copies all properties from another {@code Properties} instance to this instance.
+	 * If this instance is completely empty (no properties nor filler), all values from {@code other} are copied to this instance.
+	 * @param other instance providing properties
+	 * @param overwrite if {@code true}, properties found both in this instance and in {@code other}, will have their values overwritten by those in {@code other}
+	 * @return number of appended and overwritten properties
+	 */
+	public int put(Properties other, boolean overwrite) {
+		if (isEmpty()) {
+			props.putAll(other.props);
+			fillers.addAll(other.fillers);
+			
+			return size();
+		}
+		int counter = 0;
+		
+		for (Entry<String, String> prop : other.properties()) {
+			if (overwrite || !contains(prop.getKey())) {
+				put(prop.getKey(), prop.getValue());
+				counter++;
+			}
+		}
+		return counter;
 	}
 	
 	/**
@@ -199,23 +222,25 @@ public class Properties {
 	}
 	
 	/**
-	 * Loads all backing file properties and remaining default properties not found in the backing file.
-	 * If the backing file is {@code null} or does not exist, this method is equivalent to {@link #loadDefaults()}.
+	 * Parses properties and filler from a file and applies them to this instance.
+	 * @param file path to properties file to read
 	 * @throws IOException if an I/O error occurs
 	 */
-	public void reload() throws IOException {
-		clear();
-		
-		loadFile();
-		addRemainingDefaults();
+	public void load(Path file) throws IOException {
+		load(file, null);
 	}
-	private void loadFile() throws IOException {
-		if (file == null)
-			return;	// No file, no load
-		
-		try (BufferedReader fileReader = Files.newBufferedReader(file)) {
+	/**
+	 * Parses properties and filler from a file and applies them to this instance.
+	 * @param file path to properties file to read
+	 * @param key symmetric encryption key used to decrypt file contents before applying to this instance
+	 * @throws IOException if an I/O error occurs
+	 */
+	public void load(Path file, UUID key) throws IOException {
+		try (BufferedReader in = Files.newBufferedReader(file)) {
+			Encryptor encryptor = new Encryptor(key); 
+			
 			String line;
-			while ((line = format(fileReader.readLine())) != null) {
+			while ((line = encryptor.apply(in.readLine())) != null) {
 				String[] splitLine = line.split("\\s*" + PROPERTY_DELIMETER + "\\s*");	// Trim whitespace around delimiter
 				
 				if (splitLine.length < 1)
@@ -233,95 +258,41 @@ public class Properties {
 	}
 	
 	/**
-	 * Resets all properties to match defaults, if default properties are set.
-	 * @return {@code true} if this instance has default properties and successfully loaded them
-	 */
-	public boolean loadDefaults() {
-		if (defaults == null)
-			return false;
-		
-		for (String key : keys()) {
-			String defaultVal = defaults.get(key);
-			
-			if (defaultVal == null)
-				remove(key);
-			else
-				put(key, defaultVal);
-		}
-		addRemainingDefaults();
-		
-		return true;
-	}
-	private void addRemainingDefaults() {
-		if (defaults == null)
-			return;
-		
-		for (String key : defaults.keys()) {
-			if (!contains(key))
-				put(key, defaults.get(key));
-		}
-	}
-	
-	/**
-	 * Writes all current properties to the backing file.
-	 * This method does not attempt to create the path to the backing file if it does not exist.
-	 * @see #saveFile(boolean)
-	 */
-	public boolean saveFile() throws FileNotFoundException, IOException {
-		return saveFile(false);
-	}
-	/**
-	 * Writes all current properties to the backing file.
-	 * If there are no new properties to write, this method does nothing.
-	 * @param mkdirs if {@code true}, will create the path to the backing file if it does not exist
-	 * @throws FileNotFoundException  if the backing file cannot be accessed for some reason
+	 * Writes all properties and filler to a file.
+	 * @param file path to properties file to write, created if it does not exist
 	 * @throws IOException if an I/O error occurs
 	 */
-	public boolean saveFile(boolean mkdirs) throws FileNotFoundException, IOException {
-		if (file == null || toString().equals(buildFileProperties(file).toString()))
-			return false;
+	public void save(Path file) throws IOException {
+		save(file, null);
+	}
+	/**
+	 * Writes all properties and filler to a file.
+	 * @param file path to properties file to write, created if it does not exist
+	 * @param key symmetric encryption key used to encrypt properties and filler before writing
+	 * @throws IOException if an I/O error occurs
+	 */
+	public void save(Path file, UUID key) throws IOException {
+		Path parent = file.getParent();
+		if (parent != null)
+			Files.createDirectories(parent);
 		
-		if (mkdirs) {
-			Path parent = file.getParent();
-			if (parent != null)
-				Files.createDirectories(parent);
-		}
 		try (BufferedWriter out = Files.newBufferedWriter(file)) {
+			Encryptor encryptor = new Encryptor(key);
+			
 			for (Entry<String, String> prop : props.entrySet()) {
-				out.write(format(toString(prop)));
+				out.write(encryptor.apply(toString(prop)));
 				out.newLine();
 			}
 		}
-		return true;
-	}
-	protected Properties buildFileProperties(Path file) {
-		return new Properties(file);
 	}
 	
-	protected String format(String string) {
-		return string;
-	}
-	
-	private String toString(Entry<String, String> prop) {
-		return isFiller(prop.getKey()) ? prop.getValue() : prop.getKey() + PROPERTY_DELIMETER + prop.getValue();
-	}
-	
-	/** @return path to backing file */
-	public Path getFile() {
-		return file;
-	}
-	/** @param newFile new path to backing file */
-	public void setFile(Path newFile) {
-		file = newFile;
-	}
-	
-	/** @return default properties */
-	public Properties getDefaults() {
-		return defaults;
-	}
-	/** @param newDefaults new default properties */
-	public void setDefaults(Properties newDefaults) {		
-		defaults = newDefaults;
+	/**
+	 * Checks if two properties have identical contents in identical order.
+	 * @param other properties to check with
+	 * @return {@code true} if both properties are identical
+	 */
+	public boolean identical(Properties other) {
+		return this == other || toString().equals(other.toString());
 	}
 	
 	@Override
@@ -347,7 +318,7 @@ public class Properties {
 	 */
 	@Override
 	public String toString() {
-		StringBuilder toStringBuilder = new StringBuilder(getClass().getName() + "{");
+		StringBuilder toStringBuilder = new StringBuilder(getClass().getName() + " {");
 		
 		Iterator<Entry<String, String>> it = props.entrySet().iterator();
 		while (it.hasNext()) {
@@ -356,5 +327,30 @@ public class Properties {
 				toStringBuilder.append(", ");
 		}
 		return toStringBuilder.append("}").toString();
+	}
+	private String toString(Entry<String, String> property) {
+		return isFiller(property.getKey()) ? property.getValue() : property.getKey() + PROPERTY_DELIMETER + property.getValue();
+	}
+	
+	private static class Encryptor {	// Used to retain key index between encryptions
+		private final UUID key;
+		private int index;
+		
+		Encryptor(UUID key) {
+			this.key = key;
+		}
+		
+		String apply(String string) {
+			if (string == null || key == null)
+				return string;
+			
+			byte[] 	stringBytes = string.getBytes(),
+							keyBytes = key.toString().getBytes();
+			
+			for (int i = 0; i < stringBytes.length; i++)
+				stringBytes[i] = (byte) (stringBytes[i] ^ keyBytes[index++ % keyBytes.length]);
+			
+			return new String(stringBytes);
+		}
 	}
 }
