@@ -1,4 +1,4 @@
-// Copyright (c) 2016, Kirill Korolyov
+// Copyright (c) 2017, Kirill Korolyov
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
 /**
  * A collection of key-value pairs, comments, and blank lines which maintain original insertion order.
  */
-public class Properties {
+public final class Properties {
 	private static final String PROPERTY_DELIMETER = "=",
 															COMMENT_IDENTIFIER = "#";
 	
@@ -264,6 +264,10 @@ public class Properties {
 		return this == other || toString().equals(other.toString());
 	}
 	
+	/**
+	 * Compares this object to another for equality. To be equal, {@code obj} must be an instance of {@code Properties} and have a set of properties identical to this instance's set.
+	 * @return {@code true} if {@code obj} is a {@code Properties} instance and has identical properties to this instance, regardless of order
+	 */
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)

@@ -1,4 +1,4 @@
-// Copyright (c) 2016, Kirill Korolyov
+// Copyright (c) 2017, Kirill Korolyov
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without
@@ -43,27 +43,29 @@ import org.junit.Test;
 @SuppressWarnings("javadoc")
 public class PropertiesTest {
 	private static final boolean PRINT_RANDOMIZATION_RESULT = false;
-	private static final Map<String, String> properties = generateProperties(100);
-	private static final List<String> comments = generateComments(40);
-	private static final int BLANK_LINES = 10;
 	
 	private int fileCounter;
 	
 	@Test
 	public void shouldReturnKeysInInsertionOrder() {
-		assertIterablesEquals(properties.keySet(), randomize(new Properties()).keys());
+		Map<String, String> properties = generateProperties(100);
+		assertIterablesEquals(properties.keySet(), randomize(new Properties(), properties, generateComments(20), 14).keys());
 	}
 	@Test
 	public void shouldReturnPropertiesInInsertionOrder() {
-		assertIterablesEquals(properties.entrySet(), randomize(new Properties()).properties());
+		Map<String, String> properties = generateProperties(100);
+		assertIterablesEquals(properties.entrySet(), randomize(new Properties(), properties, generateComments(20), 14).properties());
 	}
 	@Test
 	public void shouldReturnCommentsInInsertionOrder() {
-		assertIterablesEquals(comments, randomize(new Properties()).comments());
+		List<String> comments = generateComments(40);
+		assertIterablesEquals(comments, randomize(new Properties(), generateProperties(4), comments, 7).comments());
 	}
 	
 	@Test
 	public void shouldMarkCommentsWhenPutUnmarked() {
+		Map<String, String> properties = generateProperties(100);
+		List<String> comments = generateComments(40);
 		assertIterablesEquals(comments, randomize(new Properties(), properties, comments.stream().map(s -> s.substring(1)).collect(Collectors.toList()), 0).comments());
 	}
 	
@@ -120,33 +122,21 @@ public class PropertiesTest {
 	
 	@Test
 	public void shouldEqualSizeWhenFillerDiffers() {
-		Properties 	p1 = randomize(new Properties(), properties, generateComments(1), 5),
-								p2 = randomize(new Properties(), properties, generateComments(10), 20);
+		Properties 	p1 = randomize(new Properties(), generateProperties(4), generateComments(1), 5),
+								p2 = randomize(new Properties(), generateProperties(4), generateComments(10), 20);
 		assertEquals(p1.size(), p2.size());
 	}
 	
 	@Test
 	public void shouldBeEmptyWhenCleared() {
-		Properties props = randomize(new Properties());
+		Properties props = randomize(new Properties(), generateProperties(34), generateComments(4), 17);
 		props.clear();
 		assertTrue(props.isEmpty());
 	}
 	
 	@Test
-	public void shouldIdenticalWhenLoadedAfterSave() throws IOException {
-		Properties 	original = randomize(new Properties()),
-								loaded = new Properties();
-		Path file = generateNewFile();
-		
-		original.save(file);
-		loaded.load(file);
-		
-		assertTrue(original.identical(loaded));
-		assertTrue(original.identical(new Properties(file)));
-	}
-	@Test
 	public void shouldEqualsWhenLoadedAfterSave() throws IOException {
-		Properties 	original = randomize(new Properties()),
+		Properties 	original = randomize(new Properties(), generateProperties(40), generateComments(16), 49),
 								loaded = new Properties();
 		Path file = generateNewFile();
 		
@@ -156,33 +146,45 @@ public class PropertiesTest {
 		assertEquals(original, loaded);
 		assertEquals(original, new Properties(file));
 	}
+	@Test
+	public void shouldIdenticalWhenLoadedAfterSave() throws IOException {
+		Properties 	original = randomize(new Properties(), generateProperties(40), generateComments(16), 49),
+								loaded = new Properties();
+		Path file = generateNewFile();
+		
+		original.save(file);
+		loaded.load(file);
+		
+		assertTrue(original.identical(loaded));
+		assertTrue(original.identical(new Properties(file)));
+	}
 	
 	@Test
 	public void shouldEqualsDefaultsWhenInitialized() {
-		Properties defaults = randomize(new Properties());
+		Properties defaults = randomize(new Properties(), generateProperties(14), generateComments(80), 46);
 		assertEquals(defaults, new Properties(defaults));
 	}
 	@Test
 	public void shouldIdenticalDefaultsWhenInitialized() {
-		Properties defaults = randomize(new Properties());
+		Properties defaults = randomize(new Properties(), generateProperties(14), generateComments(80), 46);
 		assertTrue(defaults.identical(new Properties(defaults)));
 	}
 	
 	@Test
 	public void shouldReflectiveEquals() {
-		Properties props = randomize(new Properties());
+		Properties props = randomize(new Properties(), generateProperties(80), generateComments(4), 8);
 		assertEquals(props, props);
 	}
 	@Test
 	public void shouldReflexiveEquals() {
-		Properties 	p1 = randomize(new Properties()),
+		Properties 	p1 = randomize(new Properties(), generateProperties(80), generateComments(4), 8),
 								p2 = new Properties(p1);
 		assertEquals(p1, p2);
 		assertEquals(p2, p1);
 	}
 	@Test
 	public void shouldTransitiveEquals() {
-		Properties	p1 = randomize(new Properties()),
+		Properties	p1 = randomize(new Properties(), generateProperties(80), generateComments(4), 8),
 								p2 = new Properties(p1),
 								p3 = new Properties(p2);
 		assertEquals(p1, p2);
@@ -192,7 +194,7 @@ public class PropertiesTest {
 	
 	@Test
 	public void shouldHashSameWhenEquals() {
-		Properties 	p1 = randomize(new Properties()),
+		Properties 	p1 = randomize(new Properties(), generateProperties(38), generateComments(1), 2),
 								p2 = new Properties(p1);
 		assertEquals(p1, p2);
 		assertEquals(p1.hashCode(), p2.hashCode());
@@ -200,21 +202,31 @@ public class PropertiesTest {
 	
 	@Test
 	public void shouldEqualsPermutation() {
-		Properties 	p1 = randomize(new Properties()),
-								p2 = randomize(new Properties());
+		Map<String, String> properties = generateProperties(400);
+		List<String> comments = generateComments(8);
+		int blanklines = 4;
+		
+		Properties 	p1 = randomize(new Properties(), properties, comments, blanklines),
+								p2 = randomize(new Properties(), properties, comments, blanklines);
 		assertEquals(p1, p2);
 		assertEquals(p2, p1);
 	}
 	@Test
 	public void shouldNotIdenticalPermutation() {
-		Properties	p1 = randomize(new Properties()),
-								p2 = randomize(new Properties());
+		Map<String, String> properties = generateProperties(400);
+		List<String> comments = generateComments(8);
+		int blanklines = 4;
+		
+		Properties 	p1 = randomize(new Properties(), properties, comments, blanklines),
+								p2 = randomize(new Properties(), properties, comments, blanklines);
 		assertFalse(p1.identical(p2));
 		assertFalse(p2.identical(p1));
 	}
 	
 	@Test
 	public void shouldEqualsWhenFillerDiffers() {
+		Map<String, String> properties = generateProperties(15);
+		
 		Properties 	p1 = randomize(new Properties(), properties, generateComments(1), 5),
 								p2 = randomize(new Properties(), properties, generateComments(10), 20);
 		assertEquals(p1, p2);
@@ -222,6 +234,8 @@ public class PropertiesTest {
 	}
 	@Test
 	public void shouldNotIdenticalWhenFillerDiffers() {
+		Map<String, String> properties = generateProperties(15);
+		
 		Properties 	p1 = randomize(new Properties(), properties, generateComments(1), 5),
 								p2 = randomize(new Properties(), properties, generateComments(10), 20);
 		assertFalse(p1.identical(p2));
@@ -237,9 +251,6 @@ public class PropertiesTest {
 		assertEquals(expectedIt.hasNext(), actualIt.hasNext());
 	}
 	
-	private static Properties randomize(Properties props) {
-		return randomize(props, properties, comments, BLANK_LINES);
-	}
 	private static Properties randomize(Properties props, Map<String, String> properties, Iterable<String> comments, int blankLines) {
 		Random rand = new Random();
 		
@@ -266,12 +277,12 @@ public class PropertiesTest {
 	
 	private static Map<String, String> generateProperties(int num) {
 		Map<String, String> properties = new LinkedHashMap<>();
-		IntStream.range(0, num).forEach(i -> properties.put("Key" + i, "Val" + i));
+		IntStream.range(0, num).forEach(i -> properties.put("Key-" + UUID.randomUUID().toString(), "Val-" + UUID.randomUUID().toString()));
 		
 		return properties;
 	}
 	private static List<String> generateComments(int num) {
-		return IntStream.range(0, num).mapToObj(i -> "#Comment" + i).collect(Collectors.toList());
+		return IntStream.range(0, num).mapToObj(i -> "#Comment-" + UUID.randomUUID()).collect(Collectors.toList());
 	}
 	
 	private Path generateNewFile() {
