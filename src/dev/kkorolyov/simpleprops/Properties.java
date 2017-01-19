@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
 /**
  * A collection of key-value pairs, comments, and blank lines which maintain original insertion order.
  */
-public final class Properties {
+public final class Properties implements Iterable<Entry<String, String>> {
 	private static final String PROPERTY_DELIMETER = "=",
 															COMMENT_IDENTIFIER = "#";
 	
@@ -85,14 +85,32 @@ public final class Properties {
 		return value == null ? null : value.replaceFirst("^\\[", "").replaceFirst("\\]$", "").split(",\\s?");	// Trim optional outer brackets and split on array delimiter
 	}
 	
-	/** @return {@code true} if this object contains a property identified by {@code key} */
+	/** 
+	 * @param key identifier of property to check existence of
+	 * @return {@code true} if this object contains a property identified by {@code key}
+	 */
 	public boolean contains(String key) {
 		return props.containsKey(key);
 	}
 	
-	/** @return all properties, in order */
-	public Iterable<Entry<String, String>> properties() {
-		return propertyList(false);
+	/** @return all property identifiers, in insertion order */
+	public Iterable<String> keys() {
+		return props.keySet().stream().filter(k -> !isFiller(k)).collect(Collectors.toList());
+	}
+	
+	/** @return all comments, in insertion order */
+	public Iterable<String> comments() {
+		return props.values().stream().filter(v -> isComment(v)).collect(Collectors.toList());
+	}
+	
+	/**
+	 * Returns an iterator over all properties in original insertion order.
+	 * The values of individual properties iterated over can be modified, though removing properties with {@link Iterator#remove()} has no effect.
+	 * @return iterator over properties, in insertion order
+	 */
+	@Override
+	public Iterator<Entry<String, String>> iterator() {
+		return propertyList(false).iterator();
 	}
 	private List<Entry<String, String>> propertyList(boolean sort) {
 		List<Entry<String, String>> list = props.entrySet().stream().filter(e -> !isFiller(e.getKey())).collect(Collectors.toList()); // Filters out comments, blank lines
@@ -101,16 +119,6 @@ public final class Properties {
 			list.sort((e1, e2) -> e1.getKey().compareTo(e2.getKey()));
 		
 		return list;
-	}
-	
-	/** @return all property identifiers, in order */
-	public Iterable<String> keys() {
-		return props.keySet().stream().filter(k -> !isFiller(k)).collect(Collectors.toList());
-	}
-	
-	/** @return all comments, in order */
-	public Iterable<String> comments() {
-		return props.values().stream().filter(v -> isComment(v)).collect(Collectors.toList());
 	}
 	
 	/**
@@ -147,7 +155,7 @@ public final class Properties {
 		}
 		int counter = 0;
 		
-		for (Entry<String, String> prop : other.properties()) {
+		for (Entry<String, String> prop : other) {
 			if (overwrite || !contains(prop.getKey())) {
 				put(prop.getKey(), prop.getValue());
 				counter++;
