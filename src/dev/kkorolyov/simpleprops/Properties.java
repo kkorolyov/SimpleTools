@@ -102,10 +102,15 @@ public class Properties {
 	
 	/** @return all properties, in order */
 	public Iterable<Entry<String, String>> properties() {
-		return propertyList();
+		return propertyList(false);
 	}
-	private List<Entry<String, String>> propertyList() {
-		return props.entrySet().stream().filter(e -> !isFiller(e.getKey())).collect(Collectors.toList()); // Filters out comments, blank lines
+	private List<Entry<String, String>> propertyList(boolean sort) {
+		List<Entry<String, String>> list = props.entrySet().stream().filter(e -> !isFiller(e.getKey())).collect(Collectors.toList()); // Filters out comments, blank lines
+		
+		if (sort)
+			list.sort((e1, e2) -> e1.getKey().compareTo(e2.getKey()));
+		
+		return list;
 	}
 	
 	/** @return all property identifiers, in order */
@@ -151,20 +156,20 @@ public class Properties {
 	 * @param comment comment to append, is ensured to begin with a comment identifier
 	 */
 	public void putComment(String comment) {
-		putWithFiller(isComment(comment) ? comment : (COMMENT_IDENTIFIER + comment));
+		put(isComment(comment) ? comment : (COMMENT_IDENTIFIER + comment));
 	}
-	private static boolean isComment(String key) {
-		return key != null && key.length() > 0 && key.substring(0, 1).equals(COMMENT_IDENTIFIER);
+	private static boolean isComment(String value) {
+		return value != null && value.length() > 0 && value.substring(0, 1).equals(COMMENT_IDENTIFIER);
 	}
 	
 	/**
 	 * Appends a blank line.
 	 */
 	public void putBlankLine() {
-		putWithFiller("");
+		put("");
 	}
 	
-	private void putWithFiller(String value) {
+	private void put(String value) {
 		String filler;
 		while (fillers.contains((filler = UUID.randomUUID().toString())));	// Randomize until unique filler
 		
@@ -182,7 +187,7 @@ public class Properties {
 	
 	/** @return number of properties */
 	public int size() {
-		return propertyList().size();
+		return propertyList(false).size();
 	}
 	
 	/**
@@ -191,19 +196,6 @@ public class Properties {
 	public void clear() {
 		props.clear();
 		fillers.clear();
-	}
-	
-	/** @return {@code true} if this object has a backing file and matches it exactly */
-	public boolean matchesFile() {
-		boolean matches = false;
-		
-		if (file != null)
-			matches = this.equals(buildFileProperties(file));
-		
-		return matches;
-	}
-	protected Properties buildFileProperties(Path file) {
-		return new Properties(file);
 	}
 	
 	/**
@@ -222,11 +214,9 @@ public class Properties {
 			return;	// No file, no load
 		
 		try (BufferedReader fileReader = Files.newBufferedReader(file)) {
-			String readBlock = format(readToBlock(fileReader));
-			String[] splitBlock = readBlock.split(System.lineSeparator());
-			
-			for (String nextLine : splitBlock) {
-				String[] splitLine = nextLine.split("\\s*" + PROPERTY_DELIMETER + "\\s*");	// Trim whitespace around delimiter
+			String line;
+			while ((line = format(fileReader.readLine())) != null) {
+				String[] splitLine = line.split("\\s*" + PROPERTY_DELIMETER + "\\s*");	// Trim whitespace around delimiter
 				
 				if (splitLine.length < 1)
 					putBlankLine();
@@ -241,25 +231,6 @@ public class Properties {
 			}
 		}
 	}
-	private void addRemainingDefaults() {
-		if (defaults == null)
-			return;
-		
-		for (String key : defaults.keys()) {
-			if (!contains(key))
-				put(key, defaults.get(key));
-		}
-	}
-	
-	private static String readToBlock(BufferedReader reader) throws IOException {
-		StringBuilder blockBuilder = new StringBuilder();
-		
-		int nextInt;
-		while ((nextInt = reader.read()) >= 0)
-			blockBuilder.append((char) nextInt);
-		
-		return blockBuilder.toString();
-	}
 	
 	/**
 	 * Resets all properties to match defaults, if default properties are set.
@@ -270,14 +241,25 @@ public class Properties {
 			return false;
 		
 		for (String key : keys()) {
-			if (defaults.contains(key))
-				put(key, defaults.get(key));
-			else
+			String defaultVal = defaults.get(key);
+			
+			if (defaultVal == null)
 				remove(key);
+			else
+				put(key, defaultVal);
 		}
 		addRemainingDefaults();
 		
-		return false;
+		return true;
+	}
+	private void addRemainingDefaults() {
+		if (defaults == null)
+			return;
+		
+		for (String key : defaults.keys()) {
+			if (!contains(key))
+				put(key, defaults.get(key));
+		}
 	}
 	
 	/**
@@ -285,19 +267,19 @@ public class Properties {
 	 * This method does not attempt to create the path to the backing file if it does not exist.
 	 * @see #saveFile(boolean)
 	 */
-	public void saveFile() throws FileNotFoundException, IOException {
-		saveFile(false);
+	public boolean saveFile() throws FileNotFoundException, IOException {
+		return saveFile(false);
 	}
 	/**
 	 * Writes all current properties to the backing file.
 	 * If there are no new properties to write, this method does nothing.
 	 * @param mkdirs if {@code true}, will create the path to the backing file if it does not exist
-	 * @throws IOException if an I/O error occurs
 	 * @throws FileNotFoundException  if the backing file cannot be accessed for some reason
+	 * @throws IOException if an I/O error occurs
 	 */
-	public void saveFile(boolean mkdirs) throws FileNotFoundException, IOException {
-		if (matchesFile())
-			return;
+	public boolean saveFile(boolean mkdirs) throws FileNotFoundException, IOException {
+		if (file == null || toString().equals(buildFileProperties(file).toString()))
+			return false;
 		
 		if (mkdirs) {
 			Path parent = file.getParent();
@@ -305,12 +287,23 @@ public class Properties {
 				Files.createDirectories(parent);
 		}
 		try (BufferedWriter out = Files.newBufferedWriter(file)) {
-			out.write(format(toString()));
+			for (Entry<String, String> prop : props.entrySet()) {
+				out.write(format(toString(prop)));
+				out.newLine();
+			}
 		}
+		return true;
+	}
+	protected Properties buildFileProperties(Path file) {
+		return new Properties(file);
 	}
 	
 	protected String format(String string) {
 		return string;
+	}
+	
+	private String toString(Entry<String, String> prop) {
+		return isFiller(prop.getKey()) ? prop.getValue() : prop.getKey() + PROPERTY_DELIMETER + prop.getValue();
 	}
 	
 	/** @return path to backing file */
@@ -336,36 +329,32 @@ public class Properties {
 		if (this == obj)
 			return true;
 		
-		if (obj == null || getClass() != obj.getClass())
+		if (obj == null || !(obj instanceof Properties))
 			return false;
 		
 		Properties o = (Properties) obj;
 		
-		return Objects.equals(properties(), o.properties())
-				&& Objects.equals(comments(), o.comments())
-				&& Objects.equals(file, o.file)
-				&& Objects.equals(defaults, o.defaults);
+		return Objects.equals(propertyList(true), o.propertyList(true));
 	}
 	@Override
 	public int hashCode() {
-		return Objects.hash(props, file, defaults);
+		return Objects.hash(propertyList(true));
 	}
 	
 	/**
-	 * Returns a formatted string of current properties and comments as they would be printed to a file.
+	 * Returns a string containing all properties, comments, and blank lines in original insertion order.
+	 * @return string consisting of properties and filler in original insertion order
 	 */
 	@Override
 	public String toString() {
-		StringBuilder toStringBuilder = new StringBuilder();
+		StringBuilder toStringBuilder = new StringBuilder(getClass().getName() + "{");
 		
-		for (Entry<String, String> prop : props.entrySet()) {
-			if (isFiller(prop.getKey()))	// Comment or blank line
-				toStringBuilder.append(prop.getValue());
-			else
-				toStringBuilder.append(prop.getKey()).append(PROPERTY_DELIMETER).append(prop.getValue());
-			
-			toStringBuilder.append(System.lineSeparator());
+		Iterator<Entry<String, String>> it = props.entrySet().iterator();
+		while (it.hasNext()) {
+			toStringBuilder.append(toString(it.next()));
+			if (it.hasNext())
+				toStringBuilder.append(", ");
 		}
-		return toStringBuilder.toString();
+		return toStringBuilder.append("}").toString();
 	}
 }
