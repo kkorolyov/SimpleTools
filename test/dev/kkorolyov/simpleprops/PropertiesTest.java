@@ -30,320 +30,253 @@ package dev.kkorolyov.simpleprops;
 
 import static org.junit.Assert.*;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Random;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.junit.Test;
 
 @SuppressWarnings("javadoc")
 public class PropertiesTest {
-	private static final int ITERATIONS = Byte.MAX_VALUE;
-	private static final String COMMENT = "#";
-	private static final String BASE_FILENAME = "TestPropFile";
-	private static int testFilesCounter = 0;
-	private static final Random rand = new Random();
+	private static final boolean PRINT_RANDOMIZATION_RESULT = false;
+	private static final Map<String, String> properties = generateProperties(100);
+	private static final List<String> comments = generateComments(40);
+	private static final int BLANK_LINES = 10;
+	
+	private int fileCounter;
 	
 	@Test
-	public void testPut_Contains_Get_Remove() throws IOException {
-		Properties props = new Properties();
-		
-		assertEquals(0, props.size());
-		
-		String 	keyBase = "PutKey",
-						valueBase = "PutValue";
-		
-		for (int i = 0; i < ITERATIONS; i++) {
-			String 	key = keyBase + i,
-							value = valueBase + i;
-			props.put(key, value);
-			
-			assertEquals(i + 1, props.size());
-			
-			for (int j = i; j >= 0; j--) {
-				assertTrue(props.contains(key));
-				assertEquals(value, props.get(key));
-			}
-		}
-		for (int i = props.size() - 1; i >= 0; i--) {
-			assertEquals(valueBase + i, props.remove(keyBase + i));
-			assertEquals(i, props.size());
-		}
+	public void shouldReturnKeysInInsertionOrder() {
+		assertIterablesEquals(properties.keySet(), randomize(new Properties()).keys());
+	}
+	@Test
+	public void shouldReturnPropertiesInInsertionOrder() {
+		assertIterablesEquals(properties.entrySet(), randomize(new Properties()).properties());
+	}
+	@Test
+	public void shouldReturnCommentsInInsertionOrder() {
+		assertIterablesEquals(comments, randomize(new Properties()).comments());
 	}
 	
 	@Test
-	public void testGetArray() throws IOException {
-		File file = buildFile();
-		Properties props = new Properties(file);
-		
-		assertEquals(0, props.size());
-		
-		String key = "PutArrayKey";
-		String[] value = {"A", "   BB", "C CC"};
+	public void shouldMarkCommentsWhenPutUnmarked() {
+		assertIterablesEquals(comments, randomize(new Properties(), properties, comments.stream().map(s -> s.substring(1)).collect(Collectors.toList()), 0).comments());
+	}
+	
+	@Test
+	public void shouldReturnEqualOnGetWhenValidKey() {
+		String 	key = "key",
+						value = "val";
+		Properties props = new Properties();
 		
 		props.put(key, value);
+		assertEquals(value, props.get(key));
+	}
+	@Test
+	public void shouldReturnEqualArrayStringOnGetWhenValidKey() {
+		String key = "key";
+		String[] values = {"v1", "v4", " ", UUID.randomUUID().toString()};
+		Properties props = new Properties();
 		
-		assertEquals(Arrays.toString(value), props.get(key));
-		assertArrayEquals(value, props.getArray(key));
-		
-		props.saveFile();
-		props.reload();
-		
-		assertEquals(Arrays.toString(value), props.get(key));
-		assertArrayEquals(value, props.getArray(key));
+		props.put(key, values);
+		assertEquals(Arrays.toString(values), props.get(key));
+	}
+	@Test
+	public void shouldReturnNullOnGetWhenInvalidKey() {
+		assertNull(new Properties().get("key"));
 	}
 	
 	@Test
-	public void testPutComment() {
+	public void shouldReturnEqualAsArrayOnGetArrayWhenValidKey() {
+		String 	key = "key",
+						value = "val";
 		Properties props = new Properties();
-		StringBuilder expectedCommentsBuilder = new StringBuilder();
-
-		String commentBase = "PutCommentComment";
 		
-		for (int i = 0; i < ITERATIONS; i++) {
-			String comment = commentBase + i;
-			
-			props.putComment(comment);
-			expectedCommentsBuilder.append(COMMENT).append(comment).append(System.lineSeparator());
-			
-			assertEquals(0, props.size());
-			assertTrue(props.isEmpty());
-		}
-		assertEquals(expectedCommentsBuilder.toString(), props.toString());
+		props.put(key, value);
+		assertArrayEquals(Arrays.asList(value).toArray(new String[1]), props.getArray(key));
+	}
+	@Test
+	public void shouldReturnEqualArrayOnGetArrayWhenValidKey() {
+		String key = "key";
+		String[] values = {"v1", "v4", " ", UUID.randomUUID().toString()};
+		Properties props = new Properties();
+		
+		props.put(key, values);
+		assertArrayEquals(values, props.getArray(key));
+	}
+	@Test
+	public void shouldReturnNullOnGetArrayWhenInvalidKey() {
+		assertNull(new Properties().getArray("key"));
 	}
 	
 	@Test
-	public void testKeys() {
-		Properties props = new Properties();
-		List<String> expectedKeys = new LinkedList<>();
-		
-		String 	keyBase = "KeysKey",
-						valueBase = "KeysValue",
-						commentBase = "KeysComment";
-		
-		for (int i = 0; i < ITERATIONS; i++) {
-			String 	key = keyBase + i,
-							value = valueBase + i,
-							comment = commentBase;
-			
-			props.put(key, value);
-			props.putComment(comment);
-			
-			expectedKeys.add(key);
-		}
-		String[] 	expectedKeysArray = expectedKeys.toArray(new String[expectedKeys.size()]),
-							actualKeysArray = props.keys().toArray(new String[props.keys().size()]);
-		assertArrayEquals(expectedKeysArray, actualKeysArray);
+	public void shouldBeEmptyWhenInitializedEmpty() {
+		assertTrue(new Properties().isEmpty());
 	}
 	
 	@Test
-	public void testClear_Size_IsEmpty() {
-		Properties props = new Properties();
-		
-		String 	keyBase = "ClearKey",
-						valueBase = "ClearValue",
-						commentBase = "ClearComment";
-		
-		for (int i = 0; i < ITERATIONS; i++) {
-			String 	key = keyBase + i,
-							value = valueBase + i,
-							comment = commentBase + i;
-			
-			props.put(key, value);
-			props.putComment(comment);
-			
-			assertEquals(i + 1, props.size());
-			assertFalse(props.isEmpty());
-		}
+	public void shouldEqualSizeWhenFillerDiffers() {
+		Properties 	p1 = randomize(new Properties(), properties, generateComments(1), 5),
+								p2 = randomize(new Properties(), properties, generateComments(10), 20);
+		assertEquals(p1.size(), p2.size());
+	}
+	
+	@Test
+	public void shouldBeEmptyWhenCleared() {
+		Properties props = randomize(new Properties());
 		props.clear();
-		assertEquals(0, props.size());
 		assertTrue(props.isEmpty());
 	}
 	
 	@Test
-	public void testMatchesFile() throws FileNotFoundException, IOException {
-		File file = buildFile();
-		Properties props = new Properties(file);
+	public void shouldIdenticalWhenLoadedAfterSave() throws IOException {
+		Properties 	original = randomize(new Properties()),
+								loaded = new Properties();
+		Path file = generateNewFile();
 		
-		props.saveFile();
-		assertTrue(props.matchesFile());
+		original.save(file);
+		loaded.load(file);
 		
-		String	key = "MatchesFileKey",
-						value = "MatchesFileValue",
-						comment = "MatchesFileComment";
+		assertTrue(original.identical(loaded));
+		assertTrue(original.identical(new Properties(file)));
+	}
+	@Test
+	public void shouldEqualsWhenLoadedAfterSave() throws IOException {
+		Properties 	original = randomize(new Properties()),
+								loaded = new Properties();
+		Path file = generateNewFile();
 		
-		props.put(key, value);
-		assertFalse(props.matchesFile());
+		original.save(file);
+		loaded.load(file);
 		
-		props.clear();
-		assertTrue(props.matchesFile());
-		
-		props.putComment(comment);
-		assertFalse(props.matchesFile());
-		
-		props.clear();
-		assertTrue(props.matchesFile());
-		
-		props.put(key, value);
-		props.putComment(comment);
-		props.saveFile();
-		assertTrue(props.matchesFile());
-		
-		props.clear();
-		assertFalse(props.matchesFile());
+		assertEquals(original, loaded);
+		assertEquals(original, new Properties(file));
 	}
 	
 	@Test
-	public void testSaveFileMkdirs() throws IOException {	// TODO Meh
-		File 	fileDir = new File("testDir/"),
-					file = new File("testDir/testFileInDir");
-		fileDir.deleteOnExit();
-		file.deleteOnExit();
-		
-		Properties props = new Properties(file);
-		
-		props.putComment("Comment");
-		try {
-			props.saveFile();
-			
-			fail("Failed to throw FileNotFoundException");
-		} catch (FileNotFoundException e) {
-			// Success
-		}
-		try {
-			props.saveFile(true);
-		} catch (FileNotFoundException e) {
-			fail("Failed to mkdirs");
-		}
+	public void shouldEqualsDefaultsWhenInitialized() {
+		Properties defaults = randomize(new Properties());
+		assertEquals(defaults, new Properties(defaults));
+	}
+	@Test
+	public void shouldIdenticalDefaultsWhenInitialized() {
+		Properties defaults = randomize(new Properties());
+		assertTrue(defaults.identical(new Properties(defaults)));
 	}
 	
 	@Test
-	public void testReload() throws IOException {
-		File file = buildFile();
-		Properties 	defaults = buildDefaults(1),
-								props = new Properties(file, defaults);
-		
-		String 	key = defaults.keys().iterator().next(),
-						value = "ReloadNewValue",
-						comment = "ReloadComment";
-		
-		String 	expectedDefaultValue = defaults.get(key),
-						expectedNewValue = value;
-		
-		assertEquals(defaults.size(), props.size());
-		assertEquals(expectedDefaultValue, props.get(key));
-		
-		props.put(key, value);
-		props.putComment(comment);
-		assertEquals(defaults.size(), props.size());
-		assertFalse(props.get(key).equals(expectedDefaultValue));
-		assertEquals(expectedNewValue, props.get(key));
-		
-		props.reload();
-		assertEquals(defaults.size(), props.size());
-		assertFalse(props.get(key).equals(expectedNewValue));
-		assertEquals(expectedDefaultValue, props.get(key));
-		
-		props.put(key, value);
-		props.putComment(comment);
-		props.saveFile();
-		props.reload();
-		assertEquals(defaults.size(), props.size());
-		assertFalse(props.get(key).equals(expectedDefaultValue));
-		assertEquals(expectedNewValue, props.get(key));
+	public void shouldReflectiveEquals() {
+		Properties props = randomize(new Properties());
+		assertEquals(props, props);
+	}
+	@Test
+	public void shouldReflexiveEquals() {
+		Properties 	p1 = randomize(new Properties()),
+								p2 = new Properties(p1);
+		assertEquals(p1, p2);
+		assertEquals(p2, p1);
+	}
+	@Test
+	public void shouldTransitiveEquals() {
+		Properties	p1 = randomize(new Properties()),
+								p2 = new Properties(p1),
+								p3 = new Properties(p2);
+		assertEquals(p1, p2);
+		assertEquals(p2, p3);
+		assertEquals(p1, p3);
 	}
 	
 	@Test
-	public void testLoadDefaults() throws IOException {
-		Properties 	defaults = buildDefaults(),
-								props = new Properties();
-		
-		props.setDefaults(defaults);
-		props.loadDefaults();
-		
-		assertEquals(defaults.size(), props.size());
-		assertEquals(defaults.keys(), props.keys());
-		for (String key : defaults.keys())
-			assertEquals(defaults.get(key), props.get(key));
-		
-		String 	keyBase = "LoadDefaultsNewKey",
-						valueBase = "LoadDefaultsNewValue",
-						commentBase = "LoadDefaultsComment";
-		
-		for (int i = 0; i < ITERATIONS; i++) {
-			String 	key = keyBase + i,
-							value = valueBase + i,
-							comment = commentBase + i;
-			
-			props.put(key, value);
-			props.putComment(comment);
-			assertFalse(props.equals(defaults));
-		}
-		props.loadDefaults();
-		assertEquals(defaults.size(), props.size());
-		assertEquals(defaults.keys(), props.keys());
-		for (String key : defaults.keys())
-			assertEquals(defaults.get(key), props.get(key));
+	public void shouldHashSameWhenEquals() {
+		Properties 	p1 = randomize(new Properties()),
+								p2 = new Properties(p1);
+		assertEquals(p1, p2);
+		assertEquals(p1.hashCode(), p2.hashCode());
 	}
 	
 	@Test
-	public void testToString() throws FileNotFoundException, IOException {
-		File file = buildFile();
-		Properties props = new Properties(file);
-		
-		System.out.println("Clean EncryptedProperties:");
-		System.out.println(props.toString());
-		
-		String 	keyBase = "ToStringKey",
-						valueBase = "ToStringValue",
-						commentBase = "ToStringComment";
-		
-		for (int i = 0; i < 10; i++) {
-			String 	key = keyBase + i,
-							value = valueBase + i,
-							comment = commentBase + i;
-			
-			props.put(key, value);
-			props.putComment(comment);
-		}
-		System.out.println("Properties with " + props.size() + " properties:");
-		System.out.println(props.toString());
-		
-		props.saveFile();
-		props.reload();
-		
-		System.out.println("Properties with " + props.size() + " properties post-reload():");
-		System.out.println(props.toString());
+	public void shouldEqualsPermutation() {
+		Properties 	p1 = randomize(new Properties()),
+								p2 = randomize(new Properties());
+		assertEquals(p1, p2);
+		assertEquals(p2, p1);
 	}
-
-	private static Properties buildDefaults() {
-		return buildDefaults(rand.nextInt(ITERATIONS + 1));
-	}
-	private static Properties buildDefaults(int numProperties) {
-		Properties defaults = new Properties();
-		
-		String 	keyBase = "DefaultKey",
-						valueBase = "DefaultValue";
-		for (int i = 0; i < numProperties; i++) {
-			String 	key = keyBase + i,
-							value = valueBase + i;
-			
-			defaults.put(key, value);
-		}
-		return defaults;
+	@Test
+	public void shouldNotIdenticalPermutation() {
+		Properties	p1 = randomize(new Properties()),
+								p2 = randomize(new Properties());
+		assertFalse(p1.identical(p2));
+		assertFalse(p2.identical(p1));
 	}
 	
-	private static File buildFile() {
-		String filename = BASE_FILENAME + testFilesCounter++;
-		File file = new File(filename);
-		file.deleteOnExit();
+	@Test
+	public void shouldEqualsWhenFillerDiffers() {
+		Properties 	p1 = randomize(new Properties(), properties, generateComments(1), 5),
+								p2 = randomize(new Properties(), properties, generateComments(10), 20);
+		assertEquals(p1, p2);
+		assertEquals(p2, p1);
+	}
+	@Test
+	public void shouldNotIdenticalWhenFillerDiffers() {
+		Properties 	p1 = randomize(new Properties(), properties, generateComments(1), 5),
+								p2 = randomize(new Properties(), properties, generateComments(10), 20);
+		assertFalse(p1.identical(p2));
+		assertFalse(p2.identical(p1));
+	}
+	
+	private static <T> void assertIterablesEquals(Iterable<T> expected, Iterable<T> actual) {
+		Iterator<T> expectedIt = expected.iterator(),
+								actualIt = actual.iterator();
 		
-		System.out.println("Created testFile: " + file.toString());
+		while (expectedIt.hasNext())
+			assertEquals(expectedIt.next(), actualIt.next());
+		assertEquals(expectedIt.hasNext(), actualIt.hasNext());
+	}
+	
+	private static Properties randomize(Properties props) {
+		return randomize(props, properties, comments, BLANK_LINES);
+	}
+	private static Properties randomize(Properties props, Map<String, String> properties, Iterable<String> comments, int blankLines) {
+		Random rand = new Random();
 		
+		Iterator<Entry<String, String>> propertiesIt = properties.entrySet().iterator();
+		Iterator<String> commentIt = comments.iterator();
+		int blankLineCounter = blankLines;
+		
+		while (propertiesIt.hasNext() || commentIt.hasNext() || blankLineCounter > 0) {
+			if (rand.nextBoolean()) {
+				if (propertiesIt.hasNext() && rand.nextBoolean()) {
+					Entry<String, String> property = propertiesIt.next();
+					props.put(property.getKey(), property.getValue());
+				}
+				else if (commentIt.hasNext())
+					props.putComment(commentIt.next());
+			}
+			else if (blankLineCounter-- > 0)
+				props.putBlankLine();
+		}
+		if (PRINT_RANDOMIZATION_RESULT)
+			System.out.println("Randomized " + props.getClass().getSimpleName() + ":" + System.lineSeparator() + props);
+		return props;
+	}
+	
+	private static Map<String, String> generateProperties(int num) {
+		Map<String, String> properties = new LinkedHashMap<>();
+		IntStream.range(0, num).forEach(i -> properties.put("Key" + i, "Val" + i));
+		
+		return properties;
+	}
+	private static List<String> generateComments(int num) {
+		return IntStream.range(0, num).mapToObj(i -> "#Comment" + i).collect(Collectors.toList());
+	}
+	
+	private Path generateNewFile() {
+		Path file = Paths.get("PropertiesTestFile" + fileCounter++);
+		file.toFile().deleteOnExit();
 		return file;
 	}
 }
