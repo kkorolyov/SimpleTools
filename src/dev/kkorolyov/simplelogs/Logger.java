@@ -1,9 +1,9 @@
 package dev.kkorolyov.simplelogs;
 
-import java.io.File;
 import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -46,9 +46,9 @@ public class Logger {
 	 * @param logProps logging properties file
 	 * @return {@code true} if property application successful
 	 */
-	public static boolean applyProps(File logProps) {
+	public static boolean applyProps(Path logProps) {
 		try {
-			Class.forName("dev.kkorolyov.simplelogs.PropsApplier").getDeclaredMethod("apply", File.class).invoke(null, logProps);
+			Class.forName("dev.kkorolyov.simplelogs.PropsApplier").getDeclaredMethod("apply", Path.class).invoke(null, logProps);
 		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException | ClassNotFoundException e) {
 			e.printStackTrace();
 			return false;

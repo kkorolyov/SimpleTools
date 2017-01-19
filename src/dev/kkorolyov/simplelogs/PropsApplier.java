@@ -1,6 +1,7 @@
 package dev.kkorolyov.simplelogs;
 
 import java.io.*;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -16,7 +17,7 @@ class PropsApplier {
 		knownStreams.put("ERR", System.err);
 	}
 	
-	static void apply(File logPropsFile) throws FileNotFoundException {
+	static void apply(Path logPropsFile) throws IOException {
 		Properties props = new Properties(logPropsFile);
 		
 		for (String key : props.keys()) {
@@ -32,8 +33,15 @@ class PropsApplier {
 				
 				if (stream != null)
 					logger.addWriter(new PrintWriter(stream));
-				else
-					logger.addWriter(new PrintWriter(new File(args[i])));
+				else {
+					File file = new File(args[i]);
+					if (!file.isFile()) {	// Check if exists
+						File parent = file.getParentFile();
+						if (parent != null && !parent.exists())
+							parent.mkdirs();
+					}
+					logger.addWriter(new PrintWriter(file));
+				}
 			}
 		}
 	}

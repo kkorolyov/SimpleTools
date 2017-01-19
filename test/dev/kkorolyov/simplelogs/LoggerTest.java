@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import org.hamcrest.core.IsEqual;
@@ -219,7 +220,7 @@ public class LoggerTest {
 		assertFalse(logger.isEnabled());
 	}
 	
-	private File buildLoggerPropsStub() throws FileNotFoundException {
+	private Path buildLoggerPropsStub() throws FileNotFoundException {
 		File props = new File("testProps");
 		props.deleteOnExit();
 		
@@ -230,7 +231,7 @@ public class LoggerTest {
 			writer.print(",OUT,ERR");
 			writer.flush();
 		}
-		return props;
+		return props.toPath();
 	}
 	
 	private static PrintWriter buildWriterStub(Level loggerLevel, Level messageLevel) {
