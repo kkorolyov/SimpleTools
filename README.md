@@ -4,32 +4,22 @@ A simple Java API for writing and reading application properties to and from fil
 ## Examples
 #### Reading a property:
 ```java
-File file = new File("Config.ini");
-Properties props = new Properties(file);
+Properties props = new Properties();
+props.load(Paths.get("Config.ini"));
 
-String value1 = props.get("Key1");
+String value = props.get("Key");
 ```
 #### Writing and saving a property:
 ```java
-File file = new File("Config.ini");
-Properties props = new Properties(file);
+Properties props = new Properties();
 
-props.put("Key2", "Value2");
-props.saveFile();
+props.put("Key", "Value");
+props.save(Paths.get("Config.ini"));
 ```
-### Reverting to defaults:
+### Initializing from pre-existing properties:
 ```java
-File file = new File("Config.ini");
-Properties defaults = new Properties(); // No backing file
-defaults.put("DefaultKey", "DefaultValue");
-
-Properties props = new Properties(file, defaults);
-
-props.put("DefaultKey", "ChangedValue");
-props.get("DefaultKey");        // "ChangedValue"
-
-props.loadDefaults();
-props.get("DefaultKey");        // "DefaultValue"
+Properties fromFile = new Properties(Paths.get("Config.ini"));
+Properties fromProperties = new Properties(fromFile);
 ```
 
 ## Installation
@@ -37,8 +27,8 @@ props.get("DefaultKey");        // "DefaultValue"
 * Add either the source or bundled .jar file to your project's classpath.
 
 ## Usage
-All publicly-used methods are documented in the source code.  
-Basic API usage follows the examples noted [above](#examples).
+API is documented more thoroughly in Javadoc.
+Basic usage follows the examples noted [above](#examples).
 
 ## License
 BSD-new license.  
