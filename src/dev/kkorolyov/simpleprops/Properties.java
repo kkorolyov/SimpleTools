@@ -236,8 +236,10 @@ public final class Properties implements Iterable<Entry<String, String>> {
 				else if (splitLine.length < 2) {
 					if (splitLine[0].length() < 1)
 						putBlankLine();
-					else
+					else if (isComment(splitLine[0]))
 						putComment(splitLine[0]);
+					else
+						put(splitLine[0], "");
 				}
 				else
 					put(splitLine[0], splitLine[1]);
