@@ -32,7 +32,7 @@ public class Logger {
 	/**
 	 * Applies logging properties defined in a file.
 	 * Properties should be defined in the format:
-	 * <p>{@code LOGGER=LEVEL, WRITERS...}<p>
+	 * <p>{@code LOGGER=LEVEL, WRITERS...}</p>
 	 * <ul>
 	 * <li>{@code LOGGER} - name of a logger</li>
 	 * <li>{@code LEVEL} - the logger's logging level</li>
@@ -202,6 +202,8 @@ public class Logger {
 	/**
 	 * Attempts to log a lazy message.
 	 * The message creation function is executed only if the resultant message would be logged.
+	 * @param message message to log
+	 * @param level message's level of granularity
 	 * @see #log(String, Level)
 	 */
 	public void log(LazyMessage message, Level level) {
