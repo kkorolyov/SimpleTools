@@ -147,7 +147,7 @@ public final class Properties implements Iterable<Entry<String, String>> {
 	 * @return number of appended and overwritten properties
 	 */
 	public int put(Properties other, boolean overwrite) {
-		if (isEmpty()) {
+		if (props.isEmpty()) {
 			props.putAll(other.props);
 			fillers.addAll(other.fillers);
 			
