@@ -27,7 +27,7 @@ Properties fromProperties = new Properties(fromFile);
 * Add either the source or bundled .jar file to your project's classpath.
 
 ## Usage
-API is documented more thoroughly in Javadoc.
+API is documented more thoroughly in the [Javadoc](https://kkorolyov.github.io/SimpleProps).
 Basic usage follows the examples noted [above](#examples).
 
 ## License
