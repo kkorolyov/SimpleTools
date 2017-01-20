@@ -82,6 +82,8 @@ Each property in this file is defined as:
 	* OUT - `System.out` stream
 	* ERR - `System.err` stream
 
+Further documentation found [here](https://kkorolyov.github.io/SimpleLogs).
+
 ## License
 BSD-new license.  
 More detail found [here](LICENSE).
