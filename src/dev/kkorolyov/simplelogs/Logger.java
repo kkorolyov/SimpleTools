@@ -154,7 +154,7 @@ public class Logger {
 	 * @param level level to log at
 	 */
 	public void exception(Exception e, Level level) {
-		if (!enabled || !isLoggable(level) || writers.size() <= 0)	// Avoid needlessly formatting exception stack
+		if ((!enabled || !isLoggable(level) || writers.size() <= 0) && parent == null)	// Avoid needlessly formatting exception stack
 			return;
 		
 		log(formatException(e), level);
@@ -234,7 +234,7 @@ public class Logger {
 	 * @see #log(String, Level)
 	 */
 	public void log(LazyMessage message, Level level) {
-		if (!enabled || !isLoggable(level) || writers.size() <= 0)
+		if ((!enabled || !isLoggable(level) || writers.size() <= 0) && parent == null)
 			return;
 		
 		log(message.execute(), level);
@@ -246,7 +246,7 @@ public class Logger {
 	 * @param level message's level of granularity
 	 */
 	public void log(String message, Level level) {
-		if (!enabled || !isLoggable(level) || writers.size() <= 0)	// Avoid needlessly finding calling method
+		if ((!enabled || !isLoggable(level) || writers.size() <= 0) && parent == null)	// Avoid needlessly finding calling method
 			return;
 		
 		StackTraceElement caller = findCallingMethod(Thread.currentThread().getStackTrace());
@@ -255,12 +255,11 @@ public class Logger {
 		log(formattedMessage, level, caller);
 	}
 	private void log(String message, Level level, StackTraceElement originalCaller) {
-		if (!enabled || !isLoggable(level) || writers.size() <= 0)
-			return;
-		
-		for (PrintWriter writer : writers) {
-			writer.println(message);
-			writer.flush();
+		if (enabled && isLoggable(level) && writers.size() > 0) {
+			for (PrintWriter writer : writers) {
+				writer.println(message);
+				writer.flush();
+			}
 		}
 		if (parent != null)
 			parent.log(message, level, originalCaller);
