@@ -43,12 +43,39 @@ public class Logger {
 	 * <li>OUT - {@code System.out}</li>
 	 * <li>ERR - {@code System.err}</li>
 	 * </ul>
-	 * @param logProps logging properties file
+	 * @param logProps path to logging properties file
 	 * @return {@code true} if property application successful
 	 */
 	public static boolean applyProps(Path logProps) {
 		try {
 			Class.forName("dev.kkorolyov.simplelogs.PropsApplier").getDeclaredMethod("apply", Path.class).invoke(null, logProps);
+		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException | ClassNotFoundException e) {
+			e.printStackTrace();
+			return false;
+		}
+		return true;
+	}
+	/**
+	 * Applies logging properties defined in a file.
+	 * Properties should be defined in the format:
+	 * <p>{@code LOGGER=LEVEL, WRITERS...}</p>
+	 * <ul>
+	 * <li>{@code LOGGER} - name of a logger</li>
+	 * <li>{@code LEVEL} - the logger's logging level</li>
+	 * <li>{@code WRITERS} - list of comma-delimited files or streams the logger logs to</li>
+	 * </ul>
+	 * <p>Valid output streams:</p>
+	 * <ul>
+	 * <li>OUT - {@code System.out}</li>
+	 * <li>ERR - {@code System.err}</li>
+	 * </ul>
+	 * @param logProps path to logging properties file
+	 * @param root path prefixing all log files defined in the logging properties file
+	 * @return {@code true} if property application successful
+	 */
+	public static boolean applyProps(Path logProps, Path root) {
+		try {
+			Class.forName("dev.kkorolyov.simplelogs.PropsApplier").getDeclaredMethod("apply", Path.class, Path.class).invoke(null, logProps, root);
 		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException | ClassNotFoundException e) {
 			e.printStackTrace();
 			return false;
