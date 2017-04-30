@@ -8,8 +8,12 @@ description = """Lightweight Java logging library with minimal configuration"""
 
 repositories {
 	jcenter()
+	maven {
+		url 'https://jitpack.io'
+	}
 }
 dependencies {
+	compileOnly 'com.github.kkorolyov:SimpleProps:master-SNAPSHOT'
 	testCompile 'org.spockframework:spock-core:1.1-groovy-2.4-rc-4'
 }
 
