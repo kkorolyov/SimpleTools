@@ -1,0 +1,29 @@
+plugins {
+	id 'java'
+}
+
+group = 'dev.kkorolyov'
+version = gitVersion(projectDir)
+description = """Lightweight Java argument parsing library"""
+
+repositories {
+	jcenter()
+}
+dependencies {
+	testCompile 'org.spockframework:spock-core:1.1-groovy-2.4-rc-4'
+}
+
+jar {
+	baseName = baseName.replaceAll(/(?<=[a-z])([A-Z])(?=[a-z])/, '-$1').toLowerCase()
+}
+
+def gitVersion(dir) {
+	def stdout = new ByteArrayOutputStream()
+	exec {
+		workingDir = dir
+		commandLine 'git', 'describe'
+		standardOutput = stdout
+	}
+	stdout = stdout.toString().trim()
+	return stdout.replaceAll(/-.*/, "+${stdout.find('(?<=-)[0-9]+')}")
+}
