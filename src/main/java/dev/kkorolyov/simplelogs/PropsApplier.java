@@ -15,9 +15,6 @@ import dev.kkorolyov.simpleprops.Properties;
 
 class PropsApplier {
 	static void apply(Path logProps) throws IOException {
-		apply(logProps, Paths.get(""));
-	}
-	static void apply(Path logProps, Path root) throws IOException {
 		Map<String, OutputStream> knownStreams = generateKnownStreams();
 		Properties props = new Properties(logProps);
 		

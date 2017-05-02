@@ -8,9 +8,6 @@ import java.util.Map;
  * Provides preset formatters.
  */
 public class Formatters {
-	/** Identifies the formatter which formats messages as {@code {instant} {invoker} {level}: {message}} */
-	public static final String SIMPLE = "dev.kkorolyov.simplelogs.format.Simple";
-
 	private static final Map<String, Formatter> formatters = new HashMap<>();
 
 	/** @return formatter which formats messages as {@code {instant} {invoker} {level}: {message}} */
