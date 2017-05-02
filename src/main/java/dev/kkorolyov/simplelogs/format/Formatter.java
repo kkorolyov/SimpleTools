@@ -11,10 +11,11 @@ import dev.kkorolyov.simplelogs.Logger.Level;
 public interface Formatter {
 	/**
 	 * Formats a message.
-	 * @param level message level
 	 * @param instant instant at which message is logged
-	 * @param message message
+	 * @param invoker element invoking logger
+	 * @param level message level
+	 * @param message logged message
 	 * @return formatted message
 	 */
-	String execute(Level level, Instant instant, String message);
+	String format(Instant instant, StackTraceElement invoker, Level level, String message);
 }

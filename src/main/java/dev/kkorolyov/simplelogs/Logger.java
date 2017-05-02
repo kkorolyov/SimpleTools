@@ -4,30 +4,24 @@ import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.*;
+
+import dev.kkorolyov.simplelogs.append.Appender;
+import dev.kkorolyov.simplelogs.format.Formatter;
 
 /**
  * Simple logging interface for multiple levels.
  */
 public class Logger {
-	private static final char COARSE_TIME_SEPARATOR = '.',
-														COARSE_TO_FINE_TIME_SEPARATOR = '-',
-														FINE_TIME_SEPARATOR = ':',
-														FINE_TO_FINER_TIME_SEPARATOR = '.',
-														FIELD_SEPARATOR = ' ',
-														INVOKER_SEPARATOR = '-';
-	private static final String MESSAGE_SEPARATOR = ": ";
-	private static final String HIERARCHY_DELIMETER = ".";
-	
-	private static final Level DEFAULT_LEVEL = Level.INFO;
-	private static final PrintWriter[] DEFAULT_WRITERS = {new PrintWriter(System.err)};
-	
 	private static final Map<String, Logger> instances = new HashMap<>();
 	
-	private Level level;
-	private Set<PrintWriter> writers = new HashSet<>();
-	private boolean enabled;
 	private Logger parent;
+
+	private Level level;
+
+	private Formatter formatter;
+	private Set<Appender> appenders = new HashSet<>();
 	
 	/**
 	 * Applies logging properties defined in a file.
@@ -92,7 +86,7 @@ public class Logger {
 	public static Logger getLogger(String name) {
 		Logger instance = instances.get(name);
 		
-		return instance != null ? instance : getLogger(name, DEFAULT_LEVEL, DEFAULT_WRITERS);
+		return instance != null ? instance : getLogger(name, Level.INFO, new PrintWriter(System.err));
 	}
 	/**
 	 * Retrieves the logger of the specified name, if it exists, and sets its level and writers to the specified parameters.
@@ -126,7 +120,7 @@ public class Logger {
 		String loggerPath = name;
 		int nextLevel;
 		
-		while ((nextLevel = loggerPath.lastIndexOf(HIERARCHY_DELIMETER)) >= 0) {
+		while ((nextLevel = loggerPath.lastIndexOf('.')) >= 0) {
 			loggerPath = loggerPath.substring(0, nextLevel);
 			
 			if (instances.containsKey(loggerPath))
@@ -250,21 +244,14 @@ public class Logger {
 			return;
 		
 		StackTraceElement caller = findCallingMethod(Thread.currentThread().getStackTrace());
-		String formattedMessage = formatMessage(message, level, caller);
-		
-		log(formattedMessage, level, caller);
-	}
-	private void log(String message, Level level, StackTraceElement originalCaller) {
-		if (enabled && isLoggable(level) && writers.size() > 0) {
-			for (PrintWriter writer : writers) {
-				writer.println(message);
-				writer.flush();
-			}
+		String formattedMessage = formatter.format(Instant.now(), caller, level, message);
+
+		if (isLoggable(level)) {
+			for (Appender appender : appenders) appender.append(level, message);
 		}
-		if (parent != null)
-			parent.log(message, level, originalCaller);
+		if (parent != null) parent.log(message, level);
 	}
-	
+
 	private static StackTraceElement findCallingMethod(StackTraceElement[] stackTrace) {
 		StackTraceElement callingMethod = null;
 
@@ -282,36 +269,8 @@ public class Logger {
 		}
 		return callingMethod;
 	}
-	private static String formatMessage(String message, Level messageLevel, StackTraceElement caller) {
-		StringBuilder messageBuilder = new StringBuilder();
-		
-		Calendar currentTime = Calendar.getInstance();
-		int month = currentTime.get(Calendar.MONTH) + 1,
-				day = currentTime.get(Calendar.DAY_OF_MONTH),
-				year = currentTime.get(Calendar.YEAR),
-				hour = currentTime.get(Calendar.HOUR_OF_DAY),
-				minute = currentTime.get(Calendar.MINUTE),
-				second = currentTime.get(Calendar.SECOND),
-				millisecond = currentTime.get(Calendar.MILLISECOND);
-		String 	sMonth = String.valueOf(month),
-						sDay = String.valueOf(day),
-						sYear = String.valueOf(year),
-						sHour = (hour < 10) ? '0' + String.valueOf(hour) : String.valueOf(hour),
-						sMinute = (minute < 10) ? '0' + String.valueOf(minute) : String.valueOf(minute),
-						sSecond = (second < 10) ? '0' + String.valueOf(second) : String.valueOf(second),
-						sMillisecond = String.valueOf(millisecond);
-						
-		messageBuilder.append(sMonth + COARSE_TIME_SEPARATOR + sDay + COARSE_TIME_SEPARATOR + sYear + COARSE_TO_FINE_TIME_SEPARATOR +
-													sHour + FINE_TIME_SEPARATOR + sMinute + FINE_TIME_SEPARATOR + sSecond + FINE_TO_FINER_TIME_SEPARATOR +
-													sMillisecond + FIELD_SEPARATOR);
-		messageBuilder.append(caller.getClassName() + INVOKER_SEPARATOR + caller.getMethodName());
-		messageBuilder.append(System.lineSeparator());
-		messageBuilder.append(messageLevel + MESSAGE_SEPARATOR + message);
-		
-		return messageBuilder.toString();
-	}
-	
-	/** 
+
+	/**
 	 * Checks if a message of a specified level would be logged by this logger.
 	 * @param level logging level to test
 	 * @return {@code true} if a message of the specified level would be logged by this logger

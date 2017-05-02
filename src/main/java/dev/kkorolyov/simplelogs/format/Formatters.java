@@ -1,0 +1,28 @@
+package dev.kkorolyov.simplelogs.format;
+
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * Provides preset formatters.
+ */
+public class Formatters {
+	/** Identifies the formatter which formats messages as {@code {instant} {invoker} {level}: {message}} */
+	public static final String SIMPLE = "dev.kkorolyov.simplelogs.format.Simple";
+
+	private static final Map<String, Formatter> formatters = new HashMap<>();
+
+	/** @return formatter which formats messages as {@code {instant} {invoker} {level}: {message}} */
+	public static Formatter simple() {
+		return formatters.computeIfAbsent("simple", k -> (instant, invoker, level, message) -> {
+			String sInstant = DateTimeFormatter.ofPattern("yyyy.mm.dd-HH:mm:ss:SSS").format(instant);
+			String sInvokerClass = invoker.getClassName();
+			String sInvokerMethod = invoker.getMethodName();
+
+			return sInstant + " " + sInvokerClass + "#" + sInvokerMethod +
+						 System.lineSeparator() +
+						 level + ": " + message;
+		});
+	}
+}
