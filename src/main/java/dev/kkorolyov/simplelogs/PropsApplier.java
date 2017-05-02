@@ -10,7 +10,6 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
-import dev.kkorolyov.simplelogs.Logger.Level;
 import dev.kkorolyov.simpleprops.Properties;
 
 class PropsApplier {

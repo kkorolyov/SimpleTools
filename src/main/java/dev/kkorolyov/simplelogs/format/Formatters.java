@@ -4,6 +4,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
+import dev.kkorolyov.simplelogs.Level;
+
 /**
  * Provides preset formatters.
  */
@@ -19,7 +21,7 @@ public class Formatters {
 
 			return sInstant + " " + sInvokerClass + "#" + sInvokerMethod +
 						 System.lineSeparator() +
-						 level + ": " + message;
+						 Level.toString(level) + ": " + message;
 		});
 	}
 }

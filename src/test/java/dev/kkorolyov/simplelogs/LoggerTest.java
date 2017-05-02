@@ -14,8 +14,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
-import dev.kkorolyov.simplelogs.Logger.Level;
-
 @RunWith(Parameterized.class)
 @SuppressWarnings("javadoc")
 public class LoggerTest {

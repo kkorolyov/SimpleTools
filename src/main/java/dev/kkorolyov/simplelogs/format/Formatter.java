@@ -2,8 +2,6 @@ package dev.kkorolyov.simplelogs.format;
 
 import java.time.Instant;
 
-import dev.kkorolyov.simplelogs.Logger.Level;
-
 /**
  * Formats log messages.
  */
@@ -17,5 +15,5 @@ public interface Formatter {
 	 * @param message logged message
 	 * @return formatted message
 	 */
-	String format(Instant instant, StackTraceElement invoker, Level level, String message);
+	String format(Instant instant, StackTraceElement invoker, int level, String message);
 }
