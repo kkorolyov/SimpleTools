@@ -1,7 +1,6 @@
 package dev.kkorolyov.simplelogs;
 
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.*;
@@ -56,7 +55,6 @@ public class Logger {
 	 * @return logger associated with the fully-qualified name of the class calling this method
 	 */
 	public static Logger getLogger() {
-		System.out.println(findInvoker().getClassName() + "#" + findInvoker().getMethodName());
 		return getLogger(findInvoker().getClassName());
 	}
 
@@ -118,23 +116,12 @@ public class Logger {
 	}
 
 	private static StackTraceElement findInvoker() {
-		StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-		System.out.println(Arrays.toString(stackTrace));
-		StackTraceElement callingMethod = null;
+		StackTraceElement[] stackTrace = new Throwable().getStackTrace();
 
 		for (int i = 2; i < stackTrace.length; i++) {
-			callingMethod = stackTrace[i];
-			boolean callingMethodFound = true;
-			for (Method classMethod : Logger.class.getDeclaredMethods()) {
-				if (stackTrace[i].getMethodName().equals(classMethod.getName())) {
-					callingMethodFound = false;	// Search until called by a method outside this class
-					break;
-				}
-			}
-			if (callingMethodFound)
-				break;
+			if (!stackTrace[i].getClassName().equals(Logger.class.getName())) return stackTrace[i];	// Return latest non-Logger invoker
 		}
-		return callingMethod;
+		throw new IllegalStateException("Not invoked from outside of Logger class");	// Should not happen
 	}
 
 	private Logger(int level, Formatter formatter, Appender... appenders) {
