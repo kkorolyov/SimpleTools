@@ -18,7 +18,7 @@ dependencies {
 }
 
 jar {
-	baseName = baseName.replaceAll(/(?<=[a-z])([A-Z])(?=[a-z])/, '-$1').toLowerCase()
+	baseName = baseName.replaceAll(/[a-z]([A-Z])[a-z]/, '-$1').toLowerCase()
 }
 
 def gitVersion(dir) {
