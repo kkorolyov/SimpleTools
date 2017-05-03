@@ -1,7 +1,9 @@
 package dev.kkorolyov.simplelogs.format;
 
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import dev.kkorolyov.simplelogs.Level;
@@ -15,7 +17,10 @@ public class Formatters {
 	/** @return formatter which formats messages as {@code {instant} {invoker} {level}: {message}} */
 	public static Formatter simple() {
 		return formatters.computeIfAbsent("simple", k -> (instant, invoker, level, message) -> {
-			String sInstant = DateTimeFormatter.ofPattern("yyyy.mm.dd-HH:mm:ss:SSS").format(instant);
+			String sInstant = DateTimeFormatter.ofPattern("yyyy.mm.dd-HH:mm:ss:SSS")
+																				 .withLocale(Locale.US)
+																				 .withZone(ZoneId.systemDefault())
+																				 .format(instant);
 			String sInvokerClass = invoker.getClassName();
 			String sInvokerMethod = invoker.getMethodName();
 

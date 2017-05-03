@@ -1,10 +1,10 @@
 package dev.kkorolyov.simplelogs;
 
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.*;
-import java.util.regex.Pattern;
 
 import dev.kkorolyov.simplelogs.append.Appender;
 import dev.kkorolyov.simplelogs.append.Appenders;
@@ -56,7 +56,8 @@ public class Logger {
 	 * @return logger associated with the fully-qualified name of the class calling this method
 	 */
 	public static Logger getLogger() {
-		return getLogger(findCaller().getClassName());
+		System.out.println(findInvoker().getClassName() + "#" + findInvoker().getMethodName());
+		return getLogger(findInvoker().getClassName());
 	}
 
 	/**
@@ -79,7 +80,7 @@ public class Logger {
 	 * @return logger associated with the fully-qualified name of the class calling this method
 	 */
 	public static Logger getLogger(int level, Formatter formatter, Appender... appenders) {
-		return getLogger(findCaller().getClassName(), level, formatter, appenders);
+		return getLogger(findInvoker().getClassName(), level, formatter, appenders);
 	}
 
 	/**
@@ -94,7 +95,8 @@ public class Logger {
 		Logger instance = instances.get(name);
 
 		if (instance == null) {
-			register(name, new Logger(level, formatter, appenders));
+			instance = new Logger(level, formatter, appenders);
+			register(name, instance);
 		} else {
 			instance.setLevel(level);
 			instance.setFormatter(formatter);
@@ -109,14 +111,30 @@ public class Logger {
 						 .forEach(entry -> logger.parents.add(entry.getValue()));
 
 		instances.entrySet().parallelStream()
-						 .filter(entry -> entry.getKey().matches(name + "\\.+"))	// Add this logger as parent to all child loggers
+						 .filter(entry -> entry.getKey().contains(name))	// Add this logger as parent to all child loggers
 						 .forEach(entry -> entry.getValue().parents.add(logger));
 
 		instances.put(name, logger);
 	}
 
-	private static StackTraceElement findCaller() {
-		return Thread.currentThread().getStackTrace()[2];
+	private static StackTraceElement findInvoker() {
+		StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+		System.out.println(Arrays.toString(stackTrace));
+		StackTraceElement callingMethod = null;
+
+		for (int i = 2; i < stackTrace.length; i++) {
+			callingMethod = stackTrace[i];
+			boolean callingMethodFound = true;
+			for (Method classMethod : Logger.class.getDeclaredMethods()) {
+				if (stackTrace[i].getMethodName().equals(classMethod.getName())) {
+					callingMethodFound = false;	// Search until called by a method outside this class
+					break;
+				}
+			}
+			if (callingMethodFound)
+				break;
+		}
+		return callingMethod;
 	}
 
 	private Logger(int level, Formatter formatter, Appender... appenders) {
@@ -126,11 +144,47 @@ public class Logger {
 	}
 
 	/**
+	 * Logs a message at the {@code SEVERE} level.
+	 * @param message message to log, with '{}' denoting injection points for each arg in {@code args}
+	 * @param args arguments which are lazily resolved to their string representations and injected into {@code message} at logging time
+	 */
+	public void severe(String message, Object... args) {
+		log(Level.SEVERE, message, args);
+	}
+
+	/**
+	 * Logs a message at the {@code WARNING} level.
+	 * @param message message to log, with '{}' denoting injection points for each arg in {@code args}
+	 * @param args arguments which are lazily resolved to their string representations and injected into {@code message} at logging time
+	 */
+	public void warning(String message, Object... args) {
+		log(Level.WARNING, message, args);
+	}
+
+	/**
+	 * Logs a message at the {@code INFO} level.
+	 * @param message message to log, with '{}' denoting injection points for each arg in {@code args}
+	 * @param args arguments which are lazily resolved to their string representations and injected into {@code message} at logging time
+	 */
+	public void info(String message, Object... args) {
+		log(Level.INFO, message, args);
+	}
+
+	/**
+	 * Logs a message at the {@code DEBUG} level.
+	 * @param message message to log, with '{}' denoting injection points for each arg in {@code args}
+	 * @param args arguments which are lazily resolved to their string representations and injected into {@code message} at logging time
+	 */
+	public void debug(String message, Object... args) {
+		log(Level.DEBUG, message, args);
+	}
+
+	/**
 	 * Logs an exception at the {@code SEVERE} level.
 	 * @param e exception to log
 	 */
-	public void exception(Exception e) {
-		exception(e, Level.SEVERE);
+	public void exception(Throwable e) {
+		exception(Level.SEVERE, e);
 	}
 
 	/**
@@ -138,102 +192,49 @@ public class Logger {
 	 * @param e exception to log
 	 * @param level level to log at
 	 */
-	public void exception(Exception e, Level level) {
-		if ((!enabled || !isLoggable(level) || writers.size() <= 0) && parent == null)  // Avoid needlessly formatting exception stack
-			return;
-
-		log(formatException(e), level);
-	}
-
-	private static String formatException(Exception e) {
-		StringBuilder messageBuilder = new StringBuilder(e.toString());
-
-		for (StackTraceElement element : e.getStackTrace()) {
-			messageBuilder.append(System.lineSeparator() + "\tat " + element.toString());
+	public void exception(int level, Throwable e) {
+		if (willLog(level)) {  // Avoid needlessly formatting exception stack
+			log(level, formatException(e));
 		}
-		return messageBuilder.toString();
 	}
+	private static String formatException(Throwable e) {
+		StringJoiner joiner = new StringJoiner(System.lineSeparator() + "\tat ", e.toString(), "");
 
-	/**
-	 * Logs a lazy message at the {@code SEVERE} level.
-	 * @param message message to log
-	 */
-	public void severe(LazyParam message) {
-		log(message, Level.SEVERE);
-	}
+		for (StackTraceElement element : e.getStackTrace()) joiner.add(element.toString());
 
-	/**
-	 * Logs a lazy message at the {@code WARNING} level.
-	 * @param message message to log
-	 */
-	public void warning(LazyParam message) {
-		log(message, Level.WARNING);
-	}
-
-	/**
-	 * Logs a lazy message at the {@code INFO} level.
-	 * @param message message to log
-	 */
-	public void info(LazyParam message) {
-		log(message, Level.INFO);
-	}
-
-	/**
-	 * Logs a lazy message at the {@code DEBUG} level.
-	 * @param message message to log
-	 */
-	public void debug(LazyParam message) {
-		log(message, Level.DEBUG);
-	}
-
-	/**
-	 * Logs a message at the {@code SEVERE} level.
-	 * @param message message to log
-	 */
-	public void severe(String message) {
-		log(message, Level.SEVERE);
-	}
-
-	/**
-	 * Logs a message at the {@code WARNING} level.
-	 * @param message message to log
-	 */
-	public void warning(String message) {
-		log(message, Level.WARNING);
-	}
-
-	/**
-	 * Logs a message at the {@code INFO} level.
-	 * @param message message to log
-	 */
-	public void info(String message) {
-		log(message, Level.INFO);
-	}
-
-	/**
-	 * Logs a message at the {@code DEBUG} level.
-	 * @param message message to log
-	 */
-	public void debug(String message) {
-		log(message, Level.DEBUG);
+		return joiner.toString();
 	}
 
 	/**
 	 * Attempts to log a message.
-	 * If {@code level} is finer than this logger's current granularity level or this logger does not have a valid writer, the message is not logged.
+	 * The message is logged only if its level is {@code <=} this logger's level and this logger has at least 1 appender.
 	 * @param level granularity to log at
-	 * @param message message to log
+	 * @param message message to log, with '{}' denoting injection points for each arg in {@code args}
+	 * @param args arguments which are lazily resolved to their string representations and injected into {@code message} at logging time
 	 */
-	public void log(int level, String message) {
-		if ((!isLoggable(level) || !hasAppenders()) && parent == null)  // Avoid needlessly finding calling method
-			return;
+	public void log(int level, String message, Object... args) {
+		if (willLog(level)) {
+			String formattedMessage = formatter.format(Instant.now(), findInvoker(), level, resolve(message, args));
 
-		String formattedMessage = formatter.format(Instant.now(), findCaller(), level, message);
-
-		if (isLoggable(level)) {
-			for (Appender appender : appenders) appender.append(level, message);
+			append(level, formattedMessage);
+			for (Logger parent : parents) append(level, formattedMessage);
 		}
-		if (parent != null) parent.log(message, level);
+	}
+	private boolean willLog(int level) {
+		return isLoggable(level) && (!appenders.isEmpty() || !parents.isEmpty());
+	}
+
+	private String resolve(String message, Object... args) {
+		String result = message;
+
+		if (args != null) {
+			for (Object arg : args) result = result.replaceFirst("\\{}", arg.toString());
+		}
+		return result;
+	}
+
+	private void append(int level, String message) {
+		for (Appender appender : appenders) appender.append(level, message);
 	}
 
 	/**
@@ -266,13 +267,15 @@ public class Logger {
 		this.formatter = formatter;
 	}
 
-	private boolean hasAppenders() {
-		return appenders.size() > 0;
+	/** @param toAdd appender to add */
+	public void addAppender(Appender toAdd) {
+		appenders.add(toAdd);
 	}
-
-	/**
-	 * @param appenders new appenders; if {@code null} simply clears all existing appenders
-	 */
+	/** @param toRemove appender to remove */
+	public void removeAppender(Appender toRemove) {
+		appenders.remove(toRemove);
+	}
+	/** @param appenders new appenders; if {@code null}, clears existing appenders */
 	public void setAppenders(Appender... appenders) {
 		this.appenders.clear();
 
