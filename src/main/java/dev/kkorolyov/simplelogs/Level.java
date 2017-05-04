@@ -13,6 +13,10 @@ public final class Level {
 
 	private Level() {}
 
+	/**
+	 * @param level level as an {@code int}
+	 * @return most appropriate String representation of {@code level}
+	 */
 	public static String toString(int level) {
 		switch (level) {
 			case OFF:
@@ -29,6 +33,28 @@ public final class Level {
 				return "ALL";
 			default:
 				return String.valueOf(level);
+		}
+	}
+	/**
+	 * @param level level as a {@code String}
+	 * @return most appropriate {@code int} representation of {@code level}
+	 */
+	public static int fromString(String level) {
+		switch (level.toUpperCase()) {
+			case "OFF":
+				return OFF;
+			case "SEVERE":
+				return SEVERE;
+			case "WARNING":
+				return WARNING;
+			case "INFO":
+				return INFO;
+			case "DEBUG":
+				return DEBUG;
+			case "ALL":
+				return ALL;
+			default:
+				return INFO;
 		}
 	}
 }

@@ -1,51 +1,58 @@
 package dev.kkorolyov.simplelogs;
 
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
+import dev.kkorolyov.simplelogs.append.Appender;
+import dev.kkorolyov.simplelogs.append.Appenders;
+import dev.kkorolyov.simplelogs.format.Formatter;
+import dev.kkorolyov.simplelogs.format.Formatters;
 import dev.kkorolyov.simpleprops.Properties;
 
 class PropsApplier {
 	static void apply(Path logProps) throws IOException {
-		Map<String, OutputStream> knownStreams = generateKnownStreams();
 		Properties props = new Properties(logProps);
 		
 		for (String key : props.keys()) {
-			Logger logger = Logger.getLogger(key);
-			logger.setWriters((PrintWriter[]) null);
-			
 			String[] args = props.getArray(key);
-			if (args.length > 0)
-				logger.setLevel(Level.valueOf(args[0]));
-			
-			for (int i = 1; i < args.length; i++) {
-				OutputStream stream = knownStreams.get(args[i].toUpperCase(Locale.ENGLISH));	// Check if stream
-				
-				if (stream != null)
-					logger.addWriter(new PrintWriter(stream));
-				else {
-					Path 	file = Paths.get(args[i]),
-								parent = file.getParent();
-					if (parent != null)
-						Files.createDirectories(parent);
-					
-					logger.addWriter(new PrintWriter(file.toFile()));
-				}
-			}
+
+			String name = key;
+			int level = resolveLevel(args);
+			Formatter formatter = resolveFormatter(args);
+			Appender[] appenders = resolveAppenders(args, level);
+
+			Logger.getLogger(name, level, formatter, appenders);
 		}
 	}
-	private static Map<String, OutputStream> generateKnownStreams() {
-		Map<String, OutputStream> knownStreams = new HashMap<>();
-		knownStreams.put("OUT", System.out);
-		knownStreams.put("ERR", System.err);
-		
-		return knownStreams;
+	private static int resolveLevel(String[] args) {
+		return Level.fromString(args[0]);
+	}
+	private static Formatter resolveFormatter(String[] args) {
+		return Formatters.simple();	// TODO Actual work
+	}
+	private static Appender[] resolveAppenders(String[] args, int loggerLevel) throws IOException {
+		List<Appender> results = new ArrayList<>();
+
+		for (int i = 1; i < args.length; i++) {
+			switch (args[i].toUpperCase()) {
+				case "ERR":
+					results.add(Appenders.err(loggerLevel));	// TODO Parse custom thresholds
+					break;
+				case "OUT":
+					results.add(Appenders.out(loggerLevel));
+					break;
+				default:
+					Path file = Paths.get(args[i]);
+					Path parent = file.getParent();
+					if (parent != null) Files.createDirectories(parent);
+
+					results.add(Appenders.file(file, loggerLevel));
+			}
+		}
+		return results.toArray(new Appender[results.size()]);
 	}
 }
