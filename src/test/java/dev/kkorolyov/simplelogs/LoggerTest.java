@@ -108,7 +108,7 @@ public class LoggerTest {
 	@Test
 	public void testLogLazy() {
 		for (Level messageLevel : Level.values()) {
-			Logger logger = Logger.getLogger("test.log", loggerLevel, buildWriterStub(loggerLevel, messageLevel));
+			Logger logger = Logger.getLogger("test.logger", loggerLevel, buildWriterStub(loggerLevel, messageLevel));
 			logger.log(() -> "", messageLevel);
 		}
 	}
@@ -136,7 +136,7 @@ public class LoggerTest {
 	@Test
 	public void testLog() {
 		for (Level messageLevel : Level.values()) {
-			Logger logger = Logger.getLogger("test.log", loggerLevel, buildWriterStub(loggerLevel, messageLevel));
+			Logger logger = Logger.getLogger("test.logger", loggerLevel, buildWriterStub(loggerLevel, messageLevel));
 			logger.log("", messageLevel);
 		}
 	}

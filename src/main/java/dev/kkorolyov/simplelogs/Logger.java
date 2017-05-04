@@ -4,6 +4,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.*;
+import java.util.function.Supplier;
 
 import dev.kkorolyov.simplelogs.append.Appender;
 import dev.kkorolyov.simplelogs.append.Appenders;
@@ -167,16 +168,16 @@ public class Logger {
 	}
 
 	/**
-	 * Logs an exception at the {@code SEVERE} level.
-	 * @param e exception to log
+	 * Logs a {@link Throwable} at the {@code SEVERE} level.
+	 * @param e throwable to log
 	 */
 	public void exception(Throwable e) {
 		exception(Level.SEVERE, e);
 	}
 
 	/**
-	 * Logs an exception at a specified logging level.
-	 * @param e exception to log
+	 * Logs a {@link Throwable} at a specified logging level.
+	 * @param e throwable to log
 	 * @param level level to log at
 	 */
 	public void exception(int level, Throwable e) {
@@ -203,8 +204,8 @@ public class Logger {
 		if (willLog(level)) {
 			String formattedMessage = formatter.format(Instant.now(), findInvoker(), level, resolve(message, args));
 
-			append(level, formattedMessage);
-			for (Logger parent : parents) append(level, formattedMessage);
+			appendToAll(level, formattedMessage);
+			for (Logger parent : parents) appendToAll(level, formattedMessage);
 		}
 	}
 	private boolean willLog(int level) {
@@ -215,12 +216,14 @@ public class Logger {
 		String result = message;
 
 		if (args != null) {
-			for (Object arg : args) result = result.replaceFirst("\\{}", arg.toString());
+			for (Object arg : args) {
+				result = result.replaceFirst("\\{}", ((arg instanceof Supplier) ? ((Supplier) arg).get() : arg).toString());
+			}
 		}
 		return result;
 	}
 
-	private void append(int level, String message) {
+	private void appendToAll(int level, String message) {
 		for (Appender appender : appenders) appender.append(level, message);
 	}
 
@@ -233,34 +236,42 @@ public class Logger {
 		return level <= getLevel();  // Greater level == finer granularity
 	}
 
-	/**
-	 * @return maximum level of messages logged by this logger
-	 */
+	/** @return maximum level of messages logged by this logger */
 	public int getLevel() {
 		return level;
 	}
-
-	/**
-	 * @param level new logging level
-	 */
+	/** @param level new logging level */
 	public void setLevel(int level) {
 		this.level = level;
 	}
 
-	/**
-	 * @param formatter new message formatter
-	 */
+	/** @return current message formatter */
+	public Formatter getFormatter() {
+		return formatter;
+	}
+	/** @param formatter new message formatter */
 	public void setFormatter(Formatter formatter) {
 		this.formatter = formatter;
 	}
 
-	/** @param toAdd appender to add */
-	public void addAppender(Appender toAdd) {
-		appenders.add(toAdd);
+	/**
+	 * @param toAdd appender to add
+	 * @return {@code true} if this logger did not contain {@code toAdd}
+	 */
+	public boolean addAppender(Appender toAdd) {
+		return appenders.add(toAdd);
 	}
-	/** @param toRemove appender to remove */
-	public void removeAppender(Appender toRemove) {
-		appenders.remove(toRemove);
+	/**
+	 * @param toRemove appender to remove
+	 * @return {@code true} if this logger contained {@code toRemove}
+	 */
+	public boolean removeAppender(Appender toRemove) {
+		return appenders.remove(toRemove);
+	}
+
+	/** @return all current message appenders */
+	public Iterable<Appender> getAppenders() {
+		return appenders;
 	}
 	/** @param appenders new appenders; if {@code null}, clears existing appenders */
 	public void setAppenders(Appender... appenders) {
