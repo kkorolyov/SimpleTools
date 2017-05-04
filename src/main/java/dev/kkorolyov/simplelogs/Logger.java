@@ -205,7 +205,7 @@ public class Logger {
 			String formattedMessage = formatter.format(Instant.now(), findInvoker(), level, resolve(message, args));
 
 			appendToAll(level, formattedMessage);
-			for (Logger parent : parents) appendToAll(level, formattedMessage);
+			for (Logger parent : parents) parent.appendToAll(level, formattedMessage);
 		}
 	}
 	private boolean willLog(int level) {
