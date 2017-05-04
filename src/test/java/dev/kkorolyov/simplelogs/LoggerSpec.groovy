@@ -5,6 +5,7 @@ import dev.kkorolyov.simplelogs.format.Formatter
 import spock.lang.Shared
 import spock.lang.Specification
 
+import java.lang.reflect.Field
 import java.util.function.Supplier
 
 class LoggerSpec extends Specification {
@@ -38,32 +39,18 @@ class LoggerSpec extends Specification {
 		1 * appender.append(l, _)
 
 		where:
-		l << (Byte.MIN_VALUE..Byte.MAX_VALUE)
+		l << (-level..level)
 	}
-
-	def "appender appends message with level within threshold"() {
+	def "ignores messages above logger level"() {
 		when:
-		formatter.format(_, _, _, message) >> message
-
 		logger.log(l, message)
 
 		then:
-		1 * appender.append(l, message)
-
-		where:
-		l << (0..level)
-	}
-	def "appender ignores message with level above threshold"() {
-		when:
-		formatter.format(_, _, _, message) >> message
-
-		logger.log(l, message)
-
-		then:
+		0 * formatter.format(_, _, _, _)
 		0 * appender.append(_, _)
 
 		where:
-		l << ((level + 1)..(level + Byte.MAX_VALUE))
+		l << ((level + 1)..(level + 100))
 	}
 
 	def "resolves object toStrings"() {
@@ -85,11 +72,38 @@ class LoggerSpec extends Specification {
 		1 * formatter.format(_, _, level, "$message ${supplier.get()}")
 	}
 
-	def "ignores messages above current level"() {
+	def "appender appends message with level within threshold"() {
 		when:
-		logger.log(logger.getLevel() + 1, message)
+		formatter.format(_, _, _, message) >> message
+
+		logger.log(l, message)
 
 		then:
-		0 * formatter.format(_, _, _, _)
+		1 * appender.append(l, message)
+
+		where:
+		l << (-level..level)
+	}
+	def "appender ignores message with level above threshold"() {
+		when:
+		formatter.format(_, _, _, message) >> message
+
+		logger.log(l, message)
+
+		then:
+		0 * appender.append(_, _)
+
+		where:
+		l << ((level + 1)..(level + 100))
+	}
+
+	def "setAppenders with no arg removes appenders"() {
+		when:
+		logger.setAppenders()
+
+		then:
+		Field appendersField = Logger.getDeclaredField("appenders")
+		appendersField.setAccessible(true)
+		appendersField.get(logger).isEmpty()
 	}
 }

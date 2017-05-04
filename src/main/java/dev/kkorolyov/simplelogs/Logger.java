@@ -273,7 +273,7 @@ public class Logger {
 	public Iterable<Appender> getAppenders() {
 		return appenders;
 	}
-	/** @param appenders new appenders; if {@code null}, clears existing appenders */
+	/** @param appenders new appenders; if {@code null} or omitted, clears existing appenders */
 	public void setAppenders(Appender... appenders) {
 		this.appenders.clear();
 
