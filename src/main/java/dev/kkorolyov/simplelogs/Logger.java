@@ -5,6 +5,8 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import dev.kkorolyov.simplelogs.append.Appender;
 import dev.kkorolyov.simplelogs.append.Appenders;
@@ -217,7 +219,8 @@ public class Logger {
 
 		if (args != null) {
 			for (Object arg : args) {
-				result = result.replaceFirst("\\{}", ((arg instanceof Supplier) ? ((Supplier) arg).get() : arg).toString());
+				String replacement = ((arg instanceof Supplier) ? ((Supplier) arg).get() : arg).toString();
+				result = result.replaceFirst(Pattern.quote("{}"), Matcher.quoteReplacement(replacement));
 			}
 		}
 		return result;
