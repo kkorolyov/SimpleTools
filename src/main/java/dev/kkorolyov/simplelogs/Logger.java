@@ -219,7 +219,12 @@ public class Logger {
 
 		if (args != null) {
 			for (Object arg : args) {
-				String replacement = ((arg instanceof Supplier) ? ((Supplier) arg).get() : arg).toString();
+				String replacement = "null";
+
+				if (arg == null) replacement = "null";
+				else if (arg instanceof  Supplier) replacement = ((Supplier) arg).get().toString();
+				else replacement = arg.toString();
+
 				result = result.replaceFirst(Pattern.quote("{}"), Matcher.quoteReplacement(replacement));
 			}
 		}
