@@ -46,6 +46,7 @@ public class Appenders {
 			@Override
 			public void append(String message) {
 				writer.println(message);
+				writer.flush();
 			}
 		};
 	}
