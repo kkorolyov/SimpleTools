@@ -5,6 +5,7 @@ package dev.kkorolyov.simplelogs;
  */
 public final class Level {
 	public static final int OFF = Integer.MIN_VALUE;
+	public static final int FATAL = 0;
 	public static final int SEVERE = 100;
 	public static final int WARNING = 200;
 	public static final int INFO = 300;
@@ -21,6 +22,8 @@ public final class Level {
 		switch (level) {
 			case OFF:
 				return "OFF";
+			case FATAL:
+				return "FATAL";
 			case SEVERE:
 				return "SEVERE";
 			case WARNING:
@@ -43,6 +46,8 @@ public final class Level {
 		switch (level.toUpperCase()) {
 			case "OFF":
 				return OFF;
+			case "FATAL":
+				return FATAL;
 			case "SEVERE":
 				return SEVERE;
 			case "WARNING":

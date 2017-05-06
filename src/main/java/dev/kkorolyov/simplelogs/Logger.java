@@ -108,11 +108,11 @@ public class Logger {
 
 	private static void register(String name, Logger logger) {
 		instances.entrySet().parallelStream()
-						 .filter(entry -> name.contains(entry.getKey()))	// Add all parents to this logger
+						 .filter(entry -> name.matches(entry.getKey() + "\\..+"))	// Add all parents to this logger
 						 .forEach(entry -> logger.parents.add(entry.getValue()));
 
 		instances.entrySet().parallelStream()
-						 .filter(entry -> entry.getKey().contains(name))	// Add this logger as parent to all child loggers
+						 .filter(entry -> entry.getKey().matches(name + "\\..+"))	// Add this logger as parent to all child loggers
 						 .forEach(entry -> entry.getValue().parents.add(logger));
 
 		instances.put(name, logger);
@@ -131,6 +131,15 @@ public class Logger {
 		setLevel(level);
 		setFormatter(formatter);
 		setAppenders(appenders);
+	}
+
+	/**
+	 * Logs a message at the {@code FATAL} level.
+	 * @param message message to log, with '{}' denoting injection points for each arg in {@code args}
+	 * @param args arguments which are lazily resolved to their string representations and injected into {@code message} at logging time
+	 */
+	public void fatal(String message, Object... args) {
+		log(Level.FATAL, message, args);
 	}
 
 	/**
@@ -183,7 +192,7 @@ public class Logger {
 	 * @param level level to log at
 	 */
 	public void exception(int level, Throwable e) {
-		if (willLog(level)) {  // Avoid needlessly formatting exception stack
+		if (logs(level)) {  // Avoid needlessly formatting exception stack
 			log(level, formatException(e));
 		}
 	}
@@ -203,15 +212,12 @@ public class Logger {
 	 * @param args arguments which are lazily resolved to their string representations and injected into {@code message} at logging time
 	 */
 	public void log(int level, String message, Object... args) {
-		if (willLog(level)) {
+		if (logs(level)) {
 			String formattedMessage = formatter.format(Instant.now(), findInvoker(), level, resolve(message, args));
 
 			appendToAll(level, formattedMessage);
 			for (Logger parent : parents) parent.appendToAll(level, formattedMessage);
 		}
-	}
-	private boolean willLog(int level) {
-		return isLoggable(level) && (!appenders.isEmpty() || !parents.isEmpty());
 	}
 
 	private String resolve(String message, Object... args) {
@@ -219,7 +225,7 @@ public class Logger {
 
 		if (args != null) {
 			for (Object arg : args) {
-				String replacement = "null";
+				String replacement;
 
 				if (arg == null) replacement = "null";
 				else if (arg instanceof  Supplier) replacement = ((Supplier) arg).get().toString();
@@ -236,12 +242,22 @@ public class Logger {
 	}
 
 	/**
-	 * Checks if messages of a specified level would be logged by this logger.
-	 * @param level logging level to test
-	 * @return {@code true} if a message of the specified level would be logged by this logger
+	 * @param level granularity level
+	 * @return {@code true} if this logger logs and has at least 1 appender which accepts messages of a certain level
 	 */
-	public boolean isLoggable(int level) {
-		return level <= getLevel();  // Greater level == finer granularity
+	public boolean logs(int level) {
+		return level <= this.level && hasAcceptingAppender(level);
+	}
+	private boolean hasAcceptingAppender(int level) {
+		for (Appender appender : appenders) {
+			if (appender.logs(level)) return true;
+		}
+		for (Logger parent : parents) {
+			for (Appender appender : parent.appenders) {
+				if (appender.logs(level)) return true;
+			}
+		}
+		return false;
 	}
 
 	/** @return maximum level of messages logged by this logger */

@@ -53,6 +53,18 @@ class LoggerSpec extends Specification {
 		where:
 		l << ((level + 1)..(level + 100))
 	}
+	def "ignores messages above appender threshold"() {
+		when:
+		appender.setThreshold(threshold)
+		logger.log(level, message)
+
+		then:
+		0 * formatter.format(_, _, _, _)
+		0 * appender.append(_, _)
+
+		where:
+		threshold << ((level - 100)..(level - 1))
+	}
 
 	@Ignore // Final methods not intercepted
 	def "uses parent appenders"() {
@@ -72,7 +84,7 @@ class LoggerSpec extends Specification {
 		1 * childAppender.append(level, message)
 	}
 
-	def "resolves object toStrings"() {
+	def "resolves object args"() {
 		Object arg = 149
 
 		when:
@@ -81,7 +93,7 @@ class LoggerSpec extends Specification {
 		then:
 		1 * formatter.format(_, _, level, "$message $arg")
 	}
-	def "resolves suppliers"() {
+	def "resolves supplier args"() {
 		Supplier<String> supplier = { "ClosureVal" }
 
 		when:
@@ -89,6 +101,13 @@ class LoggerSpec extends Specification {
 
 		then:
 		1 * formatter.format(_, _, level, "$message ${supplier.get()}")
+	}
+	def "resolves null args"() {
+		when:
+		logger.log(level, "$message {} {}", "notnull", null)
+
+		then:
+		1 * formatter.format(_, _, level, "$message notnull null")
 	}
 
 	@Ignore // Final methods not intercepted
