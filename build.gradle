@@ -22,6 +22,9 @@ dependencies {
 jar {
 	baseName = baseName.replaceAll(/(?<=[a-z])([A-Z])(?=[a-z])/, '-$1').toLowerCase()
 }
+javadoc {
+	destinationDir = file('docs')
+}
 
 def gitVersion(dir) {
 	def stdout = new ByteArrayOutputStream()

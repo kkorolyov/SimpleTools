@@ -135,8 +135,7 @@ public class Logger {
 
 	/**
 	 * Logs a message at the {@code FATAL} level.
-	 * @param message message to log, with '{}' denoting injection points for each arg in {@code args}
-	 * @param args arguments which are lazily resolved to their string representations and injected into {@code message} at logging time
+	 * @see #log(int, String, Object...)
 	 */
 	public void fatal(String message, Object... args) {
 		log(Level.FATAL, message, args);
@@ -144,8 +143,7 @@ public class Logger {
 
 	/**
 	 * Logs a message at the {@code SEVERE} level.
-	 * @param message message to log, with '{}' denoting injection points for each arg in {@code args}
-	 * @param args arguments which are lazily resolved to their string representations and injected into {@code message} at logging time
+	 * @see #log(int, String, Object...)
 	 */
 	public void severe(String message, Object... args) {
 		log(Level.SEVERE, message, args);
@@ -153,8 +151,7 @@ public class Logger {
 
 	/**
 	 * Logs a message at the {@code WARNING} level.
-	 * @param message message to log, with '{}' denoting injection points for each arg in {@code args}
-	 * @param args arguments which are lazily resolved to their string representations and injected into {@code message} at logging time
+	 * @see #log(int, String, Object...)
 	 */
 	public void warning(String message, Object... args) {
 		log(Level.WARNING, message, args);
@@ -162,8 +159,7 @@ public class Logger {
 
 	/**
 	 * Logs a message at the {@code INFO} level.
-	 * @param message message to log, with '{}' denoting injection points for each arg in {@code args}
-	 * @param args arguments which are lazily resolved to their string representations and injected into {@code message} at logging time
+	 * @see #log(int, String, Object...)
 	 */
 	public void info(String message, Object... args) {
 		log(Level.INFO, message, args);
@@ -171,8 +167,7 @@ public class Logger {
 
 	/**
 	 * Logs a message at the {@code DEBUG} level.
-	 * @param message message to log, with '{}' denoting injection points for each arg in {@code args}
-	 * @param args arguments which are lazily resolved to their string representations and injected into {@code message} at logging time
+	 * @see #log(int, String, Object...)
 	 */
 	public void debug(String message, Object... args) {
 		log(Level.DEBUG, message, args);
@@ -206,10 +201,11 @@ public class Logger {
 
 	/**
 	 * Attempts to log a message.
-	 * The message is logged only if its level is {@code <=} this logger's level and this logger has at least 1 appender.
+	 * The message is logged only if its level is {@code <=} this logger's level and this logger has at least 1 appender able to append the message.
+	 * Message arguments can be supplied either as basic objects or {@link Supplier} implementations which will be lazily resolved to their string representations if and when the message is logged.
 	 * @param level granularity to log at
 	 * @param message message to log, with '{}' denoting injection points for each arg in {@code args}
-	 * @param args arguments which are lazily resolved to their string representations and injected into {@code message} at logging time
+	 * @param args arguments which are lazily resolved to their string representations ({@code Supplier -> get()}, {@code Object -> toString()}) and injected into {@code message} at logging time
 	 */
 	public void log(int level, String message, Object... args) {
 		if (logs(level)) {
@@ -243,7 +239,7 @@ public class Logger {
 
 	/**
 	 * @param level granularity level
-	 * @return {@code true} if this logger logs and has at least 1 appender which accepts messages of a certain level
+	 * @return {@code true} if {@code level <=} this logger's level and this logger has at least 1 appender which accepts messages of such level
 	 */
 	public boolean logs(int level) {
 		return level <= this.level && hasAcceptingAppender(level);
