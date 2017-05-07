@@ -1,9 +1,11 @@
 plugins {
 	id 'java'
+	id 'maven-publish'
+	id 'com.jfrog.bintray' version '1.7.3'
 }
 
 group = 'dev.kkorolyov'
-version = gitVersion(projectDir)
+version = gitVersion()
 description = """Lightweight Java logging library with minimal configuration"""
 
 repositories {
@@ -19,20 +21,56 @@ dependencies {
 			'com.github.kkorolyov:SimpleProps:master-SNAPSHOT'
 }
 
-jar {
-	baseName = baseName.replaceAll(/(?<=[a-z])([A-Z])(?=[a-z])/, '-$1').toLowerCase()
-}
 javadoc {
 	destinationDir = file('docs')
 }
 
-def gitVersion(dir) {
+jar {
+	baseName = artifactName()
+}
+
+task sourcesJar(type: Jar) {
+	classifier = 'sources'
+	from sourceSets.main.allJava
+}
+task javadocJar(type: Jar) {
+	classifier = 'javadoc'
+	from javadoc.destinationDir
+}
+publishing {
+	publications {
+		Pub(MavenPublication) {
+			from components.java
+			artifact sourcesJar
+			artifact javadocJar
+			artifactId artifactName()
+		}
+	}
+}
+bintray {
+	user = System.getenv('BINTRAY_USER')
+	key = System.getenv('BINTRAY_KEY')
+	publications = ['Pub']
+	pkg {
+		repo = 'SimpleTools'
+		name = project.name
+		licenses = ['BSD 3-Clause']
+		vcsUrl = 'https://github.com/kkorolyov/SimpleLogs.git'
+		version {
+			name = project.version
+		}
+	}
+}
+
+def gitVersion() {
 	def stdout = new ByteArrayOutputStream()
 	exec {
-		workingDir = dir
 		commandLine 'git', 'describe'
 		standardOutput = stdout
 	}
 	stdout = stdout.toString().trim()
 	return stdout.replaceAll(/-.*/, "+${stdout.find('(?<=-)[0-9]+')}")
+}
+def artifactName() {
+	return name.replaceAll(/(?<=[a-z])([A-Z])(?=[a-z])/, '-$1').toLowerCase()
 }

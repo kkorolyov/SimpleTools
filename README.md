@@ -1,9 +1,11 @@
 # SimpleLogs
-A simple Java API for logging various application messages to various outputs with minimal effort.
+(Yet another) logging library for logging system messages to various outputs with minimal effort.
 
 ## Examples
 ```java
-Logger logger = Logger.getLogger(MyClass.class.getName(), Level.INFO, new PrintWriter("error.log");
+Path logFile = Paths.get("log.log");
+Logger logger = Logger.getLogger(Level.INFO, Formatters.simple(), Appenders.file(logFile, Level.INFO));
+
 logger.info("Some INFO message");
 logger.exception(new Exception("Some SEVERE exception");
 ```
@@ -12,67 +14,52 @@ logger.exception(new Exception("Some SEVERE exception");
 * Download the [latest release](https://github.com/kkorolyov/SimpleLogs/releases/latest).
 * Add either the source or bundled .jar file to your project's classpath.
 
-## Usage
-### Logger Hierarchy
-Loggers are organized in a hierarchy according to name.
-* Each level in the hierarchy is defined as a unique set of characters (segment) delimeted by the `.` character.
-* A logger is defined as a parent of another logger when its entire name consists of segments matching the initial segments of the child logger's name.
-* Messages logged by child loggers propagate up the hierarchy until they reach either the last logger or a logger with a level less than the message.
-* Logger hierarchies are populated dynamically when new loggers are created.
-* An empty name (`""`) corresponds to the absolute root logger.
+## Overview
+SimpleLogs is composed of 3 distinct working units: `Loggers`, `Formatters`, and `Appenders`.
 
-#### Example
-* `Logger.getLogger("L1.L2")` is called.
-	* `"L1.L2"` has no parent.
-* `Logger.getLogger("L1")` is called.
-	* `"L1"` has no parent, `"L1.L2"` has `"L1"` as its parent.
-* `Logger.getLogger("L1.L2").setLevel(Level.DEBUG)` is called.
-* `Logger.getLogger("L1").setLevel(Level.INFO)` is called.
-* `Logger.getLogger("L1.L2").debug("DEBUG message")` is called.
-	* `"L1.L2"` logs and propagates the message to its parent `"L1"`, the message level exceeds the level of `"L1"` and is ignored by `"L1"`.
-* `Logger.getLogger("L1.L2").setLevel(Level.INFO)` is called.
-* `Logger.getLogger("L1").setLevel(Level.DEBUG)` is called.
-* `Logger.getLogger("L1.L2").debug("DEBUG message")` is called.
-	* The message level exceeds the level of `"L1.L2"` and is not propagated to parent `"L1"`, even though `"L1"` has a level of `DEBUG`.  
+### Logger
+This is the main, externally-facing unit responsible for accepting work in the form of log messages.
 
-### Retrieving a Logger
-Retrieve a logger by calling one of the static `Logger.getLogger()` methods.
+Loggers are organized in a hierarchy according to a `.`-delimited name.
+* The empty string `""` corresponds to the absolute root logger.
+* A logger is a child of another logger `"PARENT"` if its name follows the format `"PARENT.blah"`.
+* Child loggers propagate messages to all parents' appenders.
+
+### Formatter
+This makes logged messages look good.
+
+### Appender
+This applies formatted messages to some stream, file, or other output source.
+
+## Basic Usage
+Retrieve a logger by calling one of the static `Logger.getLogger(...)` methods.
 ```java
-	Logger logger = Logger.getLogger(String name);
-	Logger logger = Logger.getLogger(String name, Level level, PrintWriter... writers);
-```
+// For the lazy - default level of INFO, simple formatter, and appender to System.err
+Logger logger = Logger.getLogger();	// Uses the full name of the calling class as its name
+Logger logger = Logger.getLogger("custom.logger");
 
-### Logging a Message
-A logged message consists of a `String` and a logging `Level`.
+// For the picky - all the fun stuff is custom-set
+Logger logger = Logger.getLogger(Level.DEBUG, Formatters.simple(), Appenders.out());	// Uses the full name of the calling class as its name
+Logger logger = Logger.getLogger("logger.never", Level.SEVERE, new Formatter() {...}, new Appender(Level.WARNING) {...});
+```
+Log a message by specifying the message `level`, a `message string`, and optional `args`.
+A message is logged only if its level is `<=` the logging logger's level.
+Args are resolved to their string representations only if and when the message is logged, and replace `"{}"` markers in the message string.
 ```java
-logger.log("Some message", Level.INFO);	// Message is logged if the specified level is less than or equal to the logger's level
-logger.severe("Some SEVERE message");	// Same as logger.log("Some message", Level.SEVERE)
-logger.warning("Some WARNING message");	// Same as logger.log("Some message", Level.WARNING)
-logger.info("Some INFO message");		// Same as logger.log("Some message", Level.INFO)
-logger.debug("Some DEBUG message");		// Same as logger.log("Some message", Level.DEBUG)
-```
+logger.log(Level.INFO, "My object's toString={}", myObj);	// Resolves to "My object's toString=THIS_IS_MY_OBJ"
 
-### Logging an Exception
-A logged exception consists of an `Exception` and a logging `Level`.
+// Shortcuts provided for all standard levels
+logger.severe("Some bad stuff happened");
+logger.warning("This is a warning");
+logger.info("Min int={}, max int={}", Integer.MIN_VALUE, Integer.MAX_VALUE);
+logger.debug("Resolved a crazy-long computation to: {}", (Supplier) () -> "A" + "B");	// Suppliers are args too!
+```
+Log the stack trace of an exception.
 ```java
-logger.exception(new Exception("Some exception"), Level.WARNING);	// Exception is logged if the specified level is less than or equal to the logger's level
-logger.exception(new Exception("Some SEVERE exception");			// Same as logger.exception(new Exception("Some exception"), Level.SEVERE)
+logger.exception(243, new Exception("Some exception"));		// Log at a custom level
+logger.exception(new Exception("Some SEVERE exception");	// Defaults to SEVERE level
 ```
-
-### Enabling and Disabling a Logger
-Enabled loggers log both messages and exceptions at or below their level.  
-Disabled loggers log nothing.  
-All new loggers are initially enabled.
-```java
-logger.setLevel(Level.INFO);
-logger.setEnabled(true);
-logger.info("Logged message");		// Message is logged
-logger.setEnabled(false);
-logger.info("Not logged message");	// Message is ignored
-```
-
-### Configuring Loggers via properties file
-If [SimpleProps](https://github.com/kkorolyov/SimpleProps) is in the class path, `Logger.applyProps(File logProps)` can be invoked to configure loggers via a properties file.
+If [SimpleProps](https://github.com/kkorolyov/SimpleProps) is on the classpath, `Logger.applyProps(Path propsPath)` can be invoked to configure loggers via a properties file.
 Each property in this file is defined as:
 
 `LOGGER=LEVEL, WRITERS...`
@@ -82,8 +69,7 @@ Each property in this file is defined as:
 	* OUT - `System.out` stream
 	* ERR - `System.err` stream
 
-Further documentation found [here](https://kkorolyov.github.io/SimpleLogs).
+Further documentation found in the [Javadoc](https://kkorolyov.github.io/SimpleLogs).
 
 ## License
-BSD-new license.  
-More detail found [here](LICENSE).
+[BSD-new license](LICENSE).  
