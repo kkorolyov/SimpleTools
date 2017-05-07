@@ -1,9 +1,20 @@
 plugins {
 	id 'java'
+	id 'maven-publish'
+	id 'com.jfrog.bintray' version '1.7.3'
 }
 
 group = 'dev.kkorolyov'
-version = gitVersion()
+def artifactName = name.replaceAll(/(?<=[a-z])([A-Z])(?=[a-z])/, '-$1').toLowerCase()
+version = {
+	def stdout = new ByteArrayOutputStream()
+	exec {
+		commandLine 'git', 'describe'
+		standardOutput = stdout
+	}
+	stdout = stdout.toString().trim()
+	return stdout.replaceAll(/-.*/, "+${stdout.find('(?<=-)[0-9]+')}")
+}()
 description = """Lightweight Java properties library"""
 
 repositories {
@@ -13,16 +24,42 @@ dependencies {
 	testCompile 'org.spockframework:spock-core:1.1-groovy-2.4-rc-4'
 }
 
+javadoc {
+	destinationDir = file('docs')
+}
 jar {
-	baseName = baseName.replaceAll(/(?<=[a-z])([A-Z])(?=[a-z])/, '-$1').toLowerCase()
+	baseName = artifactName
 }
 
-def gitVersion(dir) {
-	def stdout = new ByteArrayOutputStream()
-	exec {
-		commandLine 'git', 'describe'
-		standardOutput = stdout
+task sourcesJar(type: Jar) {
+	classifier = 'sources'
+	from sourceSets.main.allJava
+}
+task javadocJar(type: Jar) {
+	classifier = 'javadoc'
+	from javadoc.destinationDir
+}
+publishing {
+	publications {
+		Pub(MavenPublication) {
+			from components.java
+			artifact sourcesJar
+			artifact javadocJar
+			artifactId artifactName
+		}
 	}
-	stdout = stdout.toString().trim()
-	return stdout.replaceAll(/-.*/, "+${stdout.find('(?<=-)[0-9]+')}")
+}
+bintray {
+	user = System.getenv('BINTRAY_USER')
+	key = System.getenv('BINTRAY_KEY')
+	publications = ['Pub']
+	pkg {
+		repo = 'java'
+		name = artifactName
+		licenses = ['BSD 3-Clause']
+		vcsUrl = 'https://github.com/kkorolyov/SimpleProps.git'
+		version {
+			name = project.version
+		}
+	}
 }
