@@ -3,7 +3,7 @@ plugins {
 }
 
 group = 'dev.kkorolyov'
-version = gitVersion(projectDir)
+version = gitVersion()
 description = """Lightweight Java argument parsing library"""
 
 repositories {
@@ -20,7 +20,6 @@ jar {
 def gitVersion(dir) {
 	def stdout = new ByteArrayOutputStream()
 	exec {
-		workingDir = dir
 		commandLine 'git', 'describe'
 		standardOutput = stdout
 	}
