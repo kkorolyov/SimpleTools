@@ -1,4 +1,4 @@
-[![Download](https://api.bintray.com/packages/kkorolyov/java/simple-logs/images/download.svg) ](https://bintray.com/kkorolyov/java/simple-logs/_latestVersion)
+[![Download](https://api.bintray.com/packages/kkorolyov/java/simple-opts/images/download.svg) ](https://bintray.com/kkorolyov/java/simple-opts/_latestVersion)
 
 # SimpleOpts
 A simple Java API for parsing and executing command line options.
