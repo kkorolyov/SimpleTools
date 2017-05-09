@@ -1,3 +1,5 @@
+[![Download](https://api.bintray.com/packages/kkorolyov/java/simple-logs/images/download.svg) ](https://bintray.com/kkorolyov/java/simple-logs/_latestVersion)
+
 # SimpleLogs
 (Yet another) logging library for logging system messages to various outputs with minimal effort.
 
