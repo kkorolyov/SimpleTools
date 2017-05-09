@@ -1,3 +1,5 @@
+[![Download](https://api.bintray.com/packages/kkorolyov/java/simple-props/images/download.svg) ](https://bintray.com/kkorolyov/java/simple-props/_latestVersion)
+
 # SimpleProps
 A simple Java API for writing and reading application properties to and from files.
 
