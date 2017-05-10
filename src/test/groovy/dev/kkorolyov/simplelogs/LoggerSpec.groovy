@@ -2,7 +2,6 @@ package dev.kkorolyov.simplelogs
 
 import dev.kkorolyov.simplelogs.append.Appender
 import dev.kkorolyov.simplelogs.format.Formatter
-import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -37,7 +36,7 @@ class LoggerSpec extends Specification {
 
 		then:
 		1 * formatter.format(_, _, l, message) >> message
-//		1 * appender.append(l, message)	 // Final methods not intercepted
+		1 * appender.append(message)
 
 		where:
 		l << (-level..level)
@@ -66,22 +65,43 @@ class LoggerSpec extends Specification {
 		threshold << ((level - 100)..(level - 1))
 	}
 
-	@Ignore // Final methods not intercepted
 	def "uses parent appenders"() {
 		Appender parentAppender = Mock(constructorArgs: [level])
 		Appender childAppender = Mock(constructorArgs: [level])
 
-		Logger parent = Logger.getLogger("l", level, formatter, parentAppender)
-		Logger child = Logger.getLogger("l.l", level, formatter, childAppender)
+		String name = UUID.randomUUID().toString()
+		Logger parent = Logger.getLogger(name, level, formatter, parentAppender)
+		Logger child = Logger.getLogger("${name}${".$name" * depth}", level, formatter, childAppender)
 
 		when:
-		1 * formatter.format(_, _, level, message) >> message
+		formatter.format(_, _, level, message) >> message
 
 		child.log(level, message)
 
 		then:
-		1 * parentAppender.append(level, message)
-		1 * childAppender.append(level, message)
+		1 * parentAppender.append(message)
+		1 * childAppender.append(message)
+
+		where:
+		depth << (1..100)
+	}
+	def "all loggers use empty logger's appenders"() {
+		Appender emptyAppender = Mock(constructorArgs: [level])
+
+		Logger empty = Logger.getLogger("", level, formatter, emptyAppender)
+		Logger child = Logger.getLogger(name, level, formatter, appender)
+
+		when:
+		formatter.format(_, _, level, message) >> message
+
+		child.log(level, message)
+
+		then:
+		1 * appender.append(message)
+		1 * emptyAppender.append(message)
+
+		where:
+		name << ['a', 'a.a', '145', 'log.logger.loggington.3rd', ' ', 'null']
 	}
 
 	def "resolves object args"() {
@@ -110,7 +130,6 @@ class LoggerSpec extends Specification {
 		1 * formatter.format(_, _, level, "$message notnull null")
 	}
 
-	@Ignore // Final methods not intercepted
 	def "appender appends message with level within threshold"() {
 		when:
 		formatter.format(_, _, _, message) >> message
@@ -118,23 +137,21 @@ class LoggerSpec extends Specification {
 		logger.log(l, message)
 
 		then:
-		1 * appender.append(l, message)
+		1 * appender.append(message)
 
 		where:
 		l << (-level..level)
 	}
-	@Ignore // Final methods not intercepted
 	def "appender ignores message with level above threshold"() {
-		Appender spyAppender = Spy(constructorArgs: [threshold])
+		Appender stricterAppender = Mock(constructorArgs: [threshold])
 
 		when:
-		logger.addAppender(spyAppender)
+		logger.addAppender(stricterAppender)
 		logger.log(level, message)
 
 		then:
 		1 * formatter.format(_, _, level, message) >> message
-		1 * spyAppender.append(level, message)
-		0 * spyAppender.append(_)
+		0 * stricterAppender.append(_)
 
 		where:
 		threshold << ((level - 100)..(level - 1))

@@ -108,11 +108,11 @@ public class Logger {
 
 	private static void register(String name, Logger logger) {
 		instances.entrySet().parallelStream()
-						 .filter(entry -> name.matches(entry.getKey() + "\\..+"))	// Add all parents to this logger
+						 .filter(entry -> entry.getKey().equals("") || name.matches(entry.getKey() + "\\..+"))	// Add all parents to this logger
 						 .forEach(entry -> logger.parents.add(entry.getValue()));
 
 		instances.entrySet().parallelStream()
-						 .filter(entry -> entry.getKey().matches(name + "\\..+"))	// Add this logger as parent to all child loggers
+						 .filter(entry -> name.equals("") || entry.getKey().matches(name + "\\..+"))	// Add this logger as parent to all child loggers
 						 .forEach(entry -> entry.getValue().parents.add(logger));
 
 		instances.put(name, logger);
