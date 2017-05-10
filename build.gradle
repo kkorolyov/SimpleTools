@@ -1,20 +1,22 @@
+buildscript {
+	repositories {
+		maven {
+			url 'https://dl.bintray.com/kkorolyov/groovy'
+		}
+	}
+	dependencies {
+		classpath 'dev.kkorolyov:git-version:1.+'
+	}
+}
+
 plugins {
-	id 'java'
+	id 'groovy'
 	id 'maven-publish'
 	id 'com.jfrog.bintray' version '1.7.3'
 }
+apply plugin: 'dev.kkorolyov.git-version'
 
 group = 'dev.kkorolyov'
-def artifactName = name.replaceAll(/(?<=[a-z])([A-Z])(?=[a-z])/, '-$1').toLowerCase()
-version = {
-	def stdout = new ByteArrayOutputStream()
-	exec {
-		commandLine 'git', 'describe'
-		standardOutput = stdout
-	}
-	stdout = stdout.toString().trim()
-	return stdout.replaceAll(/-.*/, "+${stdout.find('(?<=-)[0-9]+')}")
-}()
 description = """Lightweight Java argument parsing library"""
 
 repositories {
@@ -26,9 +28,6 @@ dependencies {
 
 javadoc {
 	destinationDir = file('docs')
-}
-jar {
-	baseName = artifactName
 }
 
 task sourcesJar(type: Jar) {
@@ -45,7 +44,6 @@ publishing {
 			from components.java
 			Artifact sourcesJar
 			Artifact javadocJar
-			artifactId artifactName
 		}
 	}
 }
@@ -55,7 +53,7 @@ bintray {
 	publications = ['Pub']
 	pkg {
 		repo = 'java'
-		name = artifactName
+		name = project.name
 		licenses = ['BSD 3-Clause']
 		vcsUrl = 'https://github.com/kkorolyov/SimpleOpts.git'
 		version {
