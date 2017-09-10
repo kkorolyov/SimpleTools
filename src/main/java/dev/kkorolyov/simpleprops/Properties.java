@@ -95,12 +95,16 @@ public final class Properties implements Iterable<Entry<String, String>> {
 	
 	/** @return all property identifiers, in insertion order */
 	public Iterable<String> keys() {
-		return props.keySet().stream().filter(k -> !isFiller(k)).collect(Collectors.toList());
+		return props.keySet().stream()
+				.filter(k -> !isFiller(k))
+				.collect(Collectors.toList());
 	}
 	
 	/** @return all comments, in insertion order */
 	public Iterable<String> comments() {
-		return props.values().stream().filter(v -> isComment(v)).collect(Collectors.toList());
+		return props.values().stream()
+				.filter(Properties::isComment)
+				.collect(Collectors.toList());
 	}
 	
 	/**
@@ -113,11 +117,13 @@ public final class Properties implements Iterable<Entry<String, String>> {
 		return propertyList(false).iterator();
 	}
 	private List<Entry<String, String>> propertyList(boolean sort) {
-		List<Entry<String, String>> list = props.entrySet().stream().filter(e -> !isFiller(e.getKey())).collect(Collectors.toList()); // Filters out comments, blank lines
+		List<Entry<String, String>> list = props.entrySet().stream()
+				.filter(e -> !isFiller(e.getKey()))
+				.collect(Collectors.toList()); // Filters out comments, blank lines
 		
-		if (sort)
+		if (sort) {
 			list.sort(Comparator.comparing(Entry::getKey));
-		
+		}
 		return list;
 	}
 	
@@ -231,18 +237,13 @@ public final class Properties implements Iterable<Entry<String, String>> {
 			while ((line = in.readLine()) != null) {
 				String[] splitLine = line.split("\\s*" + PROPERTY_DELIMETER + "\\s*", 2);	// Trim whitespace around delimiter
 				
-				if (splitLine.length < 1)
-					putBlankLine();
+				if (splitLine.length < 1) putBlankLine();
+				else if (isComment(splitLine[0])) putComment(splitLine[0]);
 				else if (splitLine.length < 2) {
-					if (splitLine[0].length() < 1)
-						putBlankLine();
-					else if (isComment(splitLine[0]))
-						putComment(splitLine[0]);
-					else
-						put(splitLine[0], "");
+					if (splitLine[0].length() < 1) putBlankLine();
+					else put(splitLine[0], "");
 				}
-				else
-					put(splitLine[0], splitLine[1]);
+				else put(splitLine[0], splitLine[1]);
 			}
 		}
 	}
