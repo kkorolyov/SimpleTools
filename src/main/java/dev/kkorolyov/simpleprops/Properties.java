@@ -116,7 +116,7 @@ public final class Properties implements Iterable<Entry<String, String>> {
 		List<Entry<String, String>> list = props.entrySet().stream().filter(e -> !isFiller(e.getKey())).collect(Collectors.toList()); // Filters out comments, blank lines
 		
 		if (sort)
-			list.sort((e1, e2) -> e1.getKey().compareTo(e2.getKey()));
+			list.sort(Comparator.comparing(Entry::getKey));
 		
 		return list;
 	}
@@ -229,7 +229,7 @@ public final class Properties implements Iterable<Entry<String, String>> {
 		try (BufferedReader in = Files.newBufferedReader(file)) {
 			String line;
 			while ((line = in.readLine()) != null) {
-				String[] splitLine = line.split("\\s*" + PROPERTY_DELIMETER + "\\s*");	// Trim whitespace around delimiter
+				String[] splitLine = line.split("\\s*" + PROPERTY_DELIMETER + "\\s*", 2);	// Trim whitespace around delimiter
 				
 				if (splitLine.length < 1)
 					putBlankLine();

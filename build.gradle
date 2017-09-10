@@ -5,7 +5,7 @@ buildscript {
 		}
 	}
 	dependencies {
-		classpath 'dev.kkorolyov:git-version:1.+'
+		classpath 'dev.kkorolyov:auto-snapshot:1.+'
 	}
 }
 
@@ -14,10 +14,11 @@ plugins {
 	id 'maven-publish'
 	id 'com.jfrog.bintray' version '1.7.3'
 }
-apply plugin: 'dev.kkorolyov.git-version'
+apply plugin: 'dev.kkorolyov.auto-snapshot'
 
 group = 'dev.kkorolyov'
 description = """Lightweight Java properties library"""
+version = "4.0"
 
 repositories {
 	jcenter()
