@@ -18,7 +18,7 @@ apply plugin: 'dev.kkorolyov.auto-snapshot'
 
 group = 'dev.kkorolyov'
 description = """Lightweight Java properties library"""
-version = "4.0"
+version = "4.1"
 
 repositories {
 	jcenter()
