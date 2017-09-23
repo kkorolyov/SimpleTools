@@ -1,0 +1,69 @@
+buildscript {
+	repositories {
+		maven {
+			url 'https://dl.bintray.com/kkorolyov/groovy'
+		}
+	}
+	dependencies {
+		classpath 'dev.kkorolyov:git-version:1.+'
+	}
+}
+
+plugins {
+	id 'groovy'
+	id 'maven-publish'
+	id 'com.jfrog.bintray' version '1.7.3'
+}
+apply plugin: 'dev.kkorolyov.git-version'
+
+group = 'dev.kkorolyov'
+description = """Lightweight Java logging library with minimal configuration"""
+
+repositories {
+	jcenter()
+	maven {
+		url 'https://dl.bintray.com/kkorolyov/java'
+	}
+}
+dependencies {
+	compileOnly 'dev.kkorolyov:simple-props:v4.+'
+	testCompile 'org.spockframework:spock-core:1.1-groovy-2.4-rc-4',
+			'net.bytebuddy:byte-buddy:1.6.13',
+			'dev.kkorolyov:simple-props:v4.+'
+}
+
+javadoc {
+	destinationDir = file('docs')
+}
+
+task sourcesJar(type: Jar) {
+	classifier = 'sources'
+	from sourceSets.main.allJava
+}
+task javadocJar(type: Jar) {
+	classifier = 'javadoc'
+	from javadoc.destinationDir
+}
+publishing {
+	publications {
+		Pub(MavenPublication) {
+			from components.java
+			artifact sourcesJar
+			artifact javadocJar
+		}
+	}
+}
+bintray {
+	user = System.getenv('BINTRAY_USER')
+	key = System.getenv('BINTRAY_KEY')
+	publications = ['Pub']
+	pkg {
+		repo = 'java'
+		name = project.name
+		licenses = ['BSD 3-Clause']
+		vcsUrl = 'https://github.com/kkorolyov/SimpleLogs.git'
+		version {
+			name = project.version
+		}
+	}
+}
