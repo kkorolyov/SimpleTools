@@ -1,0 +1,89 @@
+plugins {
+	id 'java-library'
+	id 'groovy'
+	id 'maven-publish'
+	id 'com.jfrog.bintray' version '1.7.3'
+}
+
+subprojects {
+	apply plugin: 'java-library'
+	apply plugin: 'groovy'
+	apply plugin: 'maven-publish'
+	apply plugin: 'com.jfrog.bintray'
+
+	group = 'dev.kkorolyov'
+	description = """Collection of utility libraries with simple APIs"""
+
+	repositories {
+		jcenter()
+	}
+
+	javadoc {
+		destinationDir = file("$rootProject.projectDir/docs/$project.name")
+	}
+
+	task sourcesJar(type: Jar) {
+		classifier = 'sources'
+		from sourceSets.main.allJava
+	}
+	task javadocJar(type: Jar) {
+		classifier = 'javadoc'
+		from javadoc.destinationDir
+	}
+	publishing {
+		publications {
+			Pub(MavenPublication) {
+				from components.java
+				artifact sourcesJar
+				artifact javadocJar
+			}
+		}
+	}
+
+	afterEvaluate {
+		bintray {
+			user = System.getenv('BINTRAY_USER')
+			key = System.getenv('BINTRAY_KEY')
+			publications = ['Pub']
+			pkg {
+				repo = 'java'
+				name = project.name
+				licenses = ['BSD 3-Clause']
+				vcsUrl = 'https://github.com/kkorolyov/SimpleTools.git'
+				version {
+					name = project.version
+				}
+			}
+		}
+	}
+}
+
+project(':simple-logs') {
+	description = """Lightweight Java logging library with minimal configuration"""
+	version = '3.1'
+
+	dependencies {
+		compileOnly project(':simple-props')
+		testImplementation project(':simple-props'),
+				'org.spockframework:spock-core:1.1-groovy-2.4',
+				'net.bytebuddy:byte-buddy:1.+'
+	}
+}
+
+project(':simple-props') {
+	description = """Lightweight Java properties library"""
+	version = '4.2'
+
+	dependencies {
+		testImplementation 'junit:junit:4.+'
+	}
+}
+
+project(':simple-opts') {
+	description = """Lightweight Java argument parsing library"""
+	version = '1.1'
+
+	dependencies {
+		testImplementation 'junit:junit:4.+'
+	}
+}
