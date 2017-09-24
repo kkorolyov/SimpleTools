@@ -3,6 +3,7 @@ plugins {
 	id 'groovy'
 	id 'maven-publish'
 	id 'com.jfrog.bintray' version '1.7.3'
+	id 'org.gradle.java.experimental-jigsaw' version '0.1.1'	// TODO Remove when supported
 }
 
 subprojects {
@@ -10,6 +11,7 @@ subprojects {
 	apply plugin: 'groovy'
 	apply plugin: 'maven-publish'
 	apply plugin: 'com.jfrog.bintray'
+	apply plugin: 'org.gradle.java.experimental-jigsaw'
 
 	group = 'dev.kkorolyov'
 	description = """Collection of utility libraries with simple APIs"""
@@ -68,6 +70,7 @@ project(':simple-logs') {
 				'org.spockframework:spock-core:1.1-groovy-2.4',
 				'net.bytebuddy:byte-buddy:1.+'
 	}
+	javaModule.name = 'dev.kkorolyov.simplelogs'
 }
 
 project(':simple-props') {
@@ -77,6 +80,7 @@ project(':simple-props') {
 	dependencies {
 		testImplementation 'junit:junit:4.+'
 	}
+	javaModule.name = 'dev.kkorolyov.simpleprops'
 }
 
 project(':simple-opts') {
@@ -86,4 +90,5 @@ project(':simple-opts') {
 	dependencies {
 		testImplementation 'junit:junit:4.+'
 	}
+	javaModule.name = 'dev.kkorolyov.simpleopts'
 }
