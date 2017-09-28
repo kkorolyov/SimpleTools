@@ -12,10 +12,16 @@ subprojects {
 	apply plugin: 'com.jfrog.bintray'
 
 	group = 'dev.kkorolyov'
-	description = """Collection of utility libraries with simple APIs"""
+	description = "Collection of utility libraries with simple APIs"
 
 	repositories {
 		jcenter()
+	}
+
+	dependencies {
+		testImplementation project(':simple-props'),
+				'org.spockframework:spock-core:1.1-groovy-2.4',
+				'net.bytebuddy:byte-buddy:1.+'
 	}
 
 	javadoc {
@@ -59,20 +65,17 @@ subprojects {
 }
 
 project(':simple-logs') {
-	description = """Lightweight Java logging library with minimal configuration"""
-	version = '3.1'
+	description = "Lightweight Java logging library with minimal configuration"
+	version = 3.1
 
 	dependencies {
 		compileOnly project(':simple-props')
-		testImplementation project(':simple-props'),
-				'org.spockframework:spock-core:1.1-groovy-2.4',
-				'net.bytebuddy:byte-buddy:1.+'
 	}
 }
 
 project(':simple-props') {
-	description = """Lightweight Java properties library"""
-	version = '4.2'
+	description = "Lightweight Java properties library"
+	version = 4.2
 
 	dependencies {
 		testImplementation 'junit:junit:4.+'
@@ -80,8 +83,8 @@ project(':simple-props') {
 }
 
 project(':simple-opts') {
-	description = """Lightweight Java argument parsing library"""
-	version = '1.1'
+	description = "Lightweight Java argument parsing library"
+	version = 1.1
 
 	dependencies {
 		testImplementation 'junit:junit:4.+'

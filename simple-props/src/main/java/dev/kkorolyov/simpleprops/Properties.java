@@ -66,6 +66,14 @@ public final class Properties implements Iterable<Entry<String, String>> {
 	public Properties(Path defaults) throws IOException {
 		load(defaults);
 	}
+	/**
+	 * Constructs a collection of properties by parsing an input stream.
+	 * @param defaults input stream containing initial properties
+	 * @throws IOException if an I/O error occurs
+	 */
+	public Properties(InputStream defaults) throws IOException {
+		load(defaults);
+	}
 	
 	/**
 	 * Retrieves the value of the property identified by {@code key}.
@@ -227,16 +235,24 @@ public final class Properties implements Iterable<Entry<String, String>> {
 	}
 	
 	/**
-	 * Parses properties and filler from a file and applies them to this instance.
-	 * @param file path to properties file to read
+	 * Parses properties and filler from a path and applies them to this instance.
+	 * @param file path to properties to read
 	 * @throws IOException if an I/O error occurs
 	 */
 	public void load(Path file) throws IOException {
-		try (BufferedReader in = Files.newBufferedReader(file)) {
+		load(Files.newInputStream(file));
+	}
+	/**
+	 * Parses properties and filler from an input stream and applies them to this instance.
+	 * @param inStream input stream of properties to read
+	 * @throws IOException if an I/O error occurs
+	 */
+	public void load(InputStream inStream) throws IOException {
+		try (BufferedReader in = new BufferedReader(new InputStreamReader(inStream))) {
 			String line;
 			while ((line = in.readLine()) != null) {
 				String[] splitLine = line.split("\\s*" + PROPERTY_DELIMETER + "\\s*", 2);	// Trim whitespace around delimiter
-				
+
 				if (splitLine.length < 1) putBlankLine();
 				else if (isComment(splitLine[0])) putComment(splitLine[0]);
 				else if (splitLine.length < 2) {
