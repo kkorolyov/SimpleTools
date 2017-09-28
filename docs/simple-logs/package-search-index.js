@@ -1,0 +1,1 @@
+packageSearchIndex = [{"l":"dev.kkorolyov.simplelogs"},{"l":"dev.kkorolyov.simplelogs.append"},{"l":"dev.kkorolyov.simplelogs.format"}]
