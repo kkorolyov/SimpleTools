@@ -62,6 +62,23 @@ subprojects {
 			}
 		}
 	}
+
+	task releaseLocal(dependsOn: [javadoc, publishToMavenLocal]) {
+		group 'publishing'
+		description "Prepares all release resources and publishes to the local Maven repo"
+
+		doLast {
+			println "Released ${project.name}-${project.version} locally"
+		}
+	}
+	task releaseBintray(dependsOn: [releaseLocal, bintrayUpload]) {
+		group 'publishing'
+		description "Releases to Bintray"
+
+		doLast {
+			println "Released ${project.name}-${project.version} to Bintray"
+		}
+	}
 }
 
 project(':simple-logs') {
@@ -80,6 +97,11 @@ project(':simple-props') {
 	dependencies {
 		testImplementation 'junit:junit:4.+'
 	}
+}
+
+project(':simple-files') {
+	description = "Snappy file interaction library"
+	version = 1.0
 }
 
 project(':simple-opts') {
