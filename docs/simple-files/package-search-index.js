@@ -1,0 +1,1 @@
+packageSearchIndex = [{"l":"dev.kkorolyov.simplefiles"},{"l":"dev.kkorolyov.simplefiles.stream"}]

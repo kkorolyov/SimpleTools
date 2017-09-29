@@ -1,0 +1,1 @@
+typeSearchIndex = [{"p":"dev.kkorolyov.simplefiles","l":"AccessException"},{"p":"dev.kkorolyov.simplefiles","l":"Files"},{"p":"dev.kkorolyov.simplefiles.stream","l":"StreamStrategies"},{"p":"dev.kkorolyov.simplefiles.stream","l":"StreamStrategy"}]
