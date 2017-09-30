@@ -2,4 +2,5 @@
 
 ## 4.2 - TBD
 ### Changes
-* Added `Properties::new` and `Properties::load` from `InputStream`
+* Added loading from `InputStream`
+* Added saving to `OutputStream`

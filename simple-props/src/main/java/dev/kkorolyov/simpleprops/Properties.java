@@ -237,18 +237,22 @@ public final class Properties implements Iterable<Entry<String, String>> {
 	/**
 	 * Parses properties and filler from a path and applies them to this instance.
 	 * @param file path to properties to read
-	 * @throws IOException if an I/O error occurs
+	 * @throws UncheckedIOException if an I/O error occurs
 	 */
-	public void load(Path file) throws IOException {
-		load(Files.newInputStream(file));
+	public void load(Path file) {
+		try {
+			load(Files.newInputStream(file));
+		} catch (IOException e) {
+			throw new UncheckedIOException(e);
+		}
 	}
 	/**
 	 * Parses properties and filler from an input stream and applies them to this instance.
-	 * @param inStream input stream of properties to read
-	 * @throws IOException if an I/O error occurs
+	 * @param stream input stream of properties to read
+	 * @throws UncheckedIOException if an I/O error occurs
 	 */
-	public void load(InputStream inStream) throws IOException {
-		try (BufferedReader in = new BufferedReader(new InputStreamReader(inStream))) {
+	public void load(InputStream stream) {
+		try (BufferedReader in = new BufferedReader(new InputStreamReader(stream))) {
 			String line;
 			while ((line = in.readLine()) != null) {
 				String[] splitLine = line.split("\\s*" + PROPERTY_DELIMETER + "\\s*", 2);	// Trim whitespace around delimiter
@@ -261,27 +265,43 @@ public final class Properties implements Iterable<Entry<String, String>> {
 				}
 				else put(splitLine[0], splitLine[1]);
 			}
+		} catch (IOException e) {
+			throw new UncheckedIOException(e);
 		}
 	}
 	
 	/**
 	 * Writes all properties and filler to a file.
 	 * @param file path to properties file to write, created if it does not exist
-	 * @throws IOException if an I/O error occurs
+	 * @throws UncheckedIOException if an I/O error occurs
 	 */
-	public void save(Path file) throws IOException {
-		Path parent = file.getParent();
-		if (parent != null)
-			Files.createDirectories(parent);
-		
-		try (BufferedWriter out = Files.newBufferedWriter(file)) {
+	public void save(Path file) {
+		try {
+			Path parent = file.getParent();
+			if (parent != null) {
+				Files.createDirectories(parent);
+			}
+			save(Files.newOutputStream(file));
+		} catch (IOException e) {
+			throw new UncheckedIOException(e);
+		}
+	}
+	/**
+	 * Writes all properties and filler to a file.
+	 * @param stream output stream to properties file to write
+	 * @throws UncheckedIOException if an I/O error occurs
+	 */
+	public void save(OutputStream stream) {
+		try (BufferedWriter out = new BufferedWriter(new OutputStreamWriter(stream))) {
 			for (Entry<String, String> prop : props.entrySet()) {
 				out.write(toString(prop));
 				out.newLine();
 			}
+		} catch (IOException e) {
+			throw new UncheckedIOException(e);
 		}
 	}
-	
+
 	/**
 	 * Checks if two properties have identical contents in identical order.
 	 * @param other properties to check with
