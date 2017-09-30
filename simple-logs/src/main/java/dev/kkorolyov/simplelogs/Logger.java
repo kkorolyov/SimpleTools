@@ -1,17 +1,26 @@
 package dev.kkorolyov.simplelogs;
 
-import java.lang.reflect.InvocationTargetException;
-import java.nio.file.Path;
-import java.time.Instant;
-import java.util.*;
-import java.util.function.Supplier;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import dev.kkorolyov.simplelogs.append.Appender;
 import dev.kkorolyov.simplelogs.append.Appenders;
 import dev.kkorolyov.simplelogs.format.Formatter;
 import dev.kkorolyov.simplelogs.format.Formatters;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
+import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Instant;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringJoiner;
+import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Simple logging interface for multiple levels.
@@ -40,21 +49,41 @@ public class Logger {
 	 * <li>ERR - {@code System.err}</li>
 	 * </ul>
 	 * @param logProps path to logging properties file
-	 * @return {@code true} if property application successful
 	 */
-	public static boolean applyProps(Path logProps) {
+	public static void applyProps(Path logProps) {
 		try {
-			Class.forName("dev.kkorolyov.simplelogs.PropsApplier").getDeclaredMethod("apply", Path.class).invoke(null, logProps);
-		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException | ClassNotFoundException e) {
-			e.printStackTrace();
-			return false;
+			applyProps(Files.newInputStream(logProps));
+		} catch (IOException e) {
+			throw new UncheckedIOException(e);
 		}
-		return true;
+	}
+	/**
+	 * Applies logging properties defined in a file.
+	 * Properties should be defined in the format:
+	 * <p>{@code LOGGER=LEVEL, WRITERS...}</p>
+	 * <ul>
+	 * <li>{@code LOGGER} - name of a logger</li>
+	 * <li>{@code LEVEL} - the logger's logging level</li>
+	 * <li>{@code WRITERS} - list of comma-delimited files or streams the logger logs to</li>
+	 * </ul>
+	 * <p>Valid output streams:</p>
+	 * <ul>
+	 * <li>OUT - {@code System.out}</li>
+	 * <li>ERR - {@code System.err}</li>
+	 * </ul>
+	 * @param logProps stream to logging properties file
+	 */
+	public static void applyProps(InputStream logProps) {
+		try {
+			Class.forName("dev.kkorolyov.simplelogs.PropsApplier").getDeclaredMethod("apply", InputStream.class).invoke(null, logProps);
+		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException | ClassNotFoundException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	/**
 	 * Retrieves the logger associated with the fully-qualified name of the class calling this method.
-	 * If such a logger does not exist, a new logger associated with {@code name} is created with level {@value Level#INFO}, the simple formatter, and an appender to {@code System.err}.
+	 * If such a logger does not exist, a new logger associated with the calling class name is created with level {@value Level#INFO}, the simple formatter, and an appender to {@code System.err}.
 	 * @return logger associated with the fully-qualified name of the class calling this method
 	 */
 	public static Logger getLogger() {

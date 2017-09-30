@@ -7,6 +7,7 @@ import dev.kkorolyov.simplelogs.format.Formatters;
 import dev.kkorolyov.simpleprops.Properties;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -15,6 +16,9 @@ import java.util.List;
 
 class PropsApplier {
 	static void apply(Path logProps) throws IOException {
+		apply(Files.newInputStream(logProps));
+	}
+	static void apply(InputStream logProps) throws IOException {
 		Properties props = new Properties(logProps);
 		
 		for (String key : props.keys()) {
