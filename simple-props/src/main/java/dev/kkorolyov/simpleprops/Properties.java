@@ -61,17 +61,17 @@ public final class Properties implements Iterable<Entry<String, String>> {
 	/**
 	 * Constructs a collection of properties by parsing a properties file.
 	 * @param defaults path to file containing initial properties
-	 * @throws IOException if an I/O error occurs
+	 * @throws UncheckedIOException if an I/O error occurs
 	 */
-	public Properties(Path defaults) throws IOException {
+	public Properties(Path defaults) {
 		load(defaults);
 	}
 	/**
 	 * Constructs a collection of properties by parsing an input stream.
 	 * @param defaults input stream containing initial properties
-	 * @throws IOException if an I/O error occurs
+	 * @throws UncheckedIOException if an I/O error occurs
 	 */
-	public Properties(InputStream defaults) throws IOException {
+	public Properties(InputStream defaults) {
 		load(defaults);
 	}
 	

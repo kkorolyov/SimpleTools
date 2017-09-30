@@ -4,3 +4,4 @@
 ### Changes
 * Added loading from `InputStream`
 * Added saving to `OutputStream`
+* Replaced thrown `IOException` with `UncheckedIOException`
