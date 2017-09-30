@@ -63,7 +63,7 @@ subprojects {
 		}
 	}
 
-	task releaseLocal(dependsOn: [javadoc, publishToMavenLocal]) {
+	task releaseLocal(dependsOn: [javadoc, test, publishToMavenLocal]) {
 		group 'publishing'
 		description "Prepares all release resources and publishes to the local Maven repo"
 

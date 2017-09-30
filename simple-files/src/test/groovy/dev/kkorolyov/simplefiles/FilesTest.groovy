@@ -6,14 +6,17 @@ import dev.kkorolyov.simplefiles.stream.OutStrategy
 import spock.lang.Shared
 import spock.lang.Specification
 
+import java.util.function.Consumer
+
 class FilesTest extends Specification {
 	@Shared String path = "something.something"
 	@Shared String badStrategyMessage = "stuff"
 	@Shared byte[] bytes = new byte[64]
-	InStrategy goodInStrategy = Mock()
-	InStrategy badInStrategy = Mock()
-	OutStrategy goodOutStrategy = Mock()
-	OutStrategy badOutStrategy = Mock()
+
+	InputStream inStream = Mock()
+	OutputStream outStream = Mock()
+	Consumer<InputStream> inConsumer = Mock()
+	Consumer<OutputStream> outConsumer = Mock()
 
 	def setupSpec() {
 		new Random().nextBytes(bytes)
@@ -23,93 +26,87 @@ class FilesTest extends Specification {
 	}
 
 	def "in() does not fail fast if failFast false"() {
-		when:
-		Files.in(path, false, badInStrategy, goodInStrategy)
-
-		then:
-		1 * badInStrategy.apply(path) >> { throw new AccessException(badStrategyMessage) }
-		1 * goodInStrategy.apply(path)
-
-		thrown AccessException
+		expect:
+		Files.in(path, false, inStrategies(inStream)) == inStream
 	}
 	def "in() fails fast if failFast true"() {
 		when:
-		Files.in(path, true, badInStrategy, goodInStrategy)
+		Files.in(path, true, inStrategies(inStream))
 
 		then:
-		1 * badInStrategy.apply(path) >> { throw new AccessException(badStrategyMessage) }
-		0 * goodInStrategy.apply(_ as String)
-
 		AccessException e = thrown()
 		e.getMessage() == badStrategyMessage
 	}
 
 	def "in() returns first non-null strategy return value"() {
-		InputStream mockStream = Mock(InputStream)
-
-		when:
-		InputStream result = Files.in(path, badInStrategy, goodInStrategy)
-
-		then:
-		1 * badInStrategy.apply(path)
-		1 * goodInStrategy.apply(path) >> { return mockStream }
-
-		notThrown AccessException
-
-		result == mockStream
+		expect:
+		Files.in(path, inStrategies(inStream)) == inStream
 	}
 	def "in() fails if null input stream returned"() {
 		when:
-		Files.in(path, goodInStrategy)
+		Files.in(path, inStrategies(null))
 
 		then:
-		1 * goodInStrategy.apply(path)
-
 		thrown AccessException
+	}
+
+	def "in() consumer invoked if stream available"() {
+		when:
+		boolean result = Files.in(path, inConsumer, inStrategies(inStream))
+
+		then:
+		result
+		1 * inConsumer.accept(inStream)
+	}
+	def "in() consumer not invoked if stream unavailable"() {
+		when:
+		boolean result = Files.in(path, inConsumer, inStrategies(null))
+
+		then:
+		!result
+		0 * inConsumer.accept(_)
 	}
 
 	def "out() does not fail fast if failFast false"() {
-		when:
-		Files.out(path, false, badOutStrategy, goodOutStrategy)
-
-		then:
-		1 * badOutStrategy.apply(path) >> { throw new AccessException(badStrategyMessage) }
-		1 * goodOutStrategy.apply(path)
-
-		thrown AccessException
+		expect:
+		Files.out(path, false, outStrategies(outStream)) == outStream
 	}
 	def "out() fails fast if failFast true"() {
 		when:
-		Files.out(path, true, badOutStrategy, goodOutStrategy)
+		Files.out(path, true, outStrategies(outStream))
 
 		then:
-		1 * badOutStrategy.apply(path) >> { throw new AccessException(badStrategyMessage) }
-		0 * goodOutStrategy.apply(_ as String)
-
 		AccessException e = thrown()
 		e.getMessage() == badStrategyMessage
 	}
 
 	def "out() returns first non-null strategy return value"() {
-		OutputStream mockStream = Mock()
-
-		when:
-		OutputStream result = Files.out(path, badOutStrategy, goodOutStrategy)
-
-		then:
-		1 * badOutStrategy.apply(path)
-		1 * goodOutStrategy.apply(path) >> { return mockStream }
-
-		result == mockStream
+		expect:
+		Files.out(path, outStrategies(outStream)) == outStream
 	}
 	def "out() fails if null input stream returned"() {
 		when:
-		Files.out(path, goodOutStrategy)
+		Files.out(path, outStrategies(null))
 
 		then:
-		1 * goodOutStrategy.apply(path)
-
 		thrown AccessException
+	}
+
+	def "out() consumer invoked if stream available"() {
+		when:
+		boolean result = Files.out(path, outConsumer, outStrategies(outStream))
+
+		then:
+		result
+		1 * outConsumer.accept(outStream)
+	}
+	def "out() consumer not invoked if stream unavailable"() {
+		when:
+		boolean result = Files.out(path, outConsumer, outStrategies(null))
+
+		then:
+		!result
+		0 * outConsumer.accept(_)
 	}
 
 	def "reads files"() {
@@ -152,5 +149,28 @@ class FilesTest extends Specification {
 
 		then:
 		1 * mockStream.write(bytes)
+	}
+
+	/** @return 2 InStrategies, where the 1st throws an {@code AccessException}, and 2nd returns {@code stream} */
+	private InStrategy[] inStrategies(InputStream stream) {
+		return [
+				Mock(InStrategy) {
+					apply(path) >> { throw new AccessException(badStrategyMessage) }
+				},
+				Mock(InStrategy) {
+					apply(path) >> stream
+				}
+		]
+	}
+	/** @return 2 OutStrategies, where the 1st throws an {@code AccessException}, and 2nd returns {@code stream} */
+	private OutStrategy[] outStrategies(OutputStream stream) {
+		return [
+				Mock(OutStrategy) {
+					apply(path) >> { throw new AccessException(badStrategyMessage) }
+				},
+				Mock(OutStrategy) {
+					apply(path) >> stream
+				}
+		]
 	}
 }

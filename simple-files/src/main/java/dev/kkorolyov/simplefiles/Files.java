@@ -13,12 +13,28 @@ import java.io.OutputStreamWriter;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
  * Provides methods for quickly working with filesystem resources.
  */
 public final class Files {
+	/**
+	 * Attempts to invoke a consumer with an input stream to a resource.
+	 * @param path path to resource
+	 * @param streamConsumer consumer invoked with stream if available
+	 * @param strategies stream opening strategies to attempt in order
+	 * @return {@code true} if stream found and consumed by {@code streamConsumer}
+	 */
+	public static boolean in(String path, Consumer<InputStream> streamConsumer, InStrategy... strategies) {
+		try {
+			streamConsumer.accept(in(path, strategies));
+			return true;
+		} catch (AccessException e) {
+			return false;
+		}
+	}
 	/**
 	 * Attempts to open an input stream to a resource, throwing an exception only if all strategies are exhausted.
 	 * @see #in(String, boolean, InStrategy...)
@@ -39,6 +55,21 @@ public final class Files {
 	}
 
 	/**
+	 * Attempts to invoke a consumer with an output stream to a resource.
+	 * @param path path to resource
+	 * @param streamConsumer consumer invoked with stream if available
+	 * @param strategies stream opening strategies to attempt in order
+	 * @return {@code true} if stream found and consumed by {@code streamConsumer}
+	 */
+	public static boolean out(String path, Consumer<OutputStream> streamConsumer, OutStrategy... strategies) {
+		try {
+			streamConsumer.accept(out(path, strategies));
+			return true;
+		} catch (AccessException e) {
+			return false;
+		}
+	}
+	/**
 	 * Attempts to open an output stream to a resource, throwing an exception only if all strategies are exhausted.
 	 * @see #out(String, boolean, OutStrategy...)
 	 */
@@ -57,6 +88,7 @@ public final class Files {
 		return stream(path, failFast, strategies);
 	}
 
+	@SafeVarargs
 	private static <T> T stream(String path, boolean failFast, Function<String, T>... strategies) {
 		for (Function<String, T> strategy : strategies) {
 			try {
