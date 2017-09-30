@@ -52,7 +52,7 @@ class FilesTest extends Specification {
 
 	def "in() consumer invoked if stream available"() {
 		when:
-		boolean result = Files.in(path, inConsumer, inStrategies(inStream))
+		boolean result = Files.in(inConsumer, path, inStrategies(inStream))
 
 		then:
 		result
@@ -60,7 +60,7 @@ class FilesTest extends Specification {
 	}
 	def "in() consumer not invoked if stream unavailable"() {
 		when:
-		boolean result = Files.in(path, inConsumer, inStrategies(null))
+		boolean result = Files.in(inConsumer, path, inStrategies(null))
 
 		then:
 		!result
@@ -94,7 +94,7 @@ class FilesTest extends Specification {
 
 	def "out() consumer invoked if stream available"() {
 		when:
-		boolean result = Files.out(path, outConsumer, outStrategies(outStream))
+		boolean result = Files.out(outConsumer, path, outStrategies(outStream))
 
 		then:
 		result
@@ -102,7 +102,7 @@ class FilesTest extends Specification {
 	}
 	def "out() consumer not invoked if stream unavailable"() {
 		when:
-		boolean result = Files.out(path, outConsumer, outStrategies(null))
+		boolean result = Files.out(outConsumer, path, outStrategies(null))
 
 		then:
 		!result

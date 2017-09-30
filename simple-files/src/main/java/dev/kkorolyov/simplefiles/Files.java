@@ -22,12 +22,12 @@ import java.util.function.Function;
 public final class Files {
 	/**
 	 * Attempts to invoke a consumer with an input stream to a resource.
-	 * @param path path to resource
 	 * @param streamConsumer consumer invoked with stream if available
+	 * @param path path to resource
 	 * @param strategies stream opening strategies to attempt in order
 	 * @return {@code true} if stream found and consumed by {@code streamConsumer}
 	 */
-	public static boolean in(String path, Consumer<InputStream> streamConsumer, InStrategy... strategies) {
+	public static boolean in(Consumer<InputStream> streamConsumer, String path, InStrategy... strategies) {
 		try {
 			streamConsumer.accept(in(path, strategies));
 			return true;
@@ -56,12 +56,12 @@ public final class Files {
 
 	/**
 	 * Attempts to invoke a consumer with an output stream to a resource.
-	 * @param path path to resource
 	 * @param streamConsumer consumer invoked with stream if available
+	 * @param path path to resource
 	 * @param strategies stream opening strategies to attempt in order
 	 * @return {@code true} if stream found and consumed by {@code streamConsumer}
 	 */
-	public static boolean out(String path, Consumer<OutputStream> streamConsumer, OutStrategy... strategies) {
+	public static boolean out(Consumer<OutputStream> streamConsumer, String path, OutStrategy... strategies) {
 		try {
 			streamConsumer.accept(out(path, strategies));
 			return true;
