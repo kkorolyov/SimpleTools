@@ -1,1 +1,1 @@
-typeSearchIndex = [{"p":"dev.kkorolyov.simplefiles","l":"AccessException"},{"p":"dev.kkorolyov.simplefiles","l":"Files"},{"p":"dev.kkorolyov.simplefiles.stream","l":"StreamStrategies"},{"p":"dev.kkorolyov.simplefiles.stream","l":"StreamStrategy"}]
+typeSearchIndex = [{"p":"dev.kkorolyov.simplefiles","l":"AccessException"},{"p":"dev.kkorolyov.simplefiles","l":"Files"},{"p":"dev.kkorolyov.simplefiles.stream","l":"InStrategy"},{"p":"dev.kkorolyov.simplefiles.stream","l":"OutStrategy"},{"p":"dev.kkorolyov.simplefiles.stream","l":"StreamStrategies"}]

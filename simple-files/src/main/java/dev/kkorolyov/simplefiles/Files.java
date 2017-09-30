@@ -1,14 +1,19 @@
 package dev.kkorolyov.simplefiles;
 
-import dev.kkorolyov.simplefiles.stream.StreamStrategy;
+import dev.kkorolyov.simplefiles.stream.InStrategy;
+import dev.kkorolyov.simplefiles.stream.OutStrategy;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.function.Function;
 
 /**
  * Provides methods for quickly working with filesystem resources.
@@ -16,10 +21,10 @@ import java.nio.file.Paths;
 public final class Files {
 	/**
 	 * Attempts to open an input stream to a resource, throwing an exception only if all strategies are exhausted.
-	 * @see #stream(String, boolean, StreamStrategy...)
+	 * @see #in(String, boolean, InStrategy...)
 	 */
-	public static InputStream stream(String path, StreamStrategy...  strategies) {
-		return stream(path, false, strategies);
+	public static InputStream in(String path, InStrategy...  strategies) {
+		return in(path, false, strategies);
 	}
 	/**
 	 * Attempts to open an input stream to a resource.
@@ -29,16 +34,39 @@ public final class Files {
 	 * @return input stream to resource
 	 * @throws AccessException if all opening strategies failed
 	 */
-	public static InputStream stream(String path, boolean failFast, StreamStrategy...  strategies) {
-		for (StreamStrategy strategy : strategies) {
+	public static InputStream in(String path, boolean failFast, InStrategy...  strategies) {
+		return stream(path, failFast, strategies);
+	}
+
+	/**
+	 * Attempts to open an output stream to a resource, throwing an exception only if all strategies are exhausted.
+	 * @see #out(String, boolean, OutStrategy...)
+	 */
+	public static OutputStream out(String path, OutStrategy... strategies) {
+		return out(path, false, strategies);
+	}
+	/**
+	 * Attempts to open an output stream to a resource.
+	 * @param path path to resource
+	 * @param failFast if {@code true}, will throw an {@link AccessException} on the first failed open strategy
+	 * @param strategies all stream opening strategies to attempt, will return the value of the first successful strategy
+	 * @return output stream to resource
+	 * @throws AccessException if all opening strategies failed
+	 */
+	public static OutputStream out(String path, boolean failFast, OutStrategy... strategies) {
+		return stream(path, failFast, strategies);
+	}
+
+	private static <T> T stream(String path, boolean failFast, Function<String, T>... strategies) {
+		for (Function<String, T> strategy : strategies) {
 			try {
-				InputStream in = strategy.open(path);
-				if (in != null) return in;
+				T stream = strategy.apply(path);
+				if (stream != null) return stream;
 			} catch (Throwable e) {
 				if (failFast) throw e;
 			}
 		}
-		throw new AccessException("All open strategies failed for path: " + path);
+		throw new AccessException("All strategies failed for path: " + path);
 	}
 
 	/**
@@ -52,53 +80,42 @@ public final class Files {
 
 	/**
 	 * Provides a reader to read a resource.
-	 * @param path path to resource
+	 * @param stream stream to resource
 	 * @return buffered reader reading resource
-	 * @throws UncheckedIOException if an IO error occurs
 	 */
-	public static BufferedReader read(String path) {
-		try {
-			return java.nio.file.Files.newBufferedReader(path(path));
-		} catch (IOException e) {
-			throw new UncheckedIOException(e);
-		}
+	public static BufferedReader read(InputStream stream) {
+		return new BufferedReader(new InputStreamReader(stream));
 	}
 	/**
 	 * Provides a writer to write a resource.
-	 * @param path path to resource
+	 * @param stream stream to resource
 	 * @return buffered writer writing resource
-	 * @throws UncheckedIOException if an IO error occurs
 	 */
-	public static BufferedWriter write(String path) {
-		try {
-			return java.nio.file.Files.newBufferedWriter(path(path));
-		} catch (IOException e) {
-			throw new UncheckedIOException(e);
-		}
+	public static BufferedWriter write(OutputStream stream) {
+		return new BufferedWriter(new OutputStreamWriter(stream));
 	}
 
 	/**
-	 * Reads bytes from a resource.
-	 * @param path path to resource
+	 * Reads bytes from a resource stream and then closes the stream.
+	 * @param stream stream to resource
 	 * @return bytes read from resource
-	 * @throws UncheckedIOException if an IO error occurs
 	 */
-	public static byte[] bytes(String path) {
-		try {
-			return java.nio.file.Files.readAllBytes(path(path));
+	public static byte[] bytes(InputStream stream) {
+		try(stream) {
+			return stream.readAllBytes();
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}
 	}
 	/**
-	 * Writes bytes to a resource.
-	 * @param path path to resource
+	 * Writes bytes to a resource stream and then closes the stream.
+	 * @param stream stream to resource
 	 * @param bytes bytes to write
 	 * @throws UncheckedIOException if an IO error occurs
 	 */
-	public static void bytes(String path, byte[] bytes) {
-		try {
-			java.nio.file.Files.write(path(path), bytes);
+	public static void bytes(OutputStream stream, byte[] bytes) {
+		try(stream) {
+			stream.write(bytes);
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}
