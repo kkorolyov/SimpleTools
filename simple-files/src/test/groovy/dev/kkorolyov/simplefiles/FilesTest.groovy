@@ -110,45 +110,37 @@ class FilesTest extends Specification {
 	}
 
 	def "reads files"() {
-		InputStream mockStream = Mock()
-
 		when:
-		Files.read(mockStream)
+		Files.read(inStream)
 				.close()
 
 		then:
-		1 * mockStream.close()
+		1 * inStream.close()
 	}
 	def "writes files"() {
-		OutputStream mockStream = Mock()
-
 		when:
-		Files.write(mockStream)
+		Files.write(outStream)
 				.close()
 
 		then:
-		1 * mockStream.close()
+		1 * outStream.close()
 	}
 
 	def "reads bytes"() {
-		InputStream mockStream = Mock()
-
 		when:
-		byte[] result = Files.bytes(mockStream)
+		byte[] result = Files.bytes(inStream)
 
 		then:
-		1 * mockStream.readAllBytes() >> bytes
+		1 * inStream.readAllBytes() >> bytes
 
 		result == bytes
 	}
 	def "writes bytes"() {
-		OutputStream mockStream = Mock()
-
 		when:
-		Files.bytes(mockStream, bytes)
+		Files.bytes(outStream, bytes)
 
 		then:
-		1 * mockStream.write(bytes)
+		1 * outStream.write(bytes)
 	}
 
 	/** @return 2 InStrategies, where the 1st throws an {@code AccessException}, and 2nd returns {@code stream} */
