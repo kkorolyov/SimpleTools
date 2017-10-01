@@ -1,5 +1,9 @@
 # Change Log
 
+## 3.1 - 2017-10-01
+### Changes
+* Added applying LogProps from an `InputStream`
+
 ## [3.0.1] - 2017-05-10
 ### Fixes
 * Root/empty logger is now correctly added as a parent to all other loggers
