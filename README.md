@@ -1,9 +1,10 @@
-# SimpleLogs
-A collection of utility libraries with simple APIs.
+# SimpleTools
+A collection of utility libraries with simple, concise APIs.
 
-## Tools
-[SimpleLogs](SimpleLogs/README.md)
+[SimpleFiles](simple-files/README.md)
 
-[SimpleProps](SimpleProps/README.md)
+[SimpleLogs](simple-logs/README.md)
 
-[SimpleOpts](SimpleOpts/README.md)
+[SimpleOpts](simple-opts/README.md)
+
+[SimpleProps](simple-props/README.md)
