@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/kkorolyov/SimpleTools.svg?branch=master)](https://travis-ci.org/kkorolyov/SimpleTools)
+
 # SimpleTools
 A collection of utility libraries with simple, concise APIs.
 
