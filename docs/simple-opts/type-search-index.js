@@ -1,1 +1,0 @@
-typeSearchIndex = [{"p":"dev.kkorolyov.simpleopts","l":"ArgParser"},{"p":"dev.kkorolyov.simpleopts","l":"Option"},{"p":"dev.kkorolyov.simpleopts","l":"Options"}]

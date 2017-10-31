@@ -5,6 +5,34 @@ plugins {
 	id 'com.jfrog.bintray' version '1.7.3'
 }
 
+task fulldoc {
+	group 'documentation'
+	description "Builds deployable documentation"
+
+	def docsDir = "$buildDir/docs"
+	def docTasks = subprojects.collect {it.tasks.withType(Javadoc)}
+
+	dependsOn docTasks
+
+	doLast {
+		docTasks.each {
+			def docTask = it.head()
+			def projectName = docTask.getProject().name
+
+			copy {
+				from docTask
+				into "$docsDir/$projectName"
+			}
+			println "Copied $projectName project's docs"
+		}
+		copy {
+			from 'docs'
+			into docsDir
+		}
+		println "Copied main docs src"
+	}
+}
+
 subprojects {
 	apply plugin: 'java-library'
 	apply plugin: 'groovy'
@@ -22,10 +50,6 @@ subprojects {
 		testImplementation project(':simple-props'),
 				'org.spockframework:spock-core:1.1-groovy-2.4',
 				'net.bytebuddy:byte-buddy:1.+'
-	}
-
-	javadoc {
-		destinationDir = file("$rootProject.projectDir/docs/$project.name")
 	}
 
 	task sourcesJar(type: Jar) {
@@ -60,23 +84,6 @@ subprojects {
 					name = project.version
 				}
 			}
-		}
-	}
-
-	task releaseLocal(dependsOn: [javadoc, test, publishToMavenLocal]) {
-		group 'publishing'
-		description "Prepares all release resources and publishes to the local Maven repo"
-
-		doLast {
-			println "Released ${project.name}-${project.version} locally"
-		}
-	}
-	task releaseBintray(dependsOn: [releaseLocal, bintrayUpload]) {
-		group 'publishing'
-		description "Releases to Bintray"
-
-		doLast {
-			println "Released ${project.name}-${project.version} to Bintray"
 		}
 	}
 }

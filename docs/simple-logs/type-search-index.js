@@ -1,1 +1,0 @@
-typeSearchIndex = [{"p":"dev.kkorolyov.simplelogs.append","l":"Appender"},{"p":"dev.kkorolyov.simplelogs.append","l":"Appenders"},{"p":"dev.kkorolyov.simplelogs.format","l":"Formatter"},{"p":"dev.kkorolyov.simplelogs.format","l":"Formatters"},{"p":"dev.kkorolyov.simplelogs","l":"Level"},{"p":"dev.kkorolyov.simplelogs","l":"Logger"}]
