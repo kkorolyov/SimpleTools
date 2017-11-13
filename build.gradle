@@ -1,36 +1,24 @@
+buildscript {
+	repositories {
+		maven {
+			url 'https://dl.bintray.com/kkorolyov/groovy'	// FullDoc
+		}
+	}
+	dependencies {
+		classpath 'dev.kkorolyov:full-doc:1.+'
+	}
+}
 plugins {
 	id 'java-library'
 	id 'groovy'
 	id 'maven-publish'
 	id 'com.jfrog.bintray' version '1.7.3'
 }
+apply plugin: 'dev.kkorolyov.full-doc'
 
-task fulldoc {
-	group 'documentation'
-	description "Builds deployable documentation"
-
-	def docsDir = "$buildDir/docs"
-	def docTasks = subprojects.collect {it.tasks.withType(Javadoc)}
-
-	dependsOn docTasks
-
-	doLast {
-		docTasks.each {
-			def docTask = it.head()
-			def projectName = docTask.getProject().name
-
-			copy {
-				from docTask
-				into "$docsDir/$projectName"
-			}
-			println "Copied $projectName project's docs"
-		}
-		copy {
-			from 'docs'
-			into docsDir
-		}
-		println "Copied main docs src"
-	}
+fulldoc {
+	src 'docs'
+	out "$buildDir/docs"
 }
 
 subprojects {
