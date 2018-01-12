@@ -1,6 +1,9 @@
 language: java
 jdk: oraclejdk9
 
+install: TRUE
+script: ./gradlew build
+
 # Some Gradle nuance
 before_cache:
   rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
