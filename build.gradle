@@ -107,3 +107,8 @@ project(':simple-opts') {
 		testImplementation 'junit:junit:4.+'
 	}
 }
+
+project(':simple-funcs') {
+	description = "Java functional programming extensions"
+	version = 1.0
+}
