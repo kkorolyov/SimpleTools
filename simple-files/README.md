@@ -30,9 +30,5 @@ BufferedWriter writer = Files.write(out);
 API is documented more thoroughly in the [Javadoc](https://kkorolyov.github.io/SimpleTools).
 Basic usage follows the examples noted [above](#examples).
 
-## License
-BSD-new license.  
-More detail found [here](LICENSE).
-
-[latest-img]: https://api.bintray.com/packages/kkorolyov/java/simple-files/images/download.svg
 [latest]: https://bintray.com/kkorolyov/java/simple-files/_latestVersion
+[latest-img]: https://api.bintray.com/packages/kkorolyov/java/simple-files/images/download.svg

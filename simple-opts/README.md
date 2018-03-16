@@ -1,4 +1,4 @@
-[![Download](https://api.bintray.com/packages/kkorolyov/java/simple-opts/images/download.svg) ](https://bintray.com/kkorolyov/java/simple-opts/_latestVersion)
+[![Download][latest-img]][latest]
 
 # SimpleOpts
 A simple Java API for parsing and executing command line options.
@@ -51,3 +51,6 @@ Basic usage follows the path:
 ## License
 BSD-new license.  
 More detail found [here](LICENSE).
+
+[latest]: https://bintray.com/kkorolyov/java/simple-opts/_latestVersion
+[latest-img]: https://api.bintray.com/packages/kkorolyov/java/simple-opts/images/download.svg

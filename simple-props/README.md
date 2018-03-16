@@ -1,4 +1,4 @@
-[![Download](https://api.bintray.com/packages/kkorolyov/java/simple-props/images/download.svg) ](https://bintray.com/kkorolyov/java/simple-props/_latestVersion)
+[![Download][latest-img]][latest]
 
 # SimpleProps
 A simple Java API for writing and reading application properties to and from files.
@@ -35,3 +35,6 @@ Basic usage follows the examples noted [above](#examples).
 ## License
 BSD-new license.  
 More detail found [here](LICENSE).
+
+[latest]: https://bintray.com/kkorolyov/java/simple-props/_latestVersion
+[latest-img]: https://api.bintray.com/packages/kkorolyov/java/simple-props/images/download.svg

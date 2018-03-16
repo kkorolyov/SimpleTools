@@ -1,4 +1,4 @@
-[![Download](https://api.bintray.com/packages/kkorolyov/java/simple-logs/images/download.svg) ](https://bintray.com/kkorolyov/java/simple-logs/_latestVersion)
+[![Download][latest-img]][latest]
 
 # SimpleLogs
 (Yet another) logging library for logging system messages to various outputs with minimal effort.
@@ -73,5 +73,5 @@ Each property in this file is defined as:
 
 Further documentation found in the [Javadoc](https://kkorolyov.github.io/SimpleLogs).
 
-## License
-[BSD-new license](LICENSE).  
+[latest]: https://bintray.com/kkorolyov/java/simple-logs/_latestVersion
+[latest-img]: https://api.bintray.com/packages/kkorolyov/java/simple-logs/images/download.svg
