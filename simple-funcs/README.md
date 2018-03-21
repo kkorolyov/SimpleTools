@@ -1,19 +1,38 @@
 [![Download][latest-img]][latest]
 
 # SimpleFuncs
-Extensions for functional programming in Java.
+Provides utilities for functional programming paradigms such as first-class functions, streams, and (preferably oneline) immutable operations.
 
 ## Components
 ### Throwing Functional Interfaces
 Extensions of existing Java 8 functional interfaces with added support for checked exceptions.
-- `ThrowingRunnable`
-- `ThrowingSupplier`
-- `ThrowingFunction`
-- `ThrowingBiConsumer`
-- `ThrowingBiFunction`
 ```java
 ThrowingRunnable<Exception> throwingRunnable = () -> throw new Exception();
-throwingRunnable.run()	// Re-throws checked exception as a RuntimeException
+throwingRunnable.run();	// Re-throws checked exception as a RuntimeException
+```
+### Collectors
+Additional (potentially) useful collectors not found in the standard library.
+```java
+Collectors.joiningDefaultEmpty("delimeter", "prefix", "suffix");
+```
+### Iterables
+Utilities for generating and working with `Iterable`s directly.
+```java
+Iterable<T> part1 = ...;
+Iterable<T> part2 = ...;
+...
+Iterable<T> partN = ...;
+
+Iterable<T> full = Iterables.concat(part1, part2, ..., partN)	// Iterates over elements of all parts in order
+```
+```java
+Iterable<String> initial = Arrays.asList("A", "B");
+Iterable<String> full = Iterables.concat(initial, "C", "D");	// Iterates over all in 'initial', then 'C' and 'D'
+```
+### Predicates
+Additional test methods for filtering stream elements.
+```java
+Predicates.isNullOrEmpty("SomeString");
 ```
 
 [latest]: https://bintray.com/kkorolyov/java/simple-funcs/_latestVersion

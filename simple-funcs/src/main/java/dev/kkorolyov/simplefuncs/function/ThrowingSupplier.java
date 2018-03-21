@@ -1,4 +1,4 @@
-package dev.kkorolyov.simplefuncs.throwing;
+package dev.kkorolyov.simplefuncs.function;
 
 import java.util.function.Supplier;
 

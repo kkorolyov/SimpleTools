@@ -110,5 +110,5 @@ project(':simple-opts') {
 
 project(':simple-funcs') {
 	description = "Java functional programming extensions"
-	version = 1.0
+	version = 1.1
 }
