@@ -1,7 +1,7 @@
 buildscript {
 	repositories {
 		maven {
-			url 'https://dl.bintray.com/kkorolyov/groovy'	// FullDoc
+			url 'https://dl.bintray.com/kkorolyov/groovy'  // FullDoc
 		}
 	}
 	dependencies {
@@ -35,9 +35,12 @@ subprojects {
 	}
 
 	dependencies {
-		testImplementation project(':simple-props'),
+		testImplementation(
+				project(':simple-props'),
+				project(':simple-specs'),
 				'org.spockframework:spock-core:1.1-groovy-2.4',
 				'net.bytebuddy:byte-buddy:1.+'
+		)
 	}
 
 	task sourcesJar(type: Jar) {
@@ -119,5 +122,14 @@ project(':simple-graphs') {
 
 	dependencies {
 		implementation project(':simple-funcs')
+	}
+}
+
+project(':simple-specs') {
+	description = "Groovy test/specification utilities"
+	version = 1.0
+
+	dependencies {
+		implementation 'org.codehaus.groovy:groovy:2.4.+'
 	}
 }

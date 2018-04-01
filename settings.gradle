@@ -1,2 +1,10 @@
 rootProject.name = 'simple-tools'
-include 'simple-logs', 'simple-props', 'simple-files', 'simple-opts', 'simple-funcs', 'simple-graphs'
+include(
+		'simple-logs',
+		'simple-props',
+		'simple-files',
+		'simple-opts',
+		'simple-funcs',
+		'simple-graphs',
+		'simple-specs'
+)
