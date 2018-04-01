@@ -71,22 +71,44 @@ class SpecUtilities {
 		return f;
 	}
 
-	/** @return random int */
-	static int randInt() {
-		return ThreadLocalRandom.current().nextInt()
+	/** @return random int between {@code 0} and {@code bound} */
+	static int randInt(int bound = Integer.MAX_VALUE) {
+		return ThreadLocalRandom.current().nextInt(bound)
 	}
-	/** @return random long */
-	static long randLong() {
-		return ThreadLocalRandom.current().nextLong()
+
+	/** @return random byte between {@code 0} and {@code bound} */
+	static byte randByte(byte bound = Byte.MAX_VALUE) {
+		return ThreadLocalRandom.current().nextInt(bound)
 	}
-	/** @return random float between {@code 0} and {@code MAX_INT} */
-	static float randFloat() {
-		return ThreadLocalRandom.current().nextDouble(Float.MAX_VALUE)
+	/**
+	 * @param length length of returned byte array
+	 * @return byte array of length {@code length} populated with random bytes
+	 */
+	static byte[] randByteArray(int length) {
+		return new byte[length].with {
+			ThreadLocalRandom.current().nextBytes(it)
+			return it
+		}
 	}
-	/** @return random double between {@code 0} and {@code MAX_DOUBLE} */
-	static double randDouble() {
-		return ThreadLocalRandom.current().nextDouble(Double.MAX_VALUE)
+
+	/** @return random short between {@code 0} and {@code bound} */
+	static short randShort(short bound = Short.MAX_VALUE) {
+		return ThreadLocalRandom.current().nextInt(bound)
 	}
+	/** @return random long between {@code 0} and {@code bound} */
+	static long randLong(long bound = Long.MAX_VALUE) {
+		return ThreadLocalRandom.current().nextLong(bound)
+	}
+
+	/** @return random float between {@code 0} and {@code bound} */
+	static float randFloat(float bound = Float.MAX_VALUE) {
+		return ThreadLocalRandom.current().nextDouble(bound)
+	}
+	/** @return random double between {@code 0} and {@code bound} */
+	static double randDouble(double bound = Double.MAX_VALUE) {
+		return ThreadLocalRandom.current().nextDouble(bound)
+	}
+
 	/** @return random String generated using UUID */
 	static String randString() {
 		return UUID.randomUUID().toString().replaceAll("-", "")
