@@ -32,7 +32,7 @@ public final class Iterables {
 	 * @return iterable which iterates over {@code iterable} elements, then over {@code others}
 	 */
 	@SafeVarargs
-	public static <T> Iterable<T> append(Iterable<T> initial, T... others) {
+	public static <T> Iterable<T> append(Iterable<? extends T> initial, T... others) {
 		return () -> new ExtraArrayIterator<>(initial.iterator(), others);
 	}
 
