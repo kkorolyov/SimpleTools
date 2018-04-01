@@ -2,12 +2,12 @@ package dev.kkorolyov.simplespecs
 
 import java.lang.reflect.Field
 import java.lang.reflect.Modifier
+import java.util.concurrent.ThreadLocalRandom
+
 /**
  * Provides utility methods for Specs.
  */
 class SpecUtilities {
-	private static final Random rand = new Random()
-
 	/**
 	 * Reflectively gets a field's value.
 	 * @see #getField(java.lang.String, java.lang.Class, java.lang.Object)
@@ -73,15 +73,19 @@ class SpecUtilities {
 
 	/** @return random int */
 	static int randInt() {
-		return rand.nextInt()
+		return ThreadLocalRandom.current().nextInt()
 	}
 	/** @return random long */
 	static long randLong() {
-		return rand.nextLong()
+		return ThreadLocalRandom.current().nextLong()
 	}
 	/** @return random float between {@code 0} and {@code MAX_INT} */
 	static float randFloat() {
-		return rand.nextInt(Integer.MAX_VALUE) * rand.nextFloat()
+		return ThreadLocalRandom.current().nextDouble(Float.MAX_VALUE)
+	}
+	/** @return random double between {@code 0} and {@code MAX_DOUBLE} */
+	static double randDouble() {
+		return ThreadLocalRandom.current().nextDouble(Double.MAX_VALUE)
 	}
 	/** @return random String generated using UUID */
 	static String randString() {
