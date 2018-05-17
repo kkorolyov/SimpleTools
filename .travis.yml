@@ -15,7 +15,7 @@ cache:
 
 # Generate Javadoc
 before_deploy:
-  ./gradlew javadoc
+  ./gradlew fulldoc
 deploy:
   # Deploy Javadoc
   - provider: pages
