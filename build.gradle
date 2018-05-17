@@ -12,7 +12,7 @@ plugins {
 	id 'java-library'
 	id 'groovy'
 	id 'maven-publish'
-	id 'com.jfrog.bintray' version '1.7.3'
+	id 'com.jfrog.bintray' version '1.8'
 }
 apply plugin: 'dev.kkorolyov.full-doc'
 
@@ -66,6 +66,7 @@ subprojects {
 			user = System.getenv('BINTRAY_USER')
 			key = System.getenv('BINTRAY_KEY')
 			publications = ['Pub']
+			publish = true
 			pkg {
 				repo = 'java'
 				name = project.name
