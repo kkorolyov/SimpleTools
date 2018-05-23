@@ -4,6 +4,7 @@
 A Java library for concisely dealing with system I/O.
 
 ## Examples
+### File operations
 #### Opening streams
 ```java
 InputStream in = Files.in("path/to/file", StreamStrategies.IN_PATH);
@@ -22,13 +23,12 @@ BufferedReader reader = Files.read(in);
 BufferedWriter writer = Files.write(out);
 ```
 
-## Installation
-* Download the [latest release][latest].
-* Add either the source or bundled .jar file to your project's classpath.
-
-## Usage
-API is documented more thoroughly in the [Javadoc](https://kkorolyov.github.io/SimpleTools).
-Basic usage follows the examples noted [above](#examples).
+### Service providers
+#### Loading service providers
+```java
+Providers<MyService> providers = Providers.fromConfig(MyService.class, "someName", 42);
+MyService someProvider = providers.get(p -> p.accepts(key));
+```
 
 [latest]: https://bintray.com/kkorolyov/java/simple-files/_latestVersion
 [latest-img]: https://api.bintray.com/packages/kkorolyov/java/simple-files/images/download.svg
