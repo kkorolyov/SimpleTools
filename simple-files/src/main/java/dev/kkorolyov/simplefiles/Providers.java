@@ -10,10 +10,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Loads providers/implementations of a service.
@@ -145,15 +147,24 @@ public class Providers<T> {
 	 * @throws IllegalArgumentException if multiple providers match {@code predicate}
 	 */
 	public Optional<T> find(Predicate<T> predicate) {
-		Collection<T> matches = providers.stream()
-				.filter(predicate)
-				.collect(Collectors.toSet());
+		Collection<T> matches = findAll(predicate);
 
 		if (matches.size() > 1) throw new IllegalArgumentException("Multiple " + serviceType + " providers match the given predicate");
 
 		return matches.stream()
 				.findFirst();
 	}
+	/**
+	 * Locates all providers which match a given predicate.
+	 * @param predicate predicate to test
+	 * @return all providers matching {@code predicate}
+	 */
+	public Collection<T> findAll(Predicate<T> predicate) {
+		return providers.stream()
+				.filter(predicate)
+				.collect(Collectors.toSet());
+	}
+
 	/**
 	 * Like {@link #find(Predicate)}, but throws an exception if no matching provider.
 	 * @param predicate predicate to test
@@ -164,5 +175,30 @@ public class Providers<T> {
 	public T get(Predicate<T> predicate) {
 		return find(predicate)
 				.orElseThrow(() -> new NoSuchElementException("No " + serviceType + " provider matches the given predicate"));
+	}
+
+	/** @return stream over all providers */
+	public Stream<T> stream() {
+		return providers.stream();
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+
+		if (o == null || getClass() != o.getClass()) return false;
+
+		Providers<?> other = (Providers<?>) o;
+		return Objects.equals(serviceType, other.serviceType)
+				&& Objects.equals(providers, other.providers);
+	}
+	@Override
+	public int hashCode() {
+		return Objects.hash(serviceType, providers);
+	}
+
+	@Override
+	public String toString() {
+		return providers.toString();
 	}
 }

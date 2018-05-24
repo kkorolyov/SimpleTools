@@ -85,7 +85,7 @@ subprojects {
 
 project(':simple-logs') {
 	description = "Lightweight Java logging library with minimal configuration"
-	version = 3.1
+	version = '3.1'
 
 	dependencies {
 		compileOnly project(':simple-props')
@@ -94,7 +94,7 @@ project(':simple-logs') {
 
 project(':simple-props') {
 	description = "Lightweight Java properties library"
-	version = 4.2
+	version = '4.2'
 
 	dependencies {
 		testImplementation 'junit:junit:4.+'
@@ -103,12 +103,12 @@ project(':simple-props') {
 
 project(':simple-files') {
 	description = "Snappy file interaction library"
-	version = 1.1
+	version = '1.1.1'
 }
 
 project(':simple-opts') {
 	description = "Lightweight Java argument parsing library"
-	version = 1.1
+	version = '1.1'
 
 	dependencies {
 		testImplementation 'junit:junit:4.+'
@@ -117,12 +117,12 @@ project(':simple-opts') {
 
 project(':simple-funcs') {
 	description = "Java functional programming extensions"
-	version = 1.2
+	version = '1.2'
 }
 
 project(':simple-graphs') {
 	description = "Java library of graph data structures and algorithms"
-	version = 1.0
+	version = '1.0'
 
 	dependencies {
 		implementation project(':simple-funcs')
@@ -131,7 +131,7 @@ project(':simple-graphs') {
 
 project(':simple-specs') {
 	description = "Groovy test/specification utilities"
-	version = 1.0
+	version = '1.0'
 
 	dependencies {
 		implementation 'org.codehaus.groovy:groovy:2.4.+'
