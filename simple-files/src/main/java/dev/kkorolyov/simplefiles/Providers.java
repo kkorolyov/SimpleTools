@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -164,5 +165,25 @@ public class Providers<T> {
 	public T get(Predicate<T> predicate) {
 		return find(predicate)
 				.orElseThrow(() -> new NoSuchElementException("No " + serviceType + " provider matches the given predicate"));
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+
+		if (o == null || getClass() != o.getClass()) return false;
+
+		Providers<?> other = (Providers<?>) o;
+		return Objects.equals(serviceType, other.serviceType)
+				&& Objects.equals(providers, other.providers);
+	}
+	@Override
+	public int hashCode() {
+		return Objects.hash(serviceType, providers);
+	}
+
+	@Override
+	public String toString() {
+		return providers.toString();
 	}
 }
