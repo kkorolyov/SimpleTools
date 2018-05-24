@@ -1,7 +1,5 @@
 package dev.kkorolyov.simplefiles
 
-import dev.kkorolyov.simplefiles.ProvidersSpec.Service
-
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -43,6 +41,20 @@ class ProvidersSpec extends Specification {
 
 		then:
 		thrown IllegalArgumentException
+	}
+
+	def "findAll returns empty if no matching providers"() {
+		providers = Providers.fromInstances(Service, services(false, 4))
+
+		expect:
+		providers.findAll(predicate) == [] as Set
+	}
+	def "finds all matching providers"() {
+		Set<Service> matching = services(true, 12)
+		providers = Providers.fromInstances(Service, services(false, 20) + matching)
+
+		expect:
+		providers.findAll(predicate) == matching
 	}
 
 	def "gets provider if matches"() {
