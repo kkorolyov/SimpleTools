@@ -8,7 +8,7 @@ import spock.lang.Specification
 
 import java.util.function.Consumer
 
-class FilesTest extends Specification {
+class FilesSpec extends Specification {
 	@Shared String path = "something.something"
 	@Shared String badStrategyMessage = "stuff"
 	@Shared byte[] bytes = new byte[64]
