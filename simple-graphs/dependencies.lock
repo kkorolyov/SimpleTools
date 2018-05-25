@@ -1,0 +1,61 @@
+{
+    "compileClasspath": {
+        "dev.kkorolyov:simple-funcs": {
+            "project": true
+        }
+    },
+    "default": {
+        "dev.kkorolyov:simple-funcs": {
+            "project": true
+        }
+    },
+    "runtimeClasspath": {
+        "dev.kkorolyov:simple-funcs": {
+            "project": true
+        }
+    },
+    "testCompileClasspath": {
+        "dev.kkorolyov:simple-funcs": {
+            "project": true
+        },
+        "dev.kkorolyov:simple-props": {
+            "project": true
+        },
+        "dev.kkorolyov:simple-specs": {
+            "project": true
+        },
+        "net.bytebuddy:byte-buddy": {
+            "locked": "1.8.11",
+            "requested": "1.+"
+        },
+        "org.spockframework:spock-core": {
+            "locked": "1.1-groovy-2.4",
+            "requested": "1.1-groovy-2.4"
+        }
+    },
+    "testRuntimeClasspath": {
+        "dev.kkorolyov:simple-funcs": {
+            "project": true
+        },
+        "dev.kkorolyov:simple-props": {
+            "project": true
+        },
+        "dev.kkorolyov:simple-specs": {
+            "project": true
+        },
+        "net.bytebuddy:byte-buddy": {
+            "locked": "1.8.11",
+            "requested": "1.+"
+        },
+        "org.codehaus.groovy:groovy": {
+            "firstLevelTransitive": [
+                "dev.kkorolyov:simple-specs"
+            ],
+            "locked": "2.4.15"
+        },
+        "org.spockframework:spock-core": {
+            "locked": "1.1-groovy-2.4",
+            "requested": "1.1-groovy-2.4"
+        }
+    }
+}
