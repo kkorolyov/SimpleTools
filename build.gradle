@@ -13,6 +13,7 @@ plugins {
 	id 'groovy'
 	id 'maven-publish'
 	id 'com.jfrog.bintray' version '1.8.0'
+	id 'nebula.dependency-lock' version '5.0.6'
 }
 apply plugin: 'dev.kkorolyov.full-doc'
 
@@ -26,6 +27,7 @@ subprojects {
 	apply plugin: 'groovy'
 	apply plugin: 'maven-publish'
 	apply plugin: 'com.jfrog.bintray'
+	apply plugin: 'nebula.dependency-lock'
 
 	group = 'dev.kkorolyov'
 	description = "Collection of utility libraries with simple APIs"
