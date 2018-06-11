@@ -14,6 +14,7 @@ throwingRunnable.run();	// Re-throws checked exception as a RuntimeException
 Additional (potentially) useful collectors not found in the standard library.
 ```java
 Collectors.joiningDefaultEmpty("delimeter", "prefix", "suffix");
+Collectors.keyedOn(KeyableThing::getKey);
 ```
 ### Iterables
 Utilities for generating and working with `Iterable`s directly.
