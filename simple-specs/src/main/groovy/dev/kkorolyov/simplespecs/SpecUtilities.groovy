@@ -30,10 +30,8 @@ class SpecUtilities {
 	 * @return {@code object's} value for {@code field} defined by class {@code c}
 	 */
 	static Object getField(String field, Class<?> c, Object object) {
-		Field f = c.getDeclaredField(field)
-		f.setAccessible(true)
-
-		return f.get(object)
+		return unfinalize(c.getDeclaredField(field))
+				.get(object)
 	}
 
 	/**
@@ -58,12 +56,12 @@ class SpecUtilities {
 	 * @param value new field value
 	 */
 	static void setField(String field, Class<?> c, Object object, Object value) {
-		Field f = c.getDeclaredField(field)
-		f.setAccessible(true)
-
-		unfinalize(f).set(object, value)
+		unfinalize(c.getDeclaredField(field))
+				.set(object, value)
 	}
 	private static Field unfinalize(Field f) {
+		f.setAccessible(true)
+
 		Field modifiers = Field.class.getDeclaredField("modifiers")
 		modifiers.setAccessible(true)
 		modifiers.setInt(f, f.modifiers & ~Modifier.FINAL)
@@ -109,7 +107,7 @@ class SpecUtilities {
 		return ThreadLocalRandom.current().nextDouble(bound)
 	}
 
-	/** @return random String generated using UUID */
+	/** @return random String generated using UUID  */
 	static String randString() {
 		return UUID.randomUUID().toString().replaceAll("-", "")
 	}
