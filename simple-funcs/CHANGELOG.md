@@ -1,6 +1,6 @@
 # Change Log
 
-## 1.3 - TBD
+## 1.3 - 2018-06-18
 ### Changes
 * Added more Collectors
 	* `keyedOn`
