@@ -133,7 +133,7 @@ project(':simple-graphs') {
 
 project(':simple-specs') {
 	description = "Groovy test/specification utilities"
-	version = '1.0'
+	version = '1.0.1'
 
 	dependencies {
 		implementation 'org.codehaus.groovy:groovy:2.4.+'
