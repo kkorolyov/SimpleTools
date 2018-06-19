@@ -1,5 +1,10 @@
 # Change Log
 
+## 1.3 - 2018-06-18
+### Changes
+* Added more Collectors
+	* `keyedOn`
+
 ## 1.2 - 2018-04-01
 ### Changes
 * Added more ThrowingFunctions
