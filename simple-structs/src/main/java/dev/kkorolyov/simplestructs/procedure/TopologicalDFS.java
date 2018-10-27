@@ -1,7 +1,7 @@
-package dev.kkorolyov.simplegraphs.procedure;
+package dev.kkorolyov.simplestructs.procedure;
 
-import dev.kkorolyov.simplegraphs.Graph;
-import dev.kkorolyov.simplegraphs.Graph.Node;
+import dev.kkorolyov.simplestructs.Graph;
+import dev.kkorolyov.simplestructs.Graph.Node;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;

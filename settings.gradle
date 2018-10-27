@@ -5,6 +5,6 @@ include(
 		'simple-files',
 		'simple-opts',
 		'simple-funcs',
-		'simple-graphs',
+		'simple-structs',
 		'simple-specs'
 )

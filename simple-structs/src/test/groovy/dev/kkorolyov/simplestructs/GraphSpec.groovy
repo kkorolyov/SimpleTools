@@ -1,4 +1,4 @@
-package dev.kkorolyov.simplegraphs
+package dev.kkorolyov.simplestructs
 
 import spock.lang.Specification
 
