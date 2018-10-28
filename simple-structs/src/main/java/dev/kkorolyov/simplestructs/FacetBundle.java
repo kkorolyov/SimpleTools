@@ -13,28 +13,32 @@ import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
 
 /**
- * An indexed collection that supports "facets" or markers on individual elements.
+ * A collection that supports "facets" or markers on individual elements.
  * Provides for efficient retrieval of all elements that have a given subset of facets applied to them.
+ * @param <K> key type
  * @param <F> facet type
  * @param <T> element type
  */
-public class FacetBundle<F, T> implements Iterable<FacetBundle<F, T>.Entry> {
+public class FacetBundle<K, F, T> implements Iterable<FacetBundle<K, F, T>.Entry> {
 	private final List<Entry> elements = new ArrayList<>();
 	private final Map<F, BitSet> facetSets = new HashMap<>();
+	private final Map<K, Integer> indices = new HashMap<>();
 
 	/**
-	 * @param index index to test
-	 * @return whether an element is set at {@code index}
+	 * @param key key to test
+	 * @return whether an element is set at {@code key}
 	 */
-	public boolean contains(int index) {
-		return get(index) != null;
+	public boolean contains(K key) {
+		return get(key) != null;
 	}
 
 	/**
-	 * @param index index to get entry for
-	 * @return entry at {@code index}, or {@code null} if no such entry
+	 * @param key key to get entry for
+	 * @return entry at {@code key}, or {@code null} if no such entry
 	 */
-	public Entry get(int index) {
+	public Entry get(K key) {
+		int index = getIndex(key);
+
 		return index < elements.size()
 				? elements.get(index)
 				: null;
@@ -58,13 +62,15 @@ public class FacetBundle<F, T> implements Iterable<FacetBundle<F, T>.Entry> {
 	}
 
 	/**
-	 * Puts an element into this bundle at a given index.
-	 * Replaces any existing element at that index.
-	 * @param index index to set element at
+	 * Puts an element into this bundle at a given key.
+	 * Replaces any existing element at that key.
+	 * @param key key to set element at
 	 * @param element element to set
 	 * @return entry containing {@code element}
 	 */
-	public Entry put(int index, T element) {
+	public Entry put(K key, T element) {
+		int index = getIndex(key);
+
 		padUntil(index);
 
 		Entry entry = elements.get(index);
@@ -81,13 +87,18 @@ public class FacetBundle<F, T> implements Iterable<FacetBundle<F, T>.Entry> {
 	}
 
 	/**
-	 * @param index index of element to remove
-	 * @return whether an element existed at {@code index} and was removed
+	 * @param key key of element to remove
+	 * @return whether an element existed at {@code key} and was removed
 	 */
-	public boolean remove(int index) {
+	public boolean remove(K key) {
+		int index = getIndex(key);
+
 		return index < elements.size() && elements.remove(index) != null;
 	}
 
+	private int getIndex(K key) {
+		return indices.computeIfAbsent(key, k -> indices.size());
+	}
 	private BitSet getFacetSet(F key) {
 		return facetSets.computeIfAbsent(key, k -> new BitSet());
 	}
@@ -156,65 +167,6 @@ public class FacetBundle<F, T> implements Iterable<FacetBundle<F, T>.Entry> {
 		private Entry setElement(T element) {
 			this.element = element;
 			return this;
-		}
-	}
-
-	/**
-	 * A {@link FacetBundle} which supports arbitrary key-based operations instead of index-based.
-	 */
-	public static class Mapped<K, F, T> implements Iterable<FacetBundle<F, T>.Entry> {
-		private final FacetBundle<F, T> delegate = new FacetBundle<>();
-		private final Map<K, Integer> indices = new HashMap<>();
-
-		/**
-		 * @param key key to test
-		 * @return whether an element is set at {@code key}
-		 */
-		public boolean contains(K key) {
-			return delegate.contains(getIndex(key));
-		}
-
-		/**
-		 * @param key key to get entry for
-		 * @return entry at {@code key}, or {@code null} if no such entry
-		 */
-		public FacetBundle<F, T>.Entry get(K key) {
-			return delegate.get(getIndex(key));
-		}
-
-		/**
-		 * @param facets facets to get intersection for
-		 * @return stream over the intersection of all elements with {@code facets} applied
-		 */
-		public Stream<T> get(Iterable<F> facets) {
-			return delegate.get(facets);
-		}
-
-		/**
-		 * Puts an element into this bundle at a given key.
-		 * Replaces any existing element at that key.
-		 * @param key key to set element at
-		 * @param element element to set
-		 * @return entry containing {@code element}
-		 */
-		public FacetBundle<F, T>.Entry put(K key, T element) {
-			return delegate.put(getIndex(key), element);
-		}
-		/**
-		 * @param key key of element to remove
-		 * @return whether an element existed at {@code key} and was removed
-		 */
-		public boolean remove(K key) {
-			return delegate.remove(getIndex(key));
-		}
-
-		private int getIndex(K key) {
-			return indices.computeIfAbsent(key, k -> indices.size());
-		}
-
-		@Override
-		public Iterator<FacetBundle<F, T>.Entry> iterator() {
-			return delegate.iterator();
 		}
 	}
 }

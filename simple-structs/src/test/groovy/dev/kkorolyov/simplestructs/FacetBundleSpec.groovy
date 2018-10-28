@@ -7,61 +7,39 @@ import static dev.kkorolyov.simplespecs.SpecUtilities.randString
 import static java.util.stream.Collectors.toSet
 
 class FacetBundleSpec extends Specification {
-	int index = randInt(2000)
+	String key = randString()
 	Object element = Mock()
 
-	FacetBundle<String, Object> bundle = new FacetBundle<>()
+	FacetBundle<String, Integer, Object> bundle = new FacetBundle<>()
 
 	def "contains entry if added"() {
 		when:
-		bundle.put(index, element)
+		bundle.put(key, element)
 
 		then:
-		bundle.contains(index)
+		bundle.contains(key)
 	}
-	def "contains nothing at unset index"() {
-		when:
-		bundle.put(0, element)
-		bundle.put(2, element)
-
-		then:
-		!bundle.contains(1)
-	}
-	def "contains nothing at out-of-bounds index"() {
-		when:
-		bundle.put(3, element)
-
-		then:
-		!bundle.contains(30)
+	def "does not contain entry if not added"() {
+		expect:
+		!bundle.contains(key)
 	}
 
-	def "gets entry at index"() {
+	def "gets entry at key"() {
 		when:
-		bundle.put(index, element)
+		bundle.put(key, element)
 
 		then:
-		element == bundle.get(index).element
+		bundle.get(key).element == element
 	}
-	def "gets null at unset index"() {
-		when:
-		bundle.put(0, element)
-		bundle.put(2, element)
-
-		then:
-		bundle.get(1) == null
-	}
-	def "gets null at out-of-bounds index"() {
-		when:
-		bundle.put(3, element)
-
-		then:
-		bundle.get(30) == null
+	def "gets null at unset key"() {
+		expect:
+		bundle.get(key) == null
 	}
 
 	def "gets facet intersection"() {
-		String facet = randString()
-		int[] faceted = (0..4)
-		int[] other = (5..50)
+		int facet = randInt()
+		String[] faceted = (0..4).collect { randString() }
+		String[] other = (5..50).collect { randString() }
 
 		when:
 		faceted.each {
@@ -70,34 +48,34 @@ class FacetBundleSpec extends Specification {
 		}
 		other.each {
 			bundle.put(it, it)
-					.addFacets(randString())
+					.addFacets(randInt())
 		}
 
 		then:
 		bundle.get([facet]).collect(toSet()) == faceted as Set
 	}
 
-	def "removes element at index"() {
+	def "replaces element at key"() {
+		Object newElement = Mock()
+		bundle.put(key, element)
+
 		when:
-		bundle.put(index, element)
+		bundle.put(key, newElement)
 
 		then:
-		bundle.remove(index)
-		!bundle.contains(index)
+		bundle.get(key).element == newElement
 	}
-	def "removes nothing at unset index"() {
+
+	def "removes element at key"() {
 		when:
-		bundle.put(0, element)
-		bundle.put(2, element)
+		bundle.put(key, element)
 
 		then:
-		!bundle.remove(1)
+		bundle.remove(key)
+		!bundle.contains(key)
 	}
-	def "removes nothing at out-of-bounds index"() {
-		when:
-		bundle.put(3, element)
-
-		then:
-		!bundle.remove(30)
+	def "removes nothing at unset key"() {
+		expect:
+		!bundle.remove(key)
 	}
 }
