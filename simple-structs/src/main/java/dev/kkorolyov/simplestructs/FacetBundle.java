@@ -1,11 +1,15 @@
 package dev.kkorolyov.simplestructs;
 
+import dev.kkorolyov.simplestructs.FacetBundle.Entry;
+
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import static dev.kkorolyov.simplefuncs.stream.Iterables.append;
@@ -19,8 +23,8 @@ import static java.util.Collections.singleton;
  * @param <F> facet type
  * @param <T> element type
  */
-public class FacetBundle<K, F, T> implements Iterable<FacetBundle<K, F, T>.Entry> {
-	private final List<Entry> elements = new ArrayList<>();
+public class FacetBundle<K, F, T> implements Iterable<Entry<F, T>> {
+	private final List<Entry<F, T>> elements = new ArrayList<>();
 	private final Map<F, BitSet> facetSets = new HashMap<>();
 	private final Map<K, Integer> indices = new HashMap<>();
 
@@ -68,14 +72,23 @@ public class FacetBundle<K, F, T> implements Iterable<FacetBundle<K, F, T>.Entry
 	 * @param element element to set
 	 * @return entry containing {@code element}
 	 */
-	public Entry put(K key, T element) {
+	public Entry<F, T> put(K key, T element) {
 		int index = getIndex(key);
 
 		padUntil(index);
 
-		Entry entry = elements.get(index);
+		Entry<F, T> entry = elements.get(index);
 		if (entry == null) {
-			entry = new Entry(index);
+			entry = new Entry<>(
+					index,
+					(facet, i) -> getFacetSet(facet).set(i),
+					(facet, i) -> getFacetSet(facet).clear(index),
+					i -> {
+						for (BitSet facetSet : facetSets.values()) {
+							facetSet.clear(i);
+						}
+					}
+			);
 			elements.set(index, entry);
 		}
 		return entry
@@ -104,16 +117,33 @@ public class FacetBundle<K, F, T> implements Iterable<FacetBundle<K, F, T>.Entry
 	}
 
 	@Override
-	public Iterator<Entry> iterator() {
+	public Iterator<Entry<F, T>> iterator() {
 		return elements.iterator();
 	}
 
-	public class Entry {
+	/**
+	 * A wrapper around an element supporting setting of facets to mark element in specific ways.
+	 * @param <F> facet type
+	 * @param <T> element type
+	 */
+	public static class Entry<F, T> {
 		private final int index;
+		private final BiConsumer<F, Integer> setFacet;
+		private final BiConsumer<F, Integer> clearFacet;
+		private final Consumer<Integer> clearFacets;
+
 		private T element;
 
-		private Entry(int index) {
+		private Entry(
+				int index,
+				BiConsumer<F, Integer> setFacet,
+				BiConsumer<F, Integer> clearFacet,
+				Consumer<Integer> clearFacets
+		) {
 			this.index = index;
+			this.setFacet = setFacet;
+			this.clearFacet = clearFacet;
+			this.clearFacets = clearFacets;
 		}
 
 		/** @see #addFacets(Iterable) */
@@ -127,7 +157,7 @@ public class FacetBundle<K, F, T> implements Iterable<FacetBundle<K, F, T>.Entry
 		 */
 		public Entry addFacets(Iterable<F> facets) {
 			for (F facet : facets) {
-				getFacetSet(facet).set(index);
+				setFacet.accept(facet, index);
 			}
 			return this;
 		}
@@ -143,7 +173,7 @@ public class FacetBundle<K, F, T> implements Iterable<FacetBundle<K, F, T>.Entry
 		 */
 		public Entry removeFacets(Iterable<F> facets) {
 			for (F facet : facets) {
-				getFacetSet(facet).clear(index);
+				clearFacet.accept(facet, index);
 			}
 			return this;
 		}
@@ -154,9 +184,7 @@ public class FacetBundle<K, F, T> implements Iterable<FacetBundle<K, F, T>.Entry
 		 * @return {@code this}
 		 */
 		public Entry setFacets(Iterable<F> facets) {
-			for (BitSet facetSet : FacetBundle.this.facetSets.values()) {
-				facetSet.clear(index);
-			}
+			clearFacets.accept(index);
 			return addFacets(facets);
 		}
 
