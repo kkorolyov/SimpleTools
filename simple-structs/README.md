@@ -29,9 +29,9 @@ Graph<Integer> graph = new Graph<Integer>()
 would result in either `[1, 2, 3, 4]` or `[2, 1, 3, 4]`
 
 ## FacetBundle
-A `FacetBundle` provides for efficient retrieval of the intersection of elements that have a given subset of "facets" or markers applied to them,
+A `FacetedBundle` provides for efficient retrieval of the intersection of elements that have a given subset of "facets" or markers applied to them,
 ```java
-FacetBundle<Integer, String, Object> bundle = new FacetBundle<>();
+FacetedBundle<Integer, String, Object> bundle = new FacetedBundle<>();
 bundle.put(0, firstObj)
 	.addFacets("A", "B");
 bundle.put(1, secondObj)

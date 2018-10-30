@@ -6,11 +6,11 @@ import static dev.kkorolyov.simplespecs.SpecUtilities.randInt
 import static dev.kkorolyov.simplespecs.SpecUtilities.randString
 import static java.util.stream.Collectors.toSet
 
-class FacetBundleSpec extends Specification {
+class FacetedBundleSpec extends Specification {
 	String key = randString()
 	Object element = Mock()
 
-	FacetBundle<String, Integer, Object> bundle = new FacetBundle<>()
+	FacetedBundle<String, Integer, Object> bundle = new FacetedBundle<>()
 
 	def "contains entry if added"() {
 		when:

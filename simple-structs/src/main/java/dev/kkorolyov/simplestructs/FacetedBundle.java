@@ -1,6 +1,6 @@
 package dev.kkorolyov.simplestructs;
 
-import dev.kkorolyov.simplestructs.FacetBundle.Entry;
+import dev.kkorolyov.simplestructs.FacetedBundle.Entry;
 
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -8,8 +8,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import static dev.kkorolyov.simplefuncs.stream.Iterables.append;
@@ -23,9 +21,9 @@ import static java.util.Collections.singleton;
  * @param <F> facet type
  * @param <T> element type
  */
-public class FacetBundle<K, F, T> implements Iterable<Entry<F, T>> {
+public class FacetedBundle<K, F, T> implements Iterable<Entry<F, T>> {
 	private final List<Entry<F, T>> elements = new ArrayList<>();
-	private final Map<F, BitSet> facetSets = new HashMap<>();
+	private final FacetSets<F> facetSets = new FacetSets<>();
 	private final Map<K, Integer> indices = new HashMap<>();
 
 	/**
@@ -57,7 +55,7 @@ public class FacetBundle<K, F, T> implements Iterable<Entry<F, T>> {
 		intersection.set(0, elements.size());
 
 		for (F facet : facets) {
-			intersection.and(getFacetSet(facet));
+			intersection.and(facetSets.getFacetSet(facet));
 		}
 
 		return intersection.stream()
@@ -79,16 +77,7 @@ public class FacetBundle<K, F, T> implements Iterable<Entry<F, T>> {
 
 		Entry<F, T> entry = elements.get(index);
 		if (entry == null) {
-			entry = new Entry<>(
-					index,
-					(facet, i) -> getFacetSet(facet).set(i),
-					(facet, i) -> getFacetSet(facet).clear(index),
-					i -> {
-						for (BitSet facetSet : facetSets.values()) {
-							facetSet.clear(i);
-						}
-					}
-			);
+			entry = new Entry<>(index, facetSets);
 			elements.set(index, entry);
 		}
 		return entry
@@ -112,13 +101,24 @@ public class FacetBundle<K, F, T> implements Iterable<Entry<F, T>> {
 	private int getIndex(K key) {
 		return indices.computeIfAbsent(key, k -> indices.size());
 	}
-	private BitSet getFacetSet(F key) {
-		return facetSets.computeIfAbsent(key, k -> new BitSet());
-	}
 
 	@Override
 	public Iterator<Entry<F, T>> iterator() {
 		return elements.iterator();
+	}
+
+	private static class FacetSets<F> {
+		private final Map<F, BitSet> facetSets = new HashMap<>();
+
+		BitSet getFacetSet(F key) {
+			return facetSets.computeIfAbsent(key, k -> new BitSet());
+		}
+
+		void clear(int index) {
+			for (BitSet facetSet : facetSets.values()) {
+				facetSet.clear(index);
+			}
+		}
 	}
 
 	/**
@@ -128,22 +128,13 @@ public class FacetBundle<K, F, T> implements Iterable<Entry<F, T>> {
 	 */
 	public static class Entry<F, T> {
 		private final int index;
-		private final BiConsumer<F, Integer> setFacet;
-		private final BiConsumer<F, Integer> clearFacet;
-		private final Consumer<Integer> clearFacets;
+		private final FacetSets<F> facetSets;
 
 		private T element;
 
-		private Entry(
-				int index,
-				BiConsumer<F, Integer> setFacet,
-				BiConsumer<F, Integer> clearFacet,
-				Consumer<Integer> clearFacets
-		) {
+		private Entry(int index, FacetSets<F> facetSets) {
 			this.index = index;
-			this.setFacet = setFacet;
-			this.clearFacet = clearFacet;
-			this.clearFacets = clearFacets;
+			this.facetSets = facetSets;
 		}
 
 		/** @see #addFacets(Iterable) */
@@ -157,7 +148,7 @@ public class FacetBundle<K, F, T> implements Iterable<Entry<F, T>> {
 		 */
 		public Entry addFacets(Iterable<F> facets) {
 			for (F facet : facets) {
-				setFacet.accept(facet, index);
+				facetSets.getFacetSet(facet).set(index);
 			}
 			return this;
 		}
@@ -173,7 +164,7 @@ public class FacetBundle<K, F, T> implements Iterable<Entry<F, T>> {
 		 */
 		public Entry removeFacets(Iterable<F> facets) {
 			for (F facet : facets) {
-				clearFacet.accept(facet, index);
+				facetSets.getFacetSet(facet).clear(index);
 			}
 			return this;
 		}
@@ -184,7 +175,7 @@ public class FacetBundle<K, F, T> implements Iterable<Entry<F, T>> {
 		 * @return {@code this}
 		 */
 		public Entry setFacets(Iterable<F> facets) {
-			clearFacets.accept(index);
+			facetSets.clear(index);
 			return addFacets(facets);
 		}
 
