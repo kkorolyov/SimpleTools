@@ -126,7 +126,7 @@ public class FacetedBundle<K, F, T> implements Iterable<Entry<F, T>> {
 	 * @param <F> facet type
 	 * @param <T> element type
 	 */
-	public static class Entry<F, T> {
+	public static final class Entry<F, T> {
 		private final int index;
 		private final FacetSets<F> facetSets;
 
@@ -138,7 +138,8 @@ public class FacetedBundle<K, F, T> implements Iterable<Entry<F, T>> {
 		}
 
 		/** @see #addFacets(Iterable) */
-		public Entry<F, T> addFacets(F facet, F... facets) {
+		@SafeVarargs
+		public final Entry<F, T> addFacets(F facet, F... facets) {
 			return addFacets(append(singleton(facet), facets));
 		}
 		/**
@@ -154,7 +155,8 @@ public class FacetedBundle<K, F, T> implements Iterable<Entry<F, T>> {
 		}
 
 		/** @see #removeFacets(Iterable) */
-		public Entry<F, T> removeFacets(F facet, F... facets) {
+		@SafeVarargs
+		public final Entry<F, T> removeFacets(F facet, F... facets) {
 			return removeFacets(append(singleton(facet), facets));
 		}
 		/**
