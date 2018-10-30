@@ -38,7 +38,7 @@ public class FacetedBundle<K, F, T> implements Iterable<Entry<F, T>> {
 	 * @param key key to get entry for
 	 * @return entry at {@code key}, or {@code null} if no such entry
 	 */
-	public Entry get(K key) {
+	public Entry<F, T> get(K key) {
 		int index = getIndex(key);
 
 		return index < elements.size()
@@ -138,7 +138,7 @@ public class FacetedBundle<K, F, T> implements Iterable<Entry<F, T>> {
 		}
 
 		/** @see #addFacets(Iterable) */
-		public Entry addFacets(F facet, F... facets) {
+		public Entry<F, T> addFacets(F facet, F... facets) {
 			return addFacets(append(singleton(facet), facets));
 		}
 		/**
@@ -146,7 +146,7 @@ public class FacetedBundle<K, F, T> implements Iterable<Entry<F, T>> {
 		 * @param facets facets to add
 		 * @return {@code this}
 		 */
-		public Entry addFacets(Iterable<F> facets) {
+		public Entry<F, T> addFacets(Iterable<F> facets) {
 			for (F facet : facets) {
 				facetSets.getFacetSet(facet).set(index);
 			}
@@ -154,7 +154,7 @@ public class FacetedBundle<K, F, T> implements Iterable<Entry<F, T>> {
 		}
 
 		/** @see #removeFacets(Iterable) */
-		public Entry removeFacets(F facet, F... facets) {
+		public Entry<F, T> removeFacets(F facet, F... facets) {
 			return removeFacets(append(singleton(facet), facets));
 		}
 		/**
@@ -162,7 +162,7 @@ public class FacetedBundle<K, F, T> implements Iterable<Entry<F, T>> {
 		 * @param facets facets to remove
 		 * @return {@code this}
 		 */
-		public Entry removeFacets(Iterable<F> facets) {
+		public Entry<F, T> removeFacets(Iterable<F> facets) {
 			for (F facet : facets) {
 				facetSets.getFacetSet(facet).clear(index);
 			}
@@ -174,7 +174,7 @@ public class FacetedBundle<K, F, T> implements Iterable<Entry<F, T>> {
 		 * @param facets facets to set
 		 * @return {@code this}
 		 */
-		public Entry setFacets(Iterable<F> facets) {
+		public Entry<F, T> setFacets(Iterable<F> facets) {
 			facetSets.clear(index);
 			return addFacets(facets);
 		}
@@ -183,7 +183,7 @@ public class FacetedBundle<K, F, T> implements Iterable<Entry<F, T>> {
 		public T getElement() {
 			return element;
 		}
-		private Entry setElement(T element) {
+		private Entry<F, T> setElement(T element) {
 			this.element = element;
 			return this;
 		}
