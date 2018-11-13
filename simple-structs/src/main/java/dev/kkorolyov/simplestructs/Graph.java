@@ -1,12 +1,14 @@
 package dev.kkorolyov.simplestructs;
 
 import dev.kkorolyov.simplefuncs.stream.Iterables;
-import dev.kkorolyov.simplestructs.procedure.TopologicalDFS;
+import dev.kkorolyov.simplestructs.Graph.Node;
+import dev.kkorolyov.simplestructs.procedure.TopologicalSort;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.StreamSupport;
@@ -15,17 +17,17 @@ import java.util.stream.StreamSupport;
  * A collection of nodes connected by outbound and inbound edges to other nodes.
  * @param <T> node type
  */
-public class Graph<T> {
+public class Graph<T> implements Iterable<Node<T>> {
 	private final Map<T, Node<T>> nodes = new HashMap<>();
 
 	/**
 	 * @return topologically-sorted list of all nodes in this graph
 	 * @throws IllegalStateException if this graph is not a directed acyclic graph
-	 * @deprecated prefer directly invoking procedures, e.g. {@link TopologicalDFS}
+	 * @deprecated prefer directly invoking a {@link TopologicalSort} procedure
 	 */
 	@Deprecated
 	public List<T> sortTopological() {
-		return new TopologicalDFS<>(this).execute();
+		return TopologicalSort.dfs(this).execute();
 	}
 
 	/**
@@ -88,6 +90,11 @@ public class Graph<T> {
 	/** @return values of all nodes in this graph */
 	public Collection<T> getNodeValues() {
 		return nodes.keySet();
+	}
+
+	@Override
+	public Iterator<Node<T>> iterator() {
+		return nodes.values().iterator();
 	}
 
 	/**
