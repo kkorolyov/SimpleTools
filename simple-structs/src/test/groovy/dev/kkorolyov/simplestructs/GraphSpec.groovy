@@ -27,7 +27,7 @@ class GraphSpec extends Specification {
 
 		when:
 		graph.add(node, outbound)
-		graph.remove(node, outbound)
+		graph.sever(node, outbound)
 
 		then:
 		!graph.contains(node)
@@ -39,7 +39,7 @@ class GraphSpec extends Specification {
 
 		when:
 		graph.add(node, outbound)
-		graph.remove(node)
+		graph.sever(node)
 
 		then:
 		graph.contains(node)
