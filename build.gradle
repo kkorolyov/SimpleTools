@@ -122,8 +122,8 @@ project(':simple-funcs') {
 	version = '1.3'
 }
 
-project(':simple-graphs') {
-	description = "Java library of graph data structures and algorithms"
+project(':simple-structs') {
+	description = "Java library of various data structures and algorithms"
 	version = '1.0'
 
 	dependencies {

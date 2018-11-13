@@ -1,7 +1,7 @@
-package dev.kkorolyov.simplegraphs;
+package dev.kkorolyov.simplestructs;
 
 import dev.kkorolyov.simplefuncs.stream.Iterables;
-import dev.kkorolyov.simplegraphs.procedure.TopologicalDFS;
+import dev.kkorolyov.simplestructs.procedure.TopologicalDFS;
 
 import java.util.Arrays;
 import java.util.Collection;
