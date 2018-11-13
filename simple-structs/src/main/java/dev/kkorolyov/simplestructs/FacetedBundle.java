@@ -47,10 +47,10 @@ public class FacetedBundle<K, F, T> implements Iterable<Entry<F, T>> {
 	}
 
 	/**
-	 * @param facets facets to get intersection for
+	 * @param facets facets to stream intersection for
 	 * @return stream over the intersection of all elements with {@code facets} applied
 	 */
-	public Stream<T> get(Iterable<F> facets) {
+	public Stream<T> stream(Iterable<F> facets) {
 		BitSet intersection = new BitSet(elements.size());
 		intersection.set(0, elements.size());
 

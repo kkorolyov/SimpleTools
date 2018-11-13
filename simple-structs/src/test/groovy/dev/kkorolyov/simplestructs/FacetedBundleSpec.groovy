@@ -52,7 +52,7 @@ class FacetedBundleSpec extends Specification {
 		}
 
 		then:
-		bundle.get([facet]).collect(toSet()) == faceted as Set
+		bundle.stream([facet]).collect(toSet()) == faceted as Set
 	}
 
 	def "replaces element at key"() {
