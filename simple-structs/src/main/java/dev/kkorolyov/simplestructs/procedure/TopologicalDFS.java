@@ -5,21 +5,20 @@ import dev.kkorolyov.simplestructs.Graph.Node;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * A topological sorting of a {@link Graph} using depth-first search.
- * Each execution runs on the current state of the associated graph.
  * @param <T> node type
  */
-public class TopologicalDFS<T> {
+public class TopologicalDFS<T> implements Procedure<Graph<T>, List<T>> {
 	private final Graph<T> graph;
 
-	private final Set<Node<T>> unseen = new HashSet<>();	// Nodes to visit
-	private final Set<Node<T>> visited = new HashSet<>();	// Nodes seen across all visits
+	private final Collection<Node<T>> unseen = new HashSet<>();  // Nodes to visit
+	private final Collection<Node<T>> visited = new HashSet<>();  // Nodes seen across all visits
 	private final Deque<T> sort = new ArrayDeque<>();
 
 	/**
@@ -31,10 +30,10 @@ public class TopologicalDFS<T> {
 	}
 
 	/**
-	 * Executes this topological sort.
-	 * @return topologically-sorted list of all nodes in the current state of associated graph
+	 * @return topologically-sorted list of nodes
 	 * @throws IllegalStateException if the associated graph is not a directed acyclic graph
 	 */
+	@Override
 	public List<T> execute() {
 		unseen.addAll(graph.getNodes());
 		while (!unseen.isEmpty()) {
@@ -49,15 +48,16 @@ public class TopologicalDFS<T> {
 		return result;
 	}
 	private void visit(Node<T> node) {
-		if (visited.contains(node)) return;
-		else if (!unseen.contains(node)) throw new IllegalStateException(graph + " is not a directed acyclic graph");
+		if (!visited.contains(node)) {
+			if (!unseen.contains(node)) throw new IllegalStateException(graph + " is not a directed acyclic graph");
 
-		unseen.remove(node);
+			unseen.remove(node);
 
-		for (Node<T> outbound : node.getOutbounds()) visit(outbound);
+			for (Node<T> outbound : node.getOutbounds()) visit(outbound);
 
-		visited.add(node);
+			visited.add(node);
 
-		sort.push(node.getValue());
+			sort.push(node.getValue());
+		}
 	}
 }

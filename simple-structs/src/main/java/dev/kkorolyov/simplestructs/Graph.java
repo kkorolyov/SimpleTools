@@ -21,7 +21,9 @@ public class Graph<T> {
 	/**
 	 * @return topologically-sorted list of all nodes in this graph
 	 * @throws IllegalStateException if this graph is not a directed acyclic graph
+	 * @deprecated prefer directly invoking procedures, e.g. {@link TopologicalDFS}
 	 */
+	@Deprecated
 	public List<T> sortTopological() {
 		return new TopologicalDFS<>(this).execute();
 	}
