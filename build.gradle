@@ -23,7 +23,6 @@ fulldoc {
 }
 
 subprojects {
-	apply plugin: 'java-library'
 	apply plugin: 'groovy'
 	apply plugin: 'maven-publish'
 	apply plugin: 'com.jfrog.bintray'
@@ -34,15 +33,6 @@ subprojects {
 
 	repositories {
 		jcenter()
-	}
-
-	dependencies {
-		testImplementation(
-				project(':simple-props'),
-				project(':simple-specs'),
-				'org.spockframework:spock-core:1.1-groovy-2.4',
-				'net.bytebuddy:byte-buddy:1.+'
-		)
 	}
 
 	task sourcesJar(type: Jar) {
@@ -82,6 +72,25 @@ subprojects {
 				}
 			}
 		}
+	}
+}
+
+configure([ // Java libraries
+    project(':simple-logs'),
+		project(':simple-props'),
+		project(':simple-files'),
+		project(':simple-opts'),
+		project(':simple-funcs'),
+		project(':simple-structs'),
+]) {
+	apply plugin: 'java-library'
+
+	dependencies {
+		testImplementation(
+				project(':simple-specs'),
+				'org.spockframework:spock-core:1.1-groovy-2.4',
+				'net.bytebuddy:byte-buddy:1.+'
+		)
 	}
 }
 
