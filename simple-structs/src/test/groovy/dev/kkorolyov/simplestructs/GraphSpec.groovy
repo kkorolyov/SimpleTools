@@ -5,73 +5,105 @@ import spock.lang.Specification
 class GraphSpec extends Specification {
 	Graph<Object> graph = new Graph<>()
 
-	def "contains node if added"() {
-		Object node = Mock()
-		Object outbound = Mock()
-
-		when:
-		graph.add(node, outbound)
-
-		then:
-		graph.contains(node)
-		graph.contains(outbound)
-	}
-	def "does not contain node if not added"() {
+	def "does not contain non-existent node"() {
 		expect:
 		!graph.contains("")
 	}
-
-	def "does not contain node if all edges removed"() {
-		Object node = Mock()
-		Object outbound = Mock()
-
+	def "adds node"() {
 		when:
-		graph.add(node, outbound)
-		graph.sever(node, outbound)
+		graph.add(0)
 
 		then:
-		!graph.contains(node)
-		!graph.contains(outbound)
-	}
-	def "contains node if not all edges removed"() {
-		Object node = Mock()
-		Object outbound = Mock()
-
-		when:
-		graph.add(node, outbound)
-		graph.sever(node)
-
-		then:
-		graph.contains(node)
-		graph.contains(outbound)
+		graph.contains(0)
+		graph.getOutbounds(0) == [] as Set
+		graph.getInbounds(0) == [] as Set
 	}
 
-	def "sorts topologically"() {
-		Object node = Mock()
-		Object node1 = Mock()
-		Object node11 = Mock()
-		Object node2 = Mock()
-		Object node3 = Mock()
+	def "removes node"() {
+		graph.addUndirected(0, 1)
 
 		when:
-		graph.add(node, node1, node11)
-		graph.add(node2, node3)
-		graph.add(node1, node2)
-		graph.add(node11, node2)
-		List<Object> result = graph.sortTopological()
+		graph.remove(0)
 
 		then:
-		result == [node, node1, node11, node2, node3] ||
-				result == [node, node11, node1, node2, node3]
+		!graph.contains(0)
+		graph.contains(1)
+
+		graph.getOutbounds(1) == [] as Set
+		graph.getInbounds(1) == [] as Set
 	}
-	def "excepts if topologically-sorting cyclic graph"() {
-		Object node = Mock()
 
+	def "adds directed edge"() {
 		when:
-		graph.add(node, node)
-		graph.sortTopological()
+		graph.add(0, 1)
 
 		then:
-		thrown IllegalStateException
+		graph.isConnected(0)
+		graph.outDegree(0) == 1
+		graph.inDegree(0) == 0
+		graph.getOutbounds(0) == [1] as Set
+		graph.getInbounds(0) == [] as Set
+
+		graph.isConnected(1)
+		graph.outDegree(1) == 0
+		graph.inDegree(1) == 1
+		graph.getOutbounds(1) == [] as Set
+		graph.getInbounds(1) == [0] as Set
+	}
+	def "adds undirected edge"() {
+		when:
+		graph.addUndirected(0, 1)
+
+		then:
+		graph.isConnected(0)
+		graph.outDegree(0) == 1
+		graph.inDegree(0) == 1
+		graph.getOutbounds(0) == [1] as Set
+		graph.getInbounds(0) == [1] as Set
+
+		graph.isConnected(1)
+		graph.outDegree(1) == 1
+		graph.inDegree(1) == 1
+		graph.getOutbounds(1) == [0] as Set
+		graph.getInbounds(1) == [0] as Set
+	}
+
+	def "severs directed edge"() {
+		graph.addUndirected(0, 1)
+
+		when:
+		graph.sever(0, 1)
+
+		then:
+		graph.isConnected(0)
+		graph.outDegree(0) == 0
+		graph.inDegree(0) == 1
+		graph.getOutbounds(0) == [] as Set
+		graph.getInbounds(0) == [1] as Set
+
+		graph.isConnected(0)
+		graph.outDegree(1) == 1
+		graph.inDegree(1) == 0
+		graph.getOutbounds(1) == [0] as Set
+		graph.getInbounds(1) == [] as Set
+	}
+	def "severs undirected edge"() {
+		graph.addUndirected(0, 1)
+
+		when:
+		graph.severUndirected(0, 1)
+
+		then:
+		!graph.isConnected(0)
+		graph.outDegree(0) == 0
+		graph.inDegree(0) == 0
+		graph.getOutbounds(0) == [] as Set
+		graph.getInbounds(0) == [] as Set
+
+		!graph.isConnected(1)
+		graph.outDegree(1) == 0
+		graph.inDegree(1) == 0
+		graph.getOutbounds(1) == [] as Set
+		graph.getInbounds(1) == [] as Set
 	}
 }

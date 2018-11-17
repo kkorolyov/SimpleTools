@@ -44,7 +44,7 @@ public final class ShortestPath {
 
 				if (startNode != null && endNode != null) unseen.add(startNode);
 				outer:
-				for (Node<T> node = unseen.remove(); !unseen.isEmpty(); node = unseen.remove()) {
+				for (Node<T> node = unseen.poll(); node != null; node = unseen.poll()) {
 					for (Node<T> outbound : node.getOutbounds()) {
 						if (visited.add(outbound)) {
 							unseen.add(outbound);

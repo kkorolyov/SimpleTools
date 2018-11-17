@@ -10,11 +10,14 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.StreamSupport;
 
 import static dev.kkorolyov.simplefuncs.stream.Iterables.append;
+import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
 import static java.util.Collections.unmodifiableCollection;
+import static java.util.stream.Collectors.toSet;
 
 /**
  * A collection of values connected by outbound and inbound edges to other values.
@@ -37,6 +40,63 @@ public class Graph<T> implements Iterable<Node<T>> {
 	 */
 	public Node<T> get(T value) {
 		return nodes.get(value);
+	}
+
+	/**
+	 * @param value value to get outbound connected values for
+	 * @return values connected to {@code value} by outbound edges
+	 */
+	public Collection<T> getOutbounds(T value) {
+		return getEdgeValues(value, Node::getOutbounds);
+	}
+	/**
+	 * @param value value to get inbound connected values for
+	 * @return values connected to {@code value} by inbound edges
+	 */
+	public Collection<T> getInbounds(T value) {
+		return getEdgeValues(value, Node::getInbounds);
+	}
+	private Collection<T> getEdgeValues(T value, Function<? super Node<T>, ? extends Collection<Node<T>>> edgesMapper) {
+		Node<T> node = get(value);
+
+		return node == null
+				? emptySet()
+				: edgesMapper.apply(node).stream()
+				.map(Node::getValue)
+				.collect(toSet());
+	}
+
+	/**
+	 * @param value value to get outbound degree for
+	 * @return number of outbound edges from {@code value}
+	 */
+	public int outDegree(T value) {
+		Node<T> node = get(value);
+
+		return node == null
+				? 0
+				: node.outDegree();
+	}
+	/**
+	 * @param value value to get inbound degree for
+	 * @return number of inbound edges to {@code value}
+	 */
+	public int inDegree(T value) {
+		Node<T> node = get(value);
+
+		return node == null
+				? 0
+				: node.inDegree();
+	}
+
+	/**
+	 * @param value value to check for connectivity
+	 * @return whether {@code value} is in this graph and connected to at least one other value
+	 */
+	public boolean isConnected(T value) {
+		Node<T> node = get(value);
+
+		return node != null && node.isConnected();
 	}
 
 	/** @see #add(Object, Iterable) */
