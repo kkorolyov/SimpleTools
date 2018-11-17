@@ -13,11 +13,8 @@
         "dev.kkorolyov:simple-props": {
             "project": true
         },
-        "dev.kkorolyov:simple-specs": {
-            "project": true
-        },
         "net.bytebuddy:byte-buddy": {
-            "locked": "1.8.11",
+            "locked": "1.9.4",
             "requested": "1.+"
         },
         "org.spockframework:spock-core": {
@@ -29,18 +26,9 @@
         "dev.kkorolyov:simple-props": {
             "project": true
         },
-        "dev.kkorolyov:simple-specs": {
-            "project": true
-        },
         "net.bytebuddy:byte-buddy": {
-            "locked": "1.8.11",
+            "locked": "1.9.4",
             "requested": "1.+"
-        },
-        "org.codehaus.groovy:groovy": {
-            "firstLevelTransitive": [
-                "dev.kkorolyov:simple-specs"
-            ],
-            "locked": "2.4.15"
         },
         "org.spockframework:spock-core": {
             "locked": "1.1-groovy-2.4",
