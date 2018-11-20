@@ -12,7 +12,7 @@ plugins {
 	id 'java-library'
 	id 'groovy'
 	id 'maven-publish'
-	id 'com.jfrog.bintray' version '1.8.0'
+	id 'com.jfrog.bintray' version '1.8.3'
 	id 'nebula.dependency-lock' version '5.0.6'
 }
 apply plugin: 'dev.kkorolyov.full-doc'
@@ -101,6 +101,8 @@ project(':simple-logs') {
 	dependencies {
 		compileOnly project(':simple-props')
 	}
+
+	bintrayUpload.enabled = false
 }
 
 project(':simple-props') {
@@ -110,6 +112,8 @@ project(':simple-props') {
 	dependencies {
 		testImplementation 'junit:junit:4.+'
 	}
+
+	bintrayUpload.enabled = false
 }
 
 project(':simple-files') {
@@ -146,5 +150,9 @@ project(':simple-specs') {
 
 	dependencies {
 		implementation 'org.codehaus.groovy:groovy:2.4.+'
+	}
+
+	afterEvaluate {
+		bintray.pkg.repo = 'groovy'
 	}
 }
