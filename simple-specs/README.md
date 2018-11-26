@@ -17,5 +17,5 @@ One-line getters/setters for static and instance fields
 * `double`
 * `String`
 
-[latest]: https://bintray.com/kkorolyov/java/simple-specs/_latestVersion
-[latest-img]: https://api.bintray.com/packages/kkorolyov/java/simple-specs/images/download.svg
+[latest]: https://bintray.com/kkorolyov/groovy/simple-specs/_latestVersion
+[latest-img]: https://api.bintray.com/packages/kkorolyov/groovy/simple-specs/images/download.svg
