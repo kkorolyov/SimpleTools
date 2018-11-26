@@ -13,6 +13,10 @@ A collection of utility libraries with simple, concise APIs.
 
 [SimpleProps](simple-props/README.md)
 
+[SimpleSpecs](simple-specs/README.md)
+
+[SimpleStructs](simple-structs/README.md)
+
 ## License
 [BSD-new license](LICENSE)
 
