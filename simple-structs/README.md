@@ -28,7 +28,7 @@ Graph<Integer> graph = new Graph<Integer>()
 ```
 would result in either `[1, 2, 3, 4]` or `[2, 1, 3, 4]`
 
-## FacetBundle
+## FacetedBundle
 A `FacetedBundle` provides for efficient retrieval of the intersection of elements that have a given subset of "facets" or markers applied to them,
 ```java
 FacetedBundle<Integer, String, Object> bundle = new FacetedBundle<>();
@@ -38,8 +38,18 @@ bundle.put(1, secondObj)
 	.addFacets("B", "C");
 
 Stream<Object> withAFacet = bundle.get(singleton("A"));	// [firstObject]
-Stream<Object> withBFacet = bundle.get(singleton("B"));	// [firstObj, secongObj]
+Stream<Object> withBFacet = bundle.get(singleton("B"));	// [firstObj, secondObj]
 Stream<Object> withCFacet = bundle.get(singleton("C"));	// [secondObj]
+```
+
+## WeightedDistribution
+A `WeightedDistribution` supports weighted randomized selection of elements.
+```java
+WeightedDistribution<String> distribution = new WeightedDistribution<String>()
+	.add("A", 3)
+	.add("B", 1);
+
+String randomValue = distribution.get(); // 3/4 chance of "A", 1/4 chance of "B"
 ```
 
 [latest]: https://bintray.com/kkorolyov/java/simple-structs/_latestVersion
