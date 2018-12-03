@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.1 - 2018-12-2
+### Additions
+* `WeightedDistribution`
+
 ## 1.0 - 2018-11-17
 ### Changes
 * Re-branded as SimpleStructs
