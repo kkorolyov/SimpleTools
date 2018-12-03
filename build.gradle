@@ -73,6 +73,8 @@ subprojects {
 			}
 		}
 	}
+	// Publish only those explicitly set
+	bintrayUpload.enabled = false
 }
 
 configure([ // Java libraries
@@ -101,8 +103,6 @@ project(':simple-logs') {
 	dependencies {
 		compileOnly project(':simple-props')
 	}
-
-	bintrayUpload.enabled = false
 }
 
 project(':simple-props') {
@@ -112,8 +112,6 @@ project(':simple-props') {
 	dependencies {
 		testImplementation 'junit:junit:4.+'
 	}
-
-	bintrayUpload.enabled = false
 }
 
 project(':simple-files') {
@@ -137,11 +135,13 @@ project(':simple-funcs') {
 
 project(':simple-structs') {
 	description = "Java library of various data structures and algorithms"
-	version = '1.0'
+	version = '1.1'
 
 	dependencies {
 		implementation project(':simple-funcs')
 	}
+	
+	bintrayUpload.enabled = true
 }
 
 project(':simple-specs') {
