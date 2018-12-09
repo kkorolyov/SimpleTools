@@ -28,10 +28,10 @@ public final class TopologicalSort {
 	 * @param <T> node type
 	 * @return procedure which sorts topologically using depth-first search
 	 */
-	public static <T> Procedure<List<T>> dfs(Graph<T> graph) {
+	public static <T> Procedure<List<T>> dfs(Graph<T, ?> graph) {
 		return new Procedure<>() {
-			private final Collection<Node<T>> unseen = new HashSet<>();  // Nodes to visit
-			private final Collection<Node<T>> visited = new HashSet<>();  // Nodes seen across all visits
+			private final Collection<Node<T, ?>> unseen = new HashSet<>();  // Nodes to visit
+			private final Collection<Node<T, ?>> visited = new HashSet<>();  // Nodes seen across all visits
 			private final Deque<T> sort = new ArrayDeque<>();
 
 			/**
@@ -50,13 +50,13 @@ public final class TopologicalSort {
 
 				return result;
 			}
-			private void visit(Node<T> node) {
+			private void visit(Node<T, ?> node) {
 				if (!visited.contains(node)) {
 					if (!unseen.contains(node)) throw new IllegalStateException(graph + " is not a directed acyclic graph");
 
 					unseen.remove(node);
 
-					for (Node<T> outbound : node.getOutbounds()) visit(outbound);
+					for (Node<T, ?> outbound : node.getOutbounds()) visit(outbound);
 
 					visited.add(node);
 

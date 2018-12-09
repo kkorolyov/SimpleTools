@@ -8,20 +8,20 @@ A `Graph` is a generically-typed collection of nodes connected to other nodes by
 
 ### Building a graph
 ```java
-Graph<String> graph = new Graph<String>()
-	.add("A", "1")
-	.add("B", "1")
+Graph<String, Integer> graph = new Graph<String, Integer>()
+	.add("A", "1", 1)
+	.add("B", "1", 4)
 	.add("A", "B");
 ```
 results in a graph with
-- node `"A"` has outbound edges to nodes `"1"`, `"B"`
-- node `"B"` has outbound edge to node `"1"` and inbound edge from node `"A"`
-- node `"1"` has inbound edges from nodes `"A"`, `"B"`
+- node `"A"` has outbound edges to nodes (`"1"` with weight `1`), (`"B"` with no weight)
+- node `"B"` has outbound edge to node (`"1"` with weight `4`) and inbound edge from node (`"A"` with no weight)
+- node `"1"` has inbound edges from nodes (`"A"` with weight `1`), (`"B"` with weight `4`)
 
 ### Topological sort
 Directed acyclic graphs may be sorted [topologically](https://en.wikipedia.org/wiki/Topological_sorting). 
 ```java
-Graph<Integer> graph = new Graph<Integer>()
+Graph<Integer, Void> graph = new Graph<Integer, Void>()
 	.add(1, 3, 4)
 	.add(2, 3, 4)
 	.add(3, 4);

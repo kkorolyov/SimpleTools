@@ -6,8 +6,8 @@ import spock.lang.Specification
 
 class TopologicalSortSpec extends Specification {
 	static class DfsSpec extends TopologicalSortSpec {
-		Graph<Integer> graph = new Graph<>()
-				.add(0, 1, 11)
+		Graph<Integer, Void> graph = new Graph<>()
+				.add(0, [1, 11])
 				.add(2, 3)
 				.add(1, 2)
 				.add(11, 2)
