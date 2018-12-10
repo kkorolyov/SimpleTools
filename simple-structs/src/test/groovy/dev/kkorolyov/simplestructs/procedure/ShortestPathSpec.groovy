@@ -77,15 +77,5 @@ class ShortestPathSpec extends Specification {
 			expect:
 			ShortestPath.dijkstra(graph).execute('A', 'C') == ['A', 'B', 'C']
 		}
-		def "gets unweighted shortest path"() {
-			when:
-			Graph<String, Integer> graph = new Graph<>()
-					.add('A', 'B')
-					.add('A', 'C')
-					.add('B', 'C')
-
-			then:
-			ShortestPath.dijkstra(graph).execute('A', 'C') == ['A', 'C']
-		}
 	}
 }
