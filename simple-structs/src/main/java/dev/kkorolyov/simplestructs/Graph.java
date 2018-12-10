@@ -5,9 +5,9 @@ import dev.kkorolyov.simplestructs.Graph.Node;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
@@ -16,15 +16,18 @@ import java.util.stream.StreamSupport;
 import static dev.kkorolyov.simplefuncs.stream.Iterables.append;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
+import static java.util.Collections.singletonMap;
 import static java.util.Collections.unmodifiableCollection;
+import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 
 /**
- * A collection of values connected by outbound and inbound edges to other values.
+ * A collection of values connected by weighted outbound and inbound edges to other values.
  * @param <T> value type
+ * @param <E> edge type
  */
-public class Graph<T> implements Iterable<Node<T>> {
-	private final Map<T, Node<T>> nodes = new HashMap<>();
+public final class Graph<T, E> implements Iterable<Node<T, E>> {
+	private final Map<T, Node<T, E>> nodes = new HashMap<>();
 
 	/**
 	 * @param value value to check
@@ -38,7 +41,7 @@ public class Graph<T> implements Iterable<Node<T>> {
 	 * @param value value to get node for
 	 * @return node with {@code value} in this graph, if any
 	 */
-	public Node<T> get(T value) {
+	public Node<T, E> get(T value) {
 		return nodes.get(value);
 	}
 
@@ -56,8 +59,8 @@ public class Graph<T> implements Iterable<Node<T>> {
 	public Collection<T> getInbounds(T value) {
 		return getEdgeValues(value, Node::getInbounds);
 	}
-	private Collection<T> getEdgeValues(T value, Function<? super Node<T>, ? extends Collection<Node<T>>> edgesMapper) {
-		Node<T> node = get(value);
+	private Collection<T> getEdgeValues(T value, Function<? super Node<T, E>, ? extends Collection<Node<T, E>>> edgesMapper) {
+		Node<T, E> node = get(value);
 
 		return node == null
 				? emptySet()
@@ -71,7 +74,7 @@ public class Graph<T> implements Iterable<Node<T>> {
 	 * @return number of outbound edges from {@code value}
 	 */
 	public int outDegree(T value) {
-		Node<T> node = get(value);
+		Node<T, E> node = get(value);
 
 		return node == null
 				? 0
@@ -82,7 +85,7 @@ public class Graph<T> implements Iterable<Node<T>> {
 	 * @return number of inbound edges to {@code value}
 	 */
 	public int inDegree(T value) {
-		Node<T> node = get(value);
+		Node<T, E> node = get(value);
 
 		return node == null
 				? 0
@@ -94,14 +97,35 @@ public class Graph<T> implements Iterable<Node<T>> {
 	 * @return whether {@code value} is in this graph and connected to at least one other value
 	 */
 	public boolean isConnected(T value) {
-		Node<T> node = get(value);
+		Node<T, E> node = get(value);
 
 		return node != null && node.isConnected();
 	}
 
+	/** @see #add(Object, Map) */
+	public Graph<T, E> add(T value, T outbound, E edge) {
+		return add(value, singletonMap(outbound, edge));
+	}
+	/**
+	 * Adds or updates a value in this graph.
+	 * @param value value to add or update
+	 * @param outbounds values and their respective edges to add as outbound connections from {@code value}
+	 * @return {@code this}
+	 */
+	public Graph<T, E> add(T value, Map<? extends T, ? extends E> outbounds) {
+		computeIfAbsent(value)
+				.addEdges(outbounds.entrySet().stream()
+						.collect(toMap(
+								entry -> computeIfAbsent(entry.getKey()),
+								Entry::getValue
+						))
+				);
+		return this;
+	}
+
 	/** @see #add(Object, Iterable) */
 	@SafeVarargs
-	public final Graph<T> add(T value, T... outbounds) {
+	public final Graph<T, E> add(T value, T... outbounds) {
 		return add(value, Arrays.asList(outbounds));
 	}
 	/**
@@ -110,21 +134,40 @@ public class Graph<T> implements Iterable<Node<T>> {
 	 * @param outbounds values to add as outbound connections from {@code value}
 	 * @return {@code this}
 	 */
-	public Graph<T> add(T value, Iterable<T> outbounds) {
+	public Graph<T, E> add(T value, Iterable<T> outbounds) {
 		computeIfAbsent(value)
 				.addEdges(computeIfAbsent(outbounds));
 
 		return this;
 	}
 
+	/** @see #addUndirected(Object, Map) */
+	public Graph<T, E> addUndirected(T value, T connected, E edge) {
+		return addUndirected(value, singletonMap(connected, edge));
+	}
+	/**
+	 * Like {@link #add(Object, Map)}, but also adds an inverse edge between connected node pairs.
+	 */
+	public Graph<T, E> addUndirected(T value, Map<? extends T, ? extends E> connecteds) {
+		computeIfAbsent(value)
+				.addEdgesUndirected(connecteds.entrySet().stream()
+						.collect(toMap(
+								entry -> computeIfAbsent(entry.getKey()),
+								Entry::getValue
+						))
+				);
+		return this;
+	}
+
 	/** @see #addUndirected(Object, Iterable) */
-	public Graph<T> addUndirected(T value, T... connecteds) {
-		return addUndirected(value, Arrays.asList(connecteds));
+	@SafeVarargs
+	public final Graph<T, E> addUndirected(T value, T connected, T... connecteds) {
+		return addUndirected(value, append(singleton(connected), connecteds));
 	}
 	/**
 	 * Like {@link #add(Object, Iterable)}, but also adds an inverse edge between connected node pairs.
 	 */
-	public Graph<T> addUndirected(T value, Iterable<T> connecteds) {
+	public Graph<T, E> addUndirected(T value, Iterable<T> connecteds) {
 		computeIfAbsent(value)
 				.addEdgesUndirected(computeIfAbsent(connecteds));
 
@@ -133,7 +176,7 @@ public class Graph<T> implements Iterable<Node<T>> {
 
 	/** @see #remove(Iterable) */
 	@SafeVarargs
-	public final Graph<T> remove(T value, T... values) {
+	public final Graph<T, E> remove(T value, T... values) {
 		return remove(append(singleton(value), values));
 	}
 	/**
@@ -141,7 +184,7 @@ public class Graph<T> implements Iterable<Node<T>> {
 	 * @param values values to remove
 	 * @return {@code this}
 	 */
-	public Graph<T> remove(Iterable<T> values) {
+	public Graph<T, E> remove(Iterable<T> values) {
 		find(values)
 				.forEach(Node::destroy);
 
@@ -150,7 +193,7 @@ public class Graph<T> implements Iterable<Node<T>> {
 
 	/** @see #sever(Object, Iterable) */
 	@SafeVarargs
-	public final Graph<T> sever(T value, T outbound, T... outbounds) {
+	public final Graph<T, E> sever(T value, T outbound, T... outbounds) {
 		return sever(value, append(singleton(outbound), outbounds));
 	}
 	/**
@@ -159,7 +202,7 @@ public class Graph<T> implements Iterable<Node<T>> {
 	 * @param outbounds connected values to remove outbound edges from {@code value} for
 	 * @return {@code this}
 	 */
-	public Graph<T> sever(T value, Iterable<T> outbounds) {
+	public Graph<T, E> sever(T value, Iterable<T> outbounds) {
 		find(value)
 				.ifPresent(node -> node.removeEdges(find(outbounds)));
 
@@ -167,32 +210,32 @@ public class Graph<T> implements Iterable<Node<T>> {
 	}
 
 	/** @see #severUndirected(Object, Iterable) */
-	public Graph<T> severUndirected(T value, T connected, T... connecteds) {
+	public Graph<T, E> severUndirected(T value, T connected, T... connecteds) {
 		return severUndirected(value, append(singleton(connected), connecteds));
 	}
 	/**
 	 * Like {@link #sever(Object, Iterable)}, but also removes the inverse edge between connected node pairs.
 	 */
-	public Graph<T> severUndirected(T value, Iterable<T> connecteds) {
+	public Graph<T, E> severUndirected(T value, Iterable<T> connecteds) {
 		find(value)
 				.ifPresent(node -> node.removeEdgesUndirected(find(connecteds)));
 
 		return this;
 	}
 
-	private Node<T> computeIfAbsent(T value) {
+	private Node<T, E> computeIfAbsent(T value) {
 		return nodes.computeIfAbsent(value, k -> new Node<>(k, this));
 	}
-	private Iterable<Node<T>> computeIfAbsent(Iterable<T> values) {
+	private Iterable<Node<T, E>> computeIfAbsent(Iterable<T> values) {
 		return StreamSupport.stream(values.spliterator(), false)
 				.map(this::computeIfAbsent)
 				::iterator;
 	}
 
-	private Optional<Node<T>> find(T value) {
+	private Optional<Node<T, E>> find(T value) {
 		return Optional.ofNullable(nodes.get(value));
 	}
-	private Iterable<Node<T>> find(Iterable<T> values) {
+	private Iterable<Node<T, E>> find(Iterable<T> values) {
 		return StreamSupport.stream(values.spliterator(), false)
 				.map(nodes::get)
 				.filter(Objects::nonNull)
@@ -200,7 +243,7 @@ public class Graph<T> implements Iterable<Node<T>> {
 	}
 
 	/** @return view over all nodes in this graph */
-	public Collection<Node<T>> getNodes() {
+	public Collection<Node<T, E>> getNodes() {
 		return unmodifiableCollection(nodes.values());
 	}
 	/** @return view over all values in this graph */
@@ -217,41 +260,53 @@ public class Graph<T> implements Iterable<Node<T>> {
 
 	/** @return iterator over all nodes in this graph */
 	@Override
-	public Iterator<Node<T>> iterator() {
+	public Iterator<Node<T, E>> iterator() {
 		return nodes.values().iterator();
 	}
 
 	/**
 	 * An individual vertex with outbound and inbound edges in a {@link Graph}.
-	 * @param <T> node type
+	 * @param <T> value type
+	 * @param <E> edge type
 	 */
-	public static final class Node<T> {
+	public static final class Node<T, E> {
 		private final T value;
-		private final Collection<Node<T>> outbounds = new HashSet<>();
-		private final Collection<Node<T>> inbounds = new HashSet<>();
-		private final Graph<T> graph;
+		private final Map<Node<T, E>, RelatedNode<T, E>> outbounds = new HashMap<>();
+		private final Map<Node<T, E>, RelatedNode<T, E>> inbounds = new HashMap<>();
+		private final Graph<T, E> graph;
 
-		private Node(T value, Graph<T> graph) {
+		private Node(T value, Graph<T, E> graph) {
 			this.value = value;
 			this.graph = graph;
 		}
 
 		/**
 		 * Adds outbound edges from this node to each node in {@code outbounds} and inbound edges from each node in {@code outbounds} to this node.
-		 * @param outbounds outbound nodes to connect to this node
+		 * @param outbounds outbound nodes with connection metadata to connect to this node
 		 */
-		private void addEdges(Iterable<Node<T>> outbounds) {
-			for (Node<T> outbound : outbounds) {
-				this.outbounds.add(outbound);
-				outbound.inbounds.add(this);
+		private void addEdges(Map<Node<T, E>, ? extends E> outbounds) {
+			outbounds.forEach((outbound, edge) -> {
+				this.outbounds.put(outbound, new RelatedNode<>(outbound, edge));
+				outbound.inbounds.put(this, new RelatedNode<>(this, edge));
+			});
+		}
+		/**
+		 * Adds outbound edges from this node to each node in {@code outbounds} and inbound edges from each node in {@code outbounds} to this node.
+		 * @param outbounds outbound nodes to connect to this node with {@code null} connection metadata
+		 */
+		private void addEdges(Iterable<Node<T, E>> outbounds) {
+			for (Node<T, E> outbound : outbounds) {
+				this.outbounds.put(outbound, new RelatedNode<>(outbound, null));
+				outbound.inbounds.put(this, new RelatedNode<>(this, null));
 			}
 		}
+
 		/**
 		 * Removes outbound edges from this node to each node in {@code outbounds} and inbound edges from each node in {@code outbounds} to this node.
 		 * @param outbounds outbound nodes to disconnect from this node
 		 */
-		private void removeEdges(Iterable<Node<T>> outbounds) {
-			for (Node<T> outbound : outbounds) {
+		private void removeEdges(Iterable<Node<T, E>> outbounds) {
+			for (Node<T, E> outbound : outbounds) {
 				this.outbounds.remove(outbound);
 				outbound.inbounds.remove(this);
 			}
@@ -259,22 +314,41 @@ public class Graph<T> implements Iterable<Node<T>> {
 
 		/**
 		 * Adds 2-way edge pairs from this node to each node in {@code connecteds}.
-		 * @param connecteds other nodes to connect to this node in both directions
+		 * @param connecteds other nodes with connection metadata to connect to this node in both directions
 		 */
-		private void addEdgesUndirected(Iterable<Node<T>> connecteds) {
-			for (Node<T> connected : connecteds) {
-				outbounds.add(connected);
-				inbounds.add(connected);
-				connected.outbounds.add(this);
-				connected.inbounds.add(this);
+		private void addEdgesUndirected(Map<Node<T, E>, ? extends E> connecteds) {
+			connecteds.forEach((connected, edge) -> {
+				RelatedNode<T, E> connectedRelated = new RelatedNode<>(connected, edge);
+				RelatedNode<T, E> thisRelated = new RelatedNode<>(this, edge);
+
+				outbounds.put(connected, connectedRelated);
+				inbounds.put(connected, connectedRelated);
+				connected.outbounds.put(this, thisRelated);
+				connected.inbounds.put(this, thisRelated);
+			});
+		}
+		/**
+		 * Adds 2-way edge pairs from this node to each node in {@code connecteds}.
+		 * @param connecteds other nodes to connect to this node with {@code null} connection metadata in both directions
+		 */
+		private void addEdgesUndirected(Iterable<Node<T, E>> connecteds) {
+			for (Node<T, E> connected : connecteds) {
+				RelatedNode<T, E> connectedRelated = new RelatedNode<>(connected, null);
+				RelatedNode<T, E> thisRelated = new RelatedNode<>(this, null);
+
+				outbounds.put(connected, connectedRelated);
+				inbounds.put(connected, connectedRelated);
+				connected.outbounds.put(this, thisRelated);
+				connected.inbounds.put(this, thisRelated);
 			}
 		}
+
 		/**
 		 * Removes 2-way edge pairs from this node to each node in {@code connecteds}.
 		 * @param connecteds other nodes to disconnect from this node in both directions
 		 */
-		private void removeEdgesUndirected(Iterable<Node<T>> connecteds) {
-			for (Node<T> connected : connecteds) {
+		private void removeEdgesUndirected(Iterable<Node<T, E>> connecteds) {
+			for (Node<T, E> connected : connecteds) {
 				outbounds.remove(connected);
 				inbounds.remove(connected);
 				connected.outbounds.remove(this);
@@ -286,10 +360,10 @@ public class Graph<T> implements Iterable<Node<T>> {
 		 * Removes this node and all connections to it from the graph.
 		 */
 		private void destroy() {
-			for (Node<T> outbound : outbounds) {
+			for (Node<T, E> outbound : outbounds.keySet()) {
 				outbound.inbounds.remove(this);
 			}
-			for (Node<T> inbound : inbounds) {
+			for (Node<T, E> inbound : inbounds.keySet()) {
 				inbound.outbounds.remove(this);
 			}
 			outbounds.clear();
@@ -299,12 +373,21 @@ public class Graph<T> implements Iterable<Node<T>> {
 		}
 
 		/** @return all nodes connected by an outbound edge from this node */
-		public Collection<Node<T>> getOutbounds() {
-			return unmodifiableCollection(outbounds);
+		public Collection<Node<T, E>> getOutbounds() {
+			return unmodifiableCollection(outbounds.keySet());
 		}
+		/** @return all nodes connected by an outbound edge from this node, along with connection metadata */
+		public Collection<RelatedNode<T, E>> getOutboundRelations() {
+			return unmodifiableCollection(outbounds.values());
+		}
+
 		/** @return all nodes connected by an inbound edge to this node */
-		public Collection<Node<T>> getInbounds() {
-			return unmodifiableCollection(inbounds);
+		public Collection<Node<T, E>> getInbounds() {
+			return unmodifiableCollection(inbounds.keySet());
+		}
+		/** @return all nodes connected by an inbound edge to this node, along with connection metadata */
+		public Collection<RelatedNode<T, E>> getInboundRelations() {
+			return unmodifiableCollection(inbounds.values());
 		}
 
 		/** @return number of outbound edges from this node */
@@ -324,6 +407,30 @@ public class Graph<T> implements Iterable<Node<T>> {
 		/** @return node value */
 		public T getValue() {
 			return value;
+		}
+
+		/**
+		 * A connected {@link Node} along with additional connection metadata.
+		 * @param <T> value type
+		 * @param <E> edge type
+		 */
+		public static final class RelatedNode<T, E> {
+			private final Node<T, E> node;
+			private final E edge;
+
+			private RelatedNode(Node<T, E> node, E edge) {
+				this.node = node;
+				this.edge = edge;
+			}
+
+			/** @return connected node */
+			public Node<T, E> getNode() {
+				return node;
+			}
+			/** @return connection metadata */
+			public E getEdge() {
+				return edge;
+			}
 		}
 	}
 }

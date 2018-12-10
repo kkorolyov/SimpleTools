@@ -1,5 +1,12 @@
 # Change Log
 
+## 2.0 - TBD
+### Changes
+* Added generic edge support to `Graph`
+	* `Graph<T>` becomes `Graph<T, E>`
+### Additions
+* Weighted shortest path procedure (Dijkstra)
+
 ## 1.1 - 2018-12-2
 ### Additions
 * `WeightedDistribution`
@@ -16,6 +23,6 @@
 	* `severUndirected()` edges from node to and from other nodes
 * Converted algorithmic operations to `Procedure`s supplied through factories
 ### Additions
-* Shortest path procedures
+* Shortest path procedure (BFS)
 ### Removals
 * `Graph#sortTopological()`

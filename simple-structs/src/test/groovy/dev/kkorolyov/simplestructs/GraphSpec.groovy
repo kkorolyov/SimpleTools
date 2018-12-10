@@ -3,7 +3,7 @@ package dev.kkorolyov.simplestructs
 import spock.lang.Specification
 
 class GraphSpec extends Specification {
-	Graph<Object> graph = new Graph<>()
+	Graph<Object, Void> graph = new Graph<>()
 
 	def "does not contain non-existent node"() {
 		expect:
