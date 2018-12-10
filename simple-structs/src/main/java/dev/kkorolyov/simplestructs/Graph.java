@@ -377,7 +377,7 @@ public final class Graph<T, E> implements Iterable<Node<T, E>> {
 			return unmodifiableCollection(outbounds.keySet());
 		}
 		/** @return all nodes connected by an outbound edge from this node, along with connection metadata */
-		public Collection<RelatedNode<T, E>> getRelatedOutbounds() {
+		public Collection<RelatedNode<T, E>> getOutboundRelations() {
 			return unmodifiableCollection(outbounds.values());
 		}
 
@@ -386,7 +386,7 @@ public final class Graph<T, E> implements Iterable<Node<T, E>> {
 			return unmodifiableCollection(inbounds.keySet());
 		}
 		/** @return all nodes connected by an inbound edge to this node, along with connection metadata */
-		public Collection<RelatedNode<T, E>> getRelatedInbounds() {
+		public Collection<RelatedNode<T, E>> getInboundRelations() {
 			return unmodifiableCollection(inbounds.values());
 		}
 

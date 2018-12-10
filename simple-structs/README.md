@@ -6,7 +6,6 @@ A Java library of various data structures and algorithms.
 ## Graph
 A `Graph` is a generically-typed collection of nodes connected to other nodes by outbound and inbound edges.
 
-### Building a graph
 ```java
 Graph<String, Integer> graph = new Graph<String, Integer>()
 	.add("A", "1", 1)
@@ -17,16 +16,6 @@ results in a graph with
 - node `"A"` has outbound edges to nodes (`"1"` with weight `1`), (`"B"` with no weight)
 - node `"B"` has outbound edge to node (`"1"` with weight `4`) and inbound edge from node (`"A"` with no weight)
 - node `"1"` has inbound edges from nodes (`"A"` with weight `1`), (`"B"` with weight `4`)
-
-### Topological sort
-Directed acyclic graphs may be sorted [topologically](https://en.wikipedia.org/wiki/Topological_sorting). 
-```java
-Graph<Integer, Void> graph = new Graph<Integer, Void>()
-	.add(1, 3, 4)
-	.add(2, 3, 4)
-	.add(3, 4);
-```
-would result in either `[1, 2, 3, 4]` or `[2, 1, 3, 4]`
 
 ## FacetedBundle
 A `FacetedBundle` provides for efficient retrieval of the intersection of elements that have a given subset of "facets" or markers applied to them,
