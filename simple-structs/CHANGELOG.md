@@ -6,6 +6,8 @@
 	* `Graph<T>` becomes `Graph<T, E>`
 ### Additions
 * Weighted shortest path procedure (Dijkstra)
+### Fixes
+* `FacetedBundle` now removes entries correctly
 
 ## 1.1 - 2018-12-2
 ### Additions

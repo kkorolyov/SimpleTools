@@ -2,12 +2,14 @@ package dev.kkorolyov.simplestructs;
 
 import dev.kkorolyov.simplestructs.FacetedBundle.Entry;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.stream.Stream;
 
 import static dev.kkorolyov.simplefuncs.stream.Iterables.append;
@@ -22,9 +24,9 @@ import static java.util.Collections.singleton;
  * @param <T> element type
  */
 public class FacetedBundle<K, F, T> implements Iterable<Entry<F, T>> {
-	private final List<Entry<F, T>> elements = new ArrayList<>();
+	private final Indices<K> indices = new Indices<>();
 	private final FacetSets<F> facetSets = new FacetSets<>();
-	private final Map<K, Integer> indices = new HashMap<>();
+	private final List<Entry<F, T>> elements = new ArrayList<>();
 
 	/**
 	 * @param key key to test
@@ -39,7 +41,7 @@ public class FacetedBundle<K, F, T> implements Iterable<Entry<F, T>> {
 	 * @return entry at {@code key}, or {@code null} if no such entry
 	 */
 	public Entry<F, T> get(K key) {
-		int index = getIndex(key);
+		int index = indices.getIndex(key);
 
 		return index < elements.size()
 				? elements.get(index)
@@ -71,7 +73,7 @@ public class FacetedBundle<K, F, T> implements Iterable<Entry<F, T>> {
 	 * @return entry containing {@code element}
 	 */
 	public Entry<F, T> put(K key, T element) {
-		int index = getIndex(key);
+		int index = indices.getIndex(key);
 
 		padUntil(index);
 
@@ -93,18 +95,40 @@ public class FacetedBundle<K, F, T> implements Iterable<Entry<F, T>> {
 	 * @return whether an element existed at {@code key} and was removed
 	 */
 	public boolean remove(K key) {
-		int index = getIndex(key);
+		int index = indices.remove(key);
 
-		return index < elements.size() && elements.remove(index) != null;
-	}
-
-	private int getIndex(K key) {
-		return indices.computeIfAbsent(key, k -> indices.size());
+		boolean result = index >= 0 && index < elements.size();
+		if (result) {
+			facetSets.clear(index);
+			elements.set(index, null);
+		}
+		return result;
 	}
 
 	@Override
 	public Iterator<Entry<F, T>> iterator() {
 		return elements.iterator();
+	}
+
+	private static class Indices<K> {
+		private final Map<K, Integer> indices = new HashMap<>();
+		private final Queue<Integer> reclaimedIndices = new ArrayDeque<>();
+
+		int getIndex(K key) {
+			return indices.computeIfAbsent(key, k ->
+					!reclaimedIndices.isEmpty()
+							? reclaimedIndices.poll()
+							: indices.size()
+			);
+		}
+
+		int remove(K key) {
+			Integer index = indices.remove(key);
+			if (index != null) {
+				reclaimedIndices.add(index);
+			}
+			return index != null ? index : -1;
+		}
 	}
 
 	private static class FacetSets<F> {
