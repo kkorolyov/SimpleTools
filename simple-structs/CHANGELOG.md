@@ -1,6 +1,6 @@
 # Change Log
 
-## 2.0 - TBD
+## 2.0 - 2019-3-25
 ### Changes
 * Added generic edge support to `Graph`
 	* `Graph<T>` becomes `Graph<T, E>`

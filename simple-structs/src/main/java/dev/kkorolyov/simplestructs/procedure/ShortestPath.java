@@ -108,7 +108,7 @@ public final class ShortestPath {
 	 * @return procedure which gets shortest path using Dijkstra's algorithm
 	 */
 	public static <T, E extends Comparable<E>> Procedure.Binary<T, T, List<T>> dijkstra(Graph<T, E> graph, BinaryOperator<E> adder) {
-		return new Procedure.Binary<T, T, List<T>>() {
+		return new Procedure.Binary<>() {
 			private final Comparator<E> edgeComparator = nullsLast(naturalOrder());
 
 			private final Map<Node<T, E>, E> cost = new HashMap<>();  // Nodes in graph mapped to their costs from start node

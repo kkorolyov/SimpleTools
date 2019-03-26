@@ -17,6 +17,19 @@ results in a graph with
 - node `"B"` has outbound edge to node (`"1"` with weight `4`) and inbound edge from node (`"A"` with no weight)
 - node `"1"` has inbound edges from nodes (`"A"` with weight `1`), (`"B"` with weight `4`)
 
+## Trie
+A `Trie` provides for addition and verification of iterable elements, such as `String`s.
+```java
+Trie<Character> trie = new Trie<Character>
+	.add(asIterable("foo"))
+	.add(asIterable("foobar"))
+	.add(asIterable("foofles"));
+
+trie.contains(asIterable("fo"));	// false
+trie.contains(asIterable("foob"));	// false
+trie.contains(asIterable("foobar"));	// true
+```
+
 ## FacetedBundle
 A `FacetedBundle` provides for efficient retrieval of the intersection of elements that have a given subset of "facets" or markers applied to them,
 ```java

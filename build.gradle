@@ -135,7 +135,7 @@ project(':simple-funcs') {
 
 project(':simple-structs') {
 	description = "Java library of various data structures and algorithms"
-	version = '2.0-SNAPSHOT'
+	version = '2.0'
 
 	dependencies {
 		implementation project(':simple-funcs')
