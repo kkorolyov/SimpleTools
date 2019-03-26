@@ -2,6 +2,7 @@ package dev.kkorolyov.simplestructs;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -26,7 +27,7 @@ public class Trie<T> {
 	}
 	/** @see #contains(Iterable) */
 	public boolean contains(T[] value) {
-		return contains(Arrays.stream(value)::iterator);
+		return contains(Arrays.asList(value));
 	}
 	/**
 	 * @param value value to check
@@ -43,7 +44,7 @@ public class Trie<T> {
 	}
 	/** @see #get(Iterable) */
 	public Node get(T[] value) {
-		return get(Arrays.stream(value)::iterator);
+		return get(Arrays.asList(value));
 	}
 	/**
 	 * @param value value to get node for
@@ -65,7 +66,7 @@ public class Trie<T> {
 	}
 	/** @see #add(Iterable) */
 	public Trie<T> add(T[] value) {
-		return add(Arrays.stream(value)::iterator);
+		return add(Arrays.asList(value));
 	}
 	/**
 	 * Adds a complete value to this trie.
@@ -121,6 +122,11 @@ public class Trie<T> {
 		}
 		private Node computeIfAbsent(T element, List<T> value) {
 			return children.computeIfAbsent(element, k -> new Node(value));
+		}
+
+		/** @return keys of child nodes */
+		public Collection<T> getKeys() {
+			return children.keySet();
 		}
 
 		/** @return full node value */
