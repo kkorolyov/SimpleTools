@@ -6,27 +6,29 @@ A Java library of various data structures and algorithms.
 ## Graph
 A `Graph` is a generically-typed collection of nodes connected to other nodes by outbound and inbound edges.
 
-### Building a graph
 ```java
-Graph<String> graph = new Graph<String>()
-	.add("A", "1")
-	.add("B", "1")
+Graph<String, Integer> graph = new Graph<String, Integer>()
+	.add("A", "1", 1)
+	.add("B", "1", 4)
 	.add("A", "B");
 ```
 results in a graph with
-- node `"A"` has outbound edges to nodes `"1"`, `"B"`
-- node `"B"` has outbound edge to node `"1"` and inbound edge from node `"A"`
-- node `"1"` has inbound edges from nodes `"A"`, `"B"`
+- node `"A"` has outbound edges to nodes (`"1"` with weight `1`), (`"B"` with no weight)
+- node `"B"` has outbound edge to node (`"1"` with weight `4`) and inbound edge from node (`"A"` with no weight)
+- node `"1"` has inbound edges from nodes (`"A"` with weight `1`), (`"B"` with weight `4`)
 
-### Topological sort
-Directed acyclic graphs may be sorted [topologically](https://en.wikipedia.org/wiki/Topological_sorting). 
+## Trie
+A `Trie` provides for addition and verification of iterable elements, such as `String`s.
 ```java
-Graph<Integer> graph = new Graph<Integer>()
-	.add(1, 3, 4)
-	.add(2, 3, 4)
-	.add(3, 4);
+Trie<Character> trie = new Trie<Character>
+	.add(asIterable("foo"))
+	.add(asIterable("foobar"))
+	.add(asIterable("foofles"));
+
+trie.contains(asIterable("fo"));	// false
+trie.contains(asIterable("foob"));	// false
+trie.contains(asIterable("foobar"));	// true
 ```
-would result in either `[1, 2, 3, 4]` or `[2, 1, 3, 4]`
 
 ## FacetedBundle
 A `FacetedBundle` provides for efficient retrieval of the intersection of elements that have a given subset of "facets" or markers applied to them,

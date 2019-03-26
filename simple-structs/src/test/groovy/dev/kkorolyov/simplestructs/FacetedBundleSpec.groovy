@@ -67,12 +67,18 @@ class FacetedBundleSpec extends Specification {
 	}
 
 	def "removes element at key"() {
-		when:
-		bundle.put(key, element)
+		String otherKey = randString()
+		int otherFacet = randInt()
+		Object otherElement = Mock()
 
-		then:
+		bundle.put(key, element)
+		bundle.put(otherKey, otherElement)
+				.addFacets(otherFacet)
+
+		expect:
 		bundle.remove(key)
 		!bundle.contains(key)
+		bundle.stream([otherFacet]).collect(toSet()) == [otherElement] as Set
 	}
 	def "removes nothing at unset key"() {
 		expect:

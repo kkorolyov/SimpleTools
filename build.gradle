@@ -135,13 +135,11 @@ project(':simple-funcs') {
 
 project(':simple-structs') {
 	description = "Java library of various data structures and algorithms"
-	version = '1.1'
+	version = '2.0'
 
 	dependencies {
 		implementation project(':simple-funcs')
 	}
-	
-	bintrayUpload.enabled = true
 }
 
 project(':simple-specs') {
