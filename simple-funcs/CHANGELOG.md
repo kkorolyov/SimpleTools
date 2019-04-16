@@ -1,5 +1,10 @@
 # Change Log
 
+## 1.4 - 2019-04-15
+### Additions
+* `Iterables#matches(Iterable<T>, Iterable<T>)` single-iteration matching function
+* `Iterables#append(T, T...)` convenience overload
+
 ## 1.3 - 2018-06-18
 ### Changes
 * Added more Collectors

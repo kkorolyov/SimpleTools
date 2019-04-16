@@ -2,12 +2,31 @@ package dev.kkorolyov.simplefuncs.stream;
 
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.Objects;
+
+import static java.util.Collections.singleton;
 
 /**
  * Additional utility methods for generating or otherwise working with {@link Iterable}s.
  */
 public final class Iterables {
 	private Iterables() {}
+
+	/**
+	 * Checks whether two iterables are composed of the same elements in the same iteration order.
+	 * @param iterable first iterable
+	 * @param iterable1 second iterable
+	 * @return whether {@code iterable} and {@code iterable1} are composed of the same elements in the same iteration order
+	 */
+	public static boolean matches(Iterable<?> iterable, Iterable<?> iterable1) {
+		Iterator<?> it = iterable.iterator();
+		Iterator<?> it1 = iterable1.iterator();
+
+		while (it.hasNext() && it1.hasNext()) {
+			if (!Objects.equals(it.next(), it1.next())) return false;
+		}
+		return !(it.hasNext() || it1.hasNext());
+	}
 
 	/** @see #concat(Iterable) */
 	@SafeVarargs
@@ -24,6 +43,14 @@ public final class Iterables {
 		return () -> new MultiIterator<>(iterables);
 	}
 
+	/**
+	 * Convenience overload of {@link #append(Iterable, Object[])} for "at least one" var-args usages.
+	 * @see #append(Iterable, Object[])
+	 */
+	@SafeVarargs
+	public static <T> Iterable<T> append(T initial, T... others) {
+		return append(singleton(initial), others);
+	}
 	/**
 	 * Returns an iterable which iterates first over all elements in {@code iterable}, then over all {@code others}
 	 * @param initial initial iterable to iterate
@@ -57,8 +84,11 @@ public final class Iterables {
 
 		private boolean findNext() {
 			while (current == null || !current.hasNext()) {
-				if (delegates.hasNext()) current = delegates.next().iterator();
-				else return false;
+				if (delegates.hasNext()) {
+					current = delegates.next().iterator();
+				} else {
+					return false;
+				}
 			}
 			return true;
 		}

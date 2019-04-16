@@ -3,6 +3,23 @@ package dev.kkorolyov.simplefuncs.stream
 import spock.lang.Specification
 
 class IterablesSpec extends Specification {
+	def "matches if same ordered equals"() {
+		when:
+		List<String> iterable = ["A", "B", "C"]
+		List<String> other = new ArrayList<>(iterable)
+
+		then:
+		Iterables.matches(iterable, other)
+	}
+	def "not matches if different ordered equals"() {
+		when:
+		List<String> iterable = ["A", "B", "C"]
+		List<String> other = ["A", "C", "B"]
+
+		then:
+		!Iterables.matches(iterable, other)
+	}
+
 	def "iterates concats in order"() {
 		Iterable<String> part = ["A", "B"]
 		Iterable<String> part1 = ["Z", "nope"]
