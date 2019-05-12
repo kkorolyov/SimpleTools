@@ -8,14 +8,18 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
+import java.util.ServiceLoader;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+
+import static java.util.stream.Collectors.toSet;
 
 /**
  * Loads providers/implementations of a service.
@@ -23,11 +27,30 @@ import java.util.stream.Stream;
  */
 public class Providers<T> {
 	private final Class<T> serviceType;
-	private final Collection<T> providers;
+	private final Collection<T> providers = new HashSet<>();
 
-	private Providers(Class<T> serviceType, Collection<T> providers) {
+	private Providers(Class<T> serviceType, Iterable<? extends T> providers) {
 		this.serviceType = serviceType;
-		this.providers = providers;
+		providers.forEach(this.providers::add);
+	}
+
+	/**
+	 * Loads providers from classes defined as service providers in {@code module-info} files on the modulepath.
+	 * @param serviceType service type to load providers for
+	 * @param args constructor arguments for each provider instance
+	 * @param <T> service type
+	 * @return providers loaded from classes defined as service providers for {@code serviceType} and instantiated with {@code args}
+	 * @implNote module descriptors require providers to have public, no-arg constructors; however, this method will still attempt to instantiate with {@code args} just like {@link #fromConfig(Class, Object...)}
+	 * @see #fromClasses(Class, Iterable, Object...)
+	 */
+	public static <T> Providers<T> fromDescriptor(Class<T> serviceType, Object... args) {
+		return fromClasses(
+				serviceType,
+				ServiceLoader.load(serviceType).stream()
+						.map(ServiceLoader.Provider::type)
+						.collect(toSet()),
+				args
+		);
 	}
 
 	/**
@@ -38,11 +61,12 @@ public class Providers<T> {
 	 * @return providers loaded from classes in each configuration file for {@code serviceType} and instantiated with {@code args}
 	 * @throws UncheckedIOException if an IO issue occurs
 	 * @throws IllegalStateException if multiple configuration files define the same class
-	 * @see #fromClassNames(Class, Set, Object...)
+	 * @see #fromClassNames(Class, Iterable, Object...)
 	 */
 	public static <T> Providers<T> fromConfig(Class<T> serviceType, Object... args) {
 		try {
-			return fromClassNames(serviceType,
+			return fromClassNames(
+					serviceType,
 					Collections.list(ClassLoader.getSystemResources("META-INF/services/" + serviceType.getName())).stream()
 							.flatMap(url -> {
 								try (BufferedReader in = Files.read(url.openStream())) {
@@ -53,7 +77,8 @@ public class Providers<T> {
 									throw new UncheckedIOException(e);
 								}
 							}).collect(Collectors.toCollection(LinkedHashSet::new)),
-					args);
+					args
+			);
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}
@@ -68,14 +93,16 @@ public class Providers<T> {
 	 * @return providers instantiated from each class in {@code classNames} with {@code args}
 	 * @throws IllegalArgumentException if any class in {@code classNames} is not an instance of {@code serviceType}
 	 * @throws NoSuchElementException if any class in {@code classNames} is not on the classpath
-	 * @see #fromClasses(Class, Set, Object...)
+	 * @see #fromClasses(Class, Iterable, Object...)
 	 */
-	public static <T> Providers<T> fromClassNames(Class<T> serviceType, Set<String> classNames, Object... args) {
-		return fromClasses(serviceType,
-				classNames.stream()
+	public static <T> Providers<T> fromClassNames(Class<T> serviceType, Iterable<String> classNames, Object... args) {
+		return fromClasses(
+				serviceType,
+				StreamSupport.stream(classNames.spliterator(), false)
 						.map(name -> findClass(serviceType, name))
-						.collect(Collectors.toSet()),
-				args);
+						.collect(toSet()),
+				args
+		);
 	}
 	private static <T> Class<T> findClass(Class<T> serviceType, String name) {
 		try {
@@ -100,11 +127,13 @@ public class Providers<T> {
 	 * @return providers instantiated from each class in {@code classes} with {@code args}
 	 * @throws IllegalArgumentException if any class in {@code classes} has no constructor matching {@code args} nor a no-arg constructor
 	 */
-	public static <T> Providers<T> fromClasses(Class<T> serviceType, Set<Class<T>> classes, Object... args) {
-		return fromInstances(serviceType,
-				classes.stream()
+	public static <T> Providers<T> fromClasses(Class<T> serviceType, Iterable<Class<? extends T>> classes, Object... args) {
+		return fromInstances(
+				serviceType,
+				StreamSupport.stream(classes.spliterator(), false)
 						.map(c -> instantiate(c, args))
-						.collect(Collectors.toSet()));
+						.collect(toSet())
+		);
 	}
 	private static <T> T instantiate(Class<T> c, Object... args) {
 		Constructor<T> constructor;
@@ -136,7 +165,7 @@ public class Providers<T> {
 	 * @param <T> service type
 	 * @return {@code instances} as providers
 	 */
-	public static <T> Providers<T> fromInstances(Class<T> serviceType, Set<T> instances) {
+	public static <T> Providers<T> fromInstances(Class<T> serviceType, Iterable<? extends T> instances) {
 		return new Providers<>(serviceType, instances);
 	}
 
@@ -162,7 +191,7 @@ public class Providers<T> {
 	public Collection<T> findAll(Predicate<T> predicate) {
 		return providers.stream()
 				.filter(predicate)
-				.collect(Collectors.toSet());
+				.collect(toSet());
 	}
 
 	/**
@@ -199,6 +228,9 @@ public class Providers<T> {
 
 	@Override
 	public String toString() {
-		return providers.toString();
+		return "Providers{" +
+				"serviceType=" + serviceType +
+				", providers=" + providers +
+				'}';
 	}
 }
