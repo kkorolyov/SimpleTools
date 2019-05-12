@@ -36,11 +36,11 @@ public class Providers<T> {
 
 	/**
 	 * Loads providers from classes defined as service providers in {@code module-info} files on the modulepath.
+	 * Though module descriptors require providers to have public, no-arg constructors, this method will still attempt to instantiate with {@code args} just like {@link #fromConfig(Class, Object...)}.
 	 * @param serviceType service type to load providers for
 	 * @param args constructor arguments for each provider instance
 	 * @param <T> service type
 	 * @return providers loaded from classes defined as service providers for {@code serviceType} and instantiated with {@code args}
-	 * @implNote module descriptors require providers to have public, no-arg constructors; however, this method will still attempt to instantiate with {@code args} just like {@link #fromConfig(Class, Object...)}
 	 * @see #fromClasses(Class, Iterable, Object...)
 	 */
 	public static <T> Providers<T> fromDescriptor(Class<T> serviceType, Object... args) {
