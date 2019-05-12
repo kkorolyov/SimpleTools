@@ -131,8 +131,6 @@ project(':simple-opts') {
 project(':simple-funcs') {
 	description = "Java functional programming extensions"
 	version = '1.4'
-
-	bintrayUpload.enabled = true
 }
 
 project(':simple-structs') {
