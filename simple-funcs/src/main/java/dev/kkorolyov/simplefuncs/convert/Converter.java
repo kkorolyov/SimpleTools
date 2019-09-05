@@ -9,8 +9,8 @@ import static java.util.stream.Collectors.toList;
 
 /**
  * Converts elements from {@code T} to {@code R}.
- * @param <T> input element type
- * @param <R> output element type
+ * @param <T> input type
+ * @param <R> output type
  */
 @FunctionalInterface
 public interface Converter<T, R> {
@@ -26,6 +26,20 @@ public interface Converter<T, R> {
 		return in -> Optional.of(in)
 				.filter(test)
 				.map(delegate::convert);
+	}
+
+	/**
+	 * Generates a converter which converts inputs using the first matching selective delegate.
+	 * @param delegates convert {@code T}s
+	 * @param <T> input type
+	 * @param <R> output type
+	 * @return converter converting {@code T}s using the first non-empty-returning converter from {@code delegates}
+	 */
+	static <T, R> Converter<T, Optional<R>> reducing(Iterable<? extends Converter<? super T, Optional<R>>> delegates) {
+		return in -> StreamSupport.stream(delegates.spliterator(), false)
+				.map(converter -> converter.convert(in))
+				.flatMap(Optional::stream)
+				.findFirst();
 	}
 
 	/**

@@ -10,6 +10,8 @@ import static java.util.stream.Collectors.toList;
 /**
  * A sequence of {@link Converter} calls.
  * Useful for generating a converter {@code A -> D} using converters {@code [A -> B, B -> C, C -> D]}
+ * @param <T> input type
+ * @param <R> output type
  */
 public final class ConverterChain<T, R> implements Converter<T, R> {
 	private final Collection<Converter> converters = new ArrayList<>();
@@ -17,7 +19,7 @@ public final class ConverterChain<T, R> implements Converter<T, R> {
 	/**
 	 * Generates a fresh converter chain from a source type.
 	 * @param c source element type
-	 * @param <T> element type
+	 * @param <T> input type
 	 * @return new converter chain with source type {@code c}
 	 */
 	public static <T> ConverterChain<T, T> from(Class<T> c) {

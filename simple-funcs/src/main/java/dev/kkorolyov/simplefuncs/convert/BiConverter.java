@@ -5,8 +5,8 @@ import java.util.Objects;
 
 /**
  * Similar to {@link Converter}, but able to convert bi-directionally.
- * @param <T> input element type
- * @param <R> output element type
+ * @param <T> input type
+ * @param <R> output type
  */
 public final class BiConverter<T, R> {
 	private final Converter<? super T, ? extends R> outgoing;
