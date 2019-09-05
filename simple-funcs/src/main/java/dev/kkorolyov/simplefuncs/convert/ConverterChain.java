@@ -11,7 +11,7 @@ import static java.util.stream.Collectors.toList;
  * A sequence of {@link Converter} calls.
  * Useful for generating a converter {@code A -> D} using converters {@code [A -> B, B -> C, C -> D]}
  */
-public class ConverterChain<T, R> implements Converter<T, R> {
+public final class ConverterChain<T, R> implements Converter<T, R> {
 	private final Collection<Converter> converters = new ArrayList<>();
 
 	/**

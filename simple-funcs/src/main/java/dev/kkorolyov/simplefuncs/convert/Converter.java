@@ -1,6 +1,8 @@
 package dev.kkorolyov.simplefuncs.convert;
 
 import java.util.Collection;
+import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.stream.StreamSupport;
 
 import static java.util.stream.Collectors.toList;
@@ -12,6 +14,20 @@ import static java.util.stream.Collectors.toList;
  */
 @FunctionalInterface
 public interface Converter<T, R> {
+	/**
+	 * Generates a converter which converts inputs matching a given test.
+	 * @param test filter accepting {@code T}s to convert
+	 * @param delegate converts accepted {@code T}s
+	 * @param <T> input type
+	 * @param <R> output type
+	 * @return converter converting {@code T}s matching {@code test} using {@code delegate}
+	 */
+	static <T, R> Converter<T, Optional<R>> selective(Predicate<? super T> test, Converter<? super T, ? extends R> delegate) {
+		return in -> Optional.of(in)
+				.filter(test)
+				.map(delegate::convert);
+	}
+
 	/**
 	 * Converts a {@code T} to an {@code R}.
 	 * @param in input to convert
