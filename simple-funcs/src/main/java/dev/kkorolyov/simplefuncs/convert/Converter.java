@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.StreamSupport;
 
+import static dev.kkorolyov.simplefuncs.stream.Iterables.append;
 import static java.util.stream.Collectors.toList;
 
 /**
@@ -28,6 +29,11 @@ public interface Converter<T, R> {
 				.map(delegate::convert);
 	}
 
+	/** @see #reducing(Iterable) */
+	@SafeVarargs
+	static <T, R> Converter<T, Optional<R>> reducing(Converter<? super T, Optional<R>> delegate, Converter<? super T, Optional<R>>... delegates) {
+		return reducing(append(delegate, delegates));
+	}
 	/**
 	 * Generates a converter which converts inputs using the first matching selective delegate.
 	 * @param delegates convert {@code T}s
