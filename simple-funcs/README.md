@@ -17,6 +17,9 @@ Library for generating functions converting instances between types.
 Converter<Object, String> stringifier = String::valueOf;
 Collection<String> converted = stringifier.convert(Arrays.asList(1, 5, 7));
 ```
+#### Generator Functions
+- `Converter#selective(Predicate, Converter)` generates a converter which converts input matching a given test
+- `Converter#reducing(Converter<?, Optional>...)` generates a converter which uses the first-accepting selective converter
 
 ### Collectors
 Additional (potentially) useful collectors not found in the standard library.
