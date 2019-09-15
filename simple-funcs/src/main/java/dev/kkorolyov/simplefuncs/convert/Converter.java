@@ -31,7 +31,7 @@ public interface Converter<T, R> {
 
 	/** @see #reducing(Iterable) */
 	@SafeVarargs
-	static <T, R> Converter<T, Optional<R>> reducing(Converter<? super T, Optional<R>> delegate, Converter<? super T, Optional<R>>... delegates) {
+	static <T, R> Converter<T, ? extends Optional<? extends R>> reducing(Converter<? super T, Optional<R>> delegate, Converter<? super T, ? extends Optional<? extends R>>... delegates) {
 		return reducing(append(delegate, delegates));
 	}
 	/**
@@ -41,7 +41,7 @@ public interface Converter<T, R> {
 	 * @param <R> output type
 	 * @return converter converting {@code T}s using the first non-empty-returning converter from {@code delegates}
 	 */
-	static <T, R> Converter<T, Optional<R>> reducing(Iterable<? extends Converter<? super T, Optional<R>>> delegates) {
+	static <T, R> Converter<T, ? extends Optional<? extends R>> reducing(Iterable<? extends Converter<? super T, ? extends Optional<? extends R>>> delegates) {
 		return in -> StreamSupport.stream(delegates.spliterator(), false)
 				.map(converter -> converter.convert(in))
 				.flatMap(Optional::stream)
