@@ -130,7 +130,7 @@ project(':simple-opts') {
 
 project(':simple-funcs') {
 	description = "Java functional programming extensions"
-	version = '1.4'
+	version = '1.5-SNAPSHOT'
 }
 
 project(':simple-structs') {

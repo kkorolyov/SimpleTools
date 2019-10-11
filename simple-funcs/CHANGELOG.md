@@ -1,5 +1,12 @@
 # Change Log
 
+## 1.5 - 2019-10-11
+### Additions
+* `Converter` library for generating instance conversion functions
+    * `Converter`
+    * `BiConverter`
+    * `ConverterChain`
+
 ## 1.4 - 2019-04-15
 ### Additions
 * `Iterables#matches(Iterable<T>, Iterable<T>)` single-iteration matching function
