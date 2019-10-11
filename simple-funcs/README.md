@@ -20,6 +20,8 @@ Collection<String> converted = stringifier.convert(Arrays.asList(1, 5, 7));
 #### Generator Functions
 - `Converter#selective(Predicate, Converter)` generates a converter which converts input matching a given test
 - `Converter#reducing(Converter<?, Optional>...)` generates a converter which uses the first-accepting selective converter
+#### Chaining
+A `ConverterChain` may be used to generate a converter `A -> D` using converter steps `A -> B`, `B -> C`, `C -> D`.
 
 ### Collectors
 Additional (potentially) useful collectors not found in the standard library.

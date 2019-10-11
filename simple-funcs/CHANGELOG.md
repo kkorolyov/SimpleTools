@@ -1,6 +1,6 @@
 # Change Log
 
-## 1.5 - 2019-09-05
+## 1.5 - 2019-10-11
 ### Additions
 * `Converter` library for generating instance conversion functions
     * `Converter`
