@@ -25,7 +25,7 @@ import static java.util.stream.Collectors.toSet;
  * Loads providers/implementations of a service.
  * Similar to {@link java.util.ServiceLoader}, but provides additional functionality, such as instantiating providers with constructor arguments and loading from multiple resources.
  */
-public class Providers<T> {
+public final class Providers<T> {
 	private final Class<T> serviceType;
 	private final Collection<T> providers = new HashSet<>();
 
@@ -170,15 +170,22 @@ public class Providers<T> {
 	}
 
 	/**
+	 * Locates the sole provider, if one exists.
+	 * @throws IllegalStateException if multiple providers exist
+	 */
+	public Optional<T> find() {
+		return find(t -> true);
+	}
+	/**
 	 * Locates the sole provider which matches a given predicate.
 	 * @param predicate predicate to test
 	 * @return provider matching {@code predicate}, if any
-	 * @throws IllegalArgumentException if multiple providers match {@code predicate}
+	 * @throws IllegalStateException if multiple providers match {@code predicate}
 	 */
 	public Optional<T> find(Predicate<T> predicate) {
 		Collection<T> matches = findAll(predicate);
 
-		if (matches.size() > 1) throw new IllegalArgumentException("Multiple " + serviceType + " providers match the given predicate");
+		if (matches.size() > 1) throw new IllegalStateException("Multiple " + serviceType + " providers match the given predicate");
 
 		return matches.stream()
 				.findFirst();
@@ -195,10 +202,21 @@ public class Providers<T> {
 	}
 
 	/**
+	 * Like {@link #find()}, but throws an exception if no provider.
+	 * @throws NoSuchElementException if no provider exists
+	 * @throws IllegalStateException if multiple providers exist
+	 * @see #find()
+	 */
+	public T get() {
+		return find()
+				.orElseThrow(() -> new NoSuchElementException("No " + serviceType + " provider found"));
+	}
+	/**
 	 * Like {@link #find(Predicate)}, but throws an exception if no matching provider.
 	 * @param predicate predicate to test
 	 * @return provider matching {@code predicate}
 	 * @throws NoSuchElementException if no provider matches {@code predicate}
+	 * @throws IllegalStateException if multiple providers match {@code predicate}
 	 * @see #find(Predicate)
 	 */
 	public T get(Predicate<T> predicate) {
