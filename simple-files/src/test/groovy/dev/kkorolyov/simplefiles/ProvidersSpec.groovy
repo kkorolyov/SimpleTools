@@ -40,7 +40,7 @@ class ProvidersSpec extends Specification {
 		providers.find(predicate)
 
 		then:
-		thrown IllegalArgumentException
+		thrown IllegalStateException
 	}
 
 	def "findAll returns empty if no matching providers"() {
