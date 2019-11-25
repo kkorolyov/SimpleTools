@@ -116,7 +116,9 @@ project(':simple-props') {
 
 project(':simple-files') {
 	description = "Snappy file interaction library"
-	version = '1.2'
+	version = '1.3'
+
+	bintrayUpload.enabled = true
 }
 
 project(':simple-opts') {
@@ -130,7 +132,7 @@ project(':simple-opts') {
 
 project(':simple-funcs') {
 	description = "Java functional programming extensions"
-	version = '1.5'
+	version = '1.6'
 
 	bintrayUpload.enabled = true
 }

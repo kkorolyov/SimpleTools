@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.6 - 2019-11-25
+### Additions
+* `Memoizer` utility
+
 ## 1.5 - 2019-10-11
 ### Additions
 * `Converter` library for generating instance conversion functions
