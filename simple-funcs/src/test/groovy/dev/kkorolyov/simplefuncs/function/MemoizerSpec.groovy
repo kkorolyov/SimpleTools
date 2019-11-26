@@ -19,10 +19,10 @@ class MemoizerSpec extends Specification {
 	Supplier<Object> supplierMemo = memoize(supplier)
 
 	Predicate<Object> predicate = Mock()
-	Predicate<Object> predicateMemo = memoize(predicate)
+	Predicate<Object> predicateMemo = memoize(predicate.&test as Function).&apply
 
 	BiPredicate<Object, Object> biPredicate = Mock()
-	BiPredicate<Object, Object> biPredicateMemo = memoize(biPredicate)
+	BiPredicate<Object, Object> biPredicateMemo = memoize(biPredicate.&test as BiFunction).&apply
 
 	Function<Object, Object> function = Mock()
 	Function<Object, Object> functionMemo = memoize(function)

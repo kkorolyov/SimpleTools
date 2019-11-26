@@ -3,9 +3,7 @@ package dev.kkorolyov.simplefuncs.function;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
-import java.util.function.BiPredicate;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
@@ -24,26 +22,8 @@ public final class Memoizer<T, R> {
 	 * @return memoized variant of {@code base}
 	 */
 	public static <T> Supplier<T> memoize(Supplier<? extends T> base) {
-		Function<Object, T> transform = Memoizer.<Object, T>memoize(t -> base.get());
+		Function<Object, T> transform = memoize(t -> base.get());
 		return () -> transform.apply(NULL);
-	}
-
-	/**
-	 * @param base base predicate
-	 * @param <T> input type
-	 * @return memoized variant of {@code base}
-	 */
-	public static <T> Predicate<T> memoize(Predicate<? super T> base) {
-		return memoize((Function<T, Boolean>) base::test)::apply;
-	}
-	/**
-	 * @param base base bi-predicate
-	 * @param <T> first input arg type
-	 * @param <U> second input arg type
-	 * @return memoized variant of {@code base}
-	 */
-	public static <T, U> BiPredicate<T, U> memoize(BiPredicate<? super T, ? super U> base) {
-		return Memoizer.<T, U, Boolean>memoize(base::test)::apply;
 	}
 
 	/**
@@ -63,8 +43,8 @@ public final class Memoizer<T, R> {
 	 * @return memoized variant of {@code base}
 	 */
 	public static <T, U, R> BiFunction<T, U, R> memoize(BiFunction<? super T, ? super U, ? extends R> base) {
-		Function<T, Function<U, R>> transform = Memoizer.<T, Function<U, R>>memoize(
-				t1 -> Memoizer.<U, R>memoize(
+		Function<T, Function<U, R>> transform = memoize(
+				t1 -> memoize(
 						u1 -> base.apply(t1, u1)
 				)
 		);
