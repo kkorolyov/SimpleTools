@@ -6,10 +6,8 @@ import spock.lang.Specification
 import java.util.function.Predicate
 
 class ProvidersSpec extends Specification {
-	interface Service {
-		boolean accepts()
-	}
-	@Shared Predicate<Service> predicate = { it.accepts() }
+	@Shared
+	Predicate<Service> predicate = { it.accepts() }
 
 	Providers<Service> providers
 
@@ -74,15 +72,37 @@ class ProvidersSpec extends Specification {
 		thrown NoSuchElementException
 	}
 
+	def "returns same provider on subsequent matching calls"() {
+		expect:
+		(0..10).collect { Providers.fromClasses(Service, [MockService], true).get() }.toSet().size() == 1
+	}
+	def "returns different providers on subsequent unmatching calls"() {
+		expect:
+		Providers.fromClasses(Service, [MockService], true).get() != Providers.fromClasses(Service, [MockService], false).get()
+	}
+
 	private Service service(boolean accepts) {
-		return new Service() {
-			@Override
-			boolean accepts() {
-				return accepts
-			}
-		}
+		return new MockService(accepts)
 	}
 	private Set<Service> services(boolean accepts, int num) {
 		return (1..num).collect { service(accepts) }
+	}
+
+	interface Service {
+		boolean accepts()
+	}
+
+	static class MockService implements Service {
+		private final boolean accepts;
+
+		// FIXME Change to primitive when Providers supports primitives
+		MockService(Boolean accepts) {
+			this.accepts = accepts
+		}
+
+		@Override
+		boolean accepts() {
+			return accepts
+		}
 	}
 }

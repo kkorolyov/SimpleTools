@@ -1,5 +1,11 @@
 # Change Log
 
+## 1.3.1 - 2019-11-28
+### Changes
+* `Providers<T>` now extends `Iterable<T>`
+### Fixes
+* `Providers` now loads the same instance for multiple provided services if such an instance exists
+
 ## 1.3 - 2019-11-25
 ### Additions
 * `Providers#find`, `Providers#get` no-arg convenience methods

@@ -9,23 +9,51 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.ServiceLoader;
+import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import static dev.kkorolyov.simplefuncs.function.Memoizer.memoize;
 import static java.util.stream.Collectors.toSet;
 
 /**
  * Loads providers/implementations of a service.
  * Similar to {@link java.util.ServiceLoader}, but provides additional functionality, such as instantiating providers with constructor arguments and loading from multiple resources.
  */
-public final class Providers<T> {
+public final class Providers<T> implements Iterable<T> {
+	// Memoize on (class, args) tuple to cache instances and support single instance providing multiple services
+	private final static BiFunction<Class<?>, Collection<Object>, Object> instantiator = memoize((c, args) -> {
+		Constructor constructor;
+		boolean noArg = false;
+		try {
+			constructor = c.getConstructor(
+					args.stream()
+							.map(Object::getClass)
+							.toArray(Class[]::new));
+		} catch (NoSuchMethodException e) {
+			try {
+				constructor = c.getConstructor();
+				noArg = true;
+			} catch (NoSuchMethodException e1) {
+				throw new IllegalArgumentException(c + " contains no constructor matching args " + args + " nor a no-arg constructor");
+			}
+		}
+		try {
+			return constructor.newInstance(noArg ? new Object[0] : args.toArray());
+		} catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+			throw new RuntimeException(e);
+		}
+	});
+
 	private final Class<T> serviceType;
 	private final Collection<T> providers = new HashSet<>();
 
@@ -131,31 +159,9 @@ public final class Providers<T> {
 		return fromInstances(
 				serviceType,
 				StreamSupport.stream(classes.spliterator(), false)
-						.map(c -> instantiate(c, args))
+						.map(c -> (T) instantiator.apply(c, Arrays.asList(args)))
 						.collect(toSet())
 		);
-	}
-	private static <T> T instantiate(Class<T> c, Object... args) {
-		Constructor<T> constructor;
-		boolean noArg = false;
-		try {
-			constructor = c.getConstructor(
-					Arrays.stream(args)
-							.map(Object::getClass)
-							.toArray(Class[]::new));
-		} catch (NoSuchMethodException e) {
-			try {
-				constructor = c.getConstructor();
-				noArg = true;
-			} catch (NoSuchMethodException e1) {
-				throw new IllegalArgumentException(c + " contains no constructor matching args " + Arrays.toString(args) + " nor a no-arg constructor");
-			}
-		}
-		try {
-			return constructor.newInstance(noArg ? new Object[0] : args);
-		} catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-			throw new RuntimeException(e);
-		}
 	}
 
 	/**
@@ -227,6 +233,11 @@ public final class Providers<T> {
 	/** @return stream over all providers */
 	public Stream<T> stream() {
 		return providers.stream();
+	}
+
+	@Override
+	public Iterator<T> iterator() {
+		return providers.iterator();
 	}
 
 	@Override
