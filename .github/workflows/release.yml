@@ -35,6 +35,10 @@ jobs:
 
       - name: Bintray
         run: ./gradlew bintrayUpload
+        env:
+          BINTRAY_USER: ${{ secrets.BINTRAY_USER }}
+          BINTRAY_KEY: ${{ secrets.BINTRAY_KEY }}
+
       # TODO Publish to GitHub Packages as well
 
   docs:
