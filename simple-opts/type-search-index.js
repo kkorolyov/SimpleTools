@@ -1,0 +1,1 @@
+typeSearchIndex = [{"l":"All Classes","url":"allclasses-index.html"},{"p":"dev.kkorolyov.simpleopts","l":"ArgParser"},{"p":"dev.kkorolyov.simpleopts","l":"Option"},{"p":"dev.kkorolyov.simpleopts","l":"Options"}]
