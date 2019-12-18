@@ -1,6 +1,10 @@
-name: Gradle Build
+name: Build
 
-on: push
+on:
+  push:
+    # Will do a superset of this to release master
+    branches-ignore:
+      - master
 
 jobs:
   build:
@@ -10,9 +14,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Setup Java
+      - name: Java
         uses: actions/setup-java@v1
         with:
           version: 11
-      - name: Gradle
+
+      - name: Build
         run: ./gradlew build
+
+      # TODO Upload test results
