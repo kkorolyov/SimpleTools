@@ -1,0 +1,31 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Java
+        uses: actions/setup-java@v1
+        with:
+          version: 11
+      - name: Fulldoc
+        run: ./gradlew fulldoc
+
+      - name: Pages
+        uses: peaceiris/actions-gh-pages@v2
+        env:
+          PUBLISH_DIR: ./build/docs
+          PUBLISH_BRANCH: gh-pages
+          ACTIONS_DEPLOY_KEY: ${{ secrets.ACTIONS_DEPLOY_KEY }}
+
+      - name: Bintray
+        run: ./gradlew bintray
