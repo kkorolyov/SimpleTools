@@ -34,7 +34,7 @@ jobs:
           path: build/docs
 
       - name: Bintray
-        run: ./gradlew bintray
+        run: ./gradlew bintrayUpload
       # TODO Publish to GitHub Packages as well
 
   docs:
